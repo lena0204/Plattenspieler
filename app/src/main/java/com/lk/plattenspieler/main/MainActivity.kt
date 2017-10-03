@@ -46,7 +46,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
 
     var medialist = ArrayList<MediaBrowserCompat.MediaItem>()
     var playingQueue = mutableListOf<MediaSessionCompat.QueueItem>()
-    var design = 0
+    var design = 0      // 0 -> hell, 1 -> dunkel
 
     lateinit var mbrowser: MediaBrowserCompat
     lateinit var tv_title: TextView
@@ -71,13 +71,16 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         updateInterface = pf
         rl_playing.setOnClickListener {
             // Bundle mit den Wiedergabedaten erstellen
-            val args = prepareBundle()
-            pf.arguments = args
-            // Fragment ersetzen
-            fragmentManager.beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.frame_layout, pf, "TAG_PLAYING")
-                    .commit()
+            if(!pf.isVisible){
+                val args = prepareBundle()
+                pf.arguments = args
+                // Fragment ersetzen
+                fragmentManager.beginTransaction()
+                        .addToBackStack(null)
+                        .replace(R.id.frame_layout, pf, "TAG_PLAYING")
+                        .commit()
+            }
+
         }
         tv_title = this.findViewById(R.id.tv_main_title) as TextView
         tv_interpret = this.findViewById(R.id.tv_main_interpret) as TextView
@@ -130,7 +133,6 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         return super.onOptionsItemSelected(item)
     }
 
-    // TODO Leiste unten nicht anklickbar, wenn das Fragment aktiv ist
     // Bundle für das PlayingFragment bereitstellen
     private fun prepareBundle(): Bundle{
         val args = Bundle()
@@ -194,8 +196,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         ib_main_next.setOnClickListener { onClickNext() }
         val mc = MediaControllerCompat.getMediaController(this)
         // update Bar mit aktuellen Infos
-        val state = mc.playbackState
-        if(state.state == PlaybackStateCompat.STATE_PLAYING){
+        if(mc.playbackState.state == PlaybackStateCompat.STATE_PLAYING){
             ib_state.background = resources.getDrawable(R.mipmap.ic_pause)
         } else {
             ib_state.background = resources.getDrawable(R.mipmap.ic_play)
@@ -206,14 +207,12 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             ib_main_next.backgroundTintList = ColorStateList.valueOf(R.color.black)
             ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
-        val metadata = mc.metadata
-        tv_title.text = metadata.description.title
-        tv_interpret.text = metadata.description.subtitle
+        tv_title.text = mc.metadata.description.title
+        tv_interpret.text = mc.metadata.description.subtitle
         // register Callback
         mc.registerCallback(controllerCallback)
     }
-    fun setData(pdata: MediaMetadataCompat){
-        val queue = MediaControllerCompat.getMediaController(this).queue
+    fun setData(pdata: MediaMetadataCompat, queue: MutableList<MediaSessionCompat.QueueItem>){
         Log.d(TAG, "prepareBundle(): QueueLänge: " + queue.size)
         var items = ""
         var i = 0
@@ -309,7 +308,8 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     // Datenbank
     fun savePlayingQueue(){
         var i = 0
-        // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben
+        // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
+        // nicht abgespielt wird
         if(playingQueue.size > 0){
             Log.d(TAG, "save Queue")
             // aktuelle Metadaten sichern
@@ -324,7 +324,8 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Länge der Schlange: " + playingQueue.size)
-            // TODO Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel))
+            /*  TODO Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
+                TODO wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört */
             while(i < playingQueue.size){
                 values = ContentValues()
                 val media = playingQueue[i].description
@@ -346,7 +347,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         if(PreferenceManager.getDefaultSharedPreferences(this).getBoolean(PREF_PLAYING, false)){
             val projection = getProjection()
             val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
-            if(c != null && c.count != 0){
+            if(c != null && c.count != 0) {
                 c.moveToFirst()
                 var i: Long = 0
                 val mc = MediaControllerCompat.getMediaController(this)
@@ -360,8 +361,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI)))
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLong())
                         .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLong())
-                setData(builder.build())
-                mc.transportControls.prepareFromMediaId(metadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID), null)
+                mc.transportControls.prepareFromMediaId(builder.build().getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID), null)
                 c.moveToNext()
                 // Metadata zusammenstellen und an den Service weitergeben
                 while(!c.isAfterLast){
@@ -376,6 +376,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                     mc.addQueueItem(description.build())
                     c.moveToNext()
                 }
+                setData(builder.build(), playingQueue)
             }
             c.close()
         }
@@ -459,14 +460,14 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         override fun onMetadataChanged(metadata: MediaMetadataCompat) {
             // update Bar mit aktuellen Infos
             // TODO Das Interface erhält teilweise kein Update, Ausnahmefälle
-            setData(metadata)
+            setData(metadata, MediaControllerCompat.getMediaController(this@MainActivity).queue)
         }
         override fun onPlaybackStateChanged(state: PlaybackStateCompat) {
             // update Bar
             if(state.state == PlaybackStateCompat.STATE_PLAYING){
-                ib_state.background = a.resources.getDrawable(R.mipmap.ic_pause)
+                ib_state.background = resources.getDrawable(R.mipmap.ic_pause)
             } else {
-                ib_state.background = a.resources.getDrawable(R.mipmap.ic_play)
+                ib_state.background = resources.getDrawable(R.mipmap.ic_play)
             }
             if(design == 0){
                 ib_state.backgroundTintList = ColorStateList.valueOf(R.color.black)
