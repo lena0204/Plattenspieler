@@ -1,0 +1,70 @@
+package com.lk.plattenspieler.fragments
+
+import android.app.Fragment
+import android.os.Bundle
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.lk.plattenspieler.R
+import com.lk.plattenspieler.utils.AlbumAdapter
+import com.lk.plattenspieler.utils.AlbumModel
+import kotlinx.android.synthetic.main.fragment_album.*
+
+/**
+ * Created by Lena on 08.06.17.
+ */
+class AlbumFragment(): Fragment(), AlbumAdapter.Click {
+
+    // Listener und Interface, um onClick weiterzureichen
+    lateinit var listener: onClick
+    val TAG = "AlbumFragment"
+    var args = Bundle()
+
+    constructor(f: AlbumFragment.onClick): this(){
+        listener = f
+    }
+    interface onClick{
+        fun onClickAlbum(albumid: String)
+    }
+
+    // Listener Methoden vom Adapter
+    override fun onClick(albumid: String) {
+        listener.onClickAlbum(albumid)
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        super.onCreateView(inflater, container, savedInstanceState)
+        return inflater.inflate(R.layout.fragment_album, container, false)
+    }
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        activity.actionBar.title = getString(R.string.app_name)
+        args = this.arguments
+        setupRecyclerView(args.getParcelableArrayList("Liste"))
+    }
+
+    // TODO teilweise lassen sich manche Einträge in der Liste nicht anklicken
+    private fun setupRecyclerView(list: ArrayList<MediaBrowserCompat.MediaItem>){
+        val data = ArrayList<AlbumModel>()
+        Log.d(TAG, list.size.toString())
+        for(item in list){
+            var albumid = item.description.mediaId
+            if(albumid != null && item.description.description != null){
+                albumid = albumid.replace("ALBUM-", "")
+                val albumtitle = item.description.title.toString()
+                val albumartist = item.description.subtitle.toString()
+                val albumarray = item.description.description.toString().split("__".toRegex())
+                val albumart = albumarray[0]
+                val albumtracks = albumarray[1] + " " + getString(R.string.songs)
+                data.add(AlbumModel(albumid, albumtitle, albumart, albumartist, albumtracks))
+            }
+        }
+        recycler_album.layoutManager = LinearLayoutManager(activity)
+        val aa = AlbumAdapter(data, this)
+        recycler_album.adapter = aa
+    }
+
+}

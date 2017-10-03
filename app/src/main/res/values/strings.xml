@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Plattenspieler</string>
+    <string name="action_playing">Wiedergabe</string>
+    <string name="cd_cover">Album Cover</string>
+    <string name="songs">Lieder</string>
+    <string name="toast_no_permission">Keine Berechtigung, den Speicher zu lesen, deshalb kann keine
+        Musik angezeigt werden.</string>
+
+    <!-- Menü -->
+    <string name="menu_change_design">Design wechseln</string>
+    <string name="menu_change_to_light">Zu hellem Design wechseln</string>
+    <string name="menu_change_to_dark">Zu dunklem Design wechseln</string>
+    <string name="menu_delete_database">Datenbank löschen</string>
+
+
+    <!-- Wiedergabe -->
+    <string name="no_title">Keine Wiedergabe</string>
+    <string name="queue_title">Aktuelle Wiedergabe</string>
+</resources>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_playing_fragment"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/app_padding"
+    android:backgroundTint="@color/darker"
+    android:backgroundTintMode="src_atop">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:id="@+id/tv_playing_album"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="@color/light_grey"
+            android:paddingBottom="5dp"/>
+
+        <TextView
+            android:id="@+id/tv_playing_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textColor="@color/light_grey"
+            android:gravity="end"/>
+        <TextView
+            android:id="@+id/tv_playing_songnumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/light_grey"
+            android:gravity="end"/>
+        <ImageView
+            android:id="@+id/iv_playing_shuffle"
+            android:background="@mipmap/ic_shuffle"
+            android:backgroundTint="@color/colorAccent"
+            android:alpha="0.4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <ListView
+            android:id="@+id/lv_playing_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textColor="@color/light_grey"
+            android:dividerHeight="0.2dp"
+            android:divider="@color/lv_divider">
+        </ListView>
+
+    </RelativeLayout>
+
+</LinearLayout>

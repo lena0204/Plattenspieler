@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Gramophone</string>
+    <string name="action_playing">Playing</string>
+    <string name="cd_cover">Album cover</string>
+    <string name="songs">Songs</string>
+    <string name="toast_no_permission">No permission to read the storage, so no music can be shown.</string>
+
+    <!-- Menü -->
+    <string name="menu_change_design">Change design</string>
+    <string name="menu_change_to_light">Change to light design</string>
+    <string name="menu_change_to_dark">Change to dark design</string>
+    <string name="menu_delete_database">Delete Database</string>
+
+
+    <!-- Wiedergabe -->
+    <string name="no_title">No current playlist</string>
+    <string name="queue_title">Playing</string>
+
+</resources>
