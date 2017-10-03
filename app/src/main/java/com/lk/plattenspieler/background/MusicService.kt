@@ -233,7 +233,6 @@ class MusicService(): MediaBrowserServiceCompat() {
         updateMetadata()
     }
     fun handleOnPause() {
-        Log.d(TAG, "handleOnPause")
         musicPlayer!!.pause()
         updatePlaybackstate(PlaybackStateCompat.STATE_PAUSED)
         this.stopForeground(false)

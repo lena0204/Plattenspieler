@@ -106,7 +106,6 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         super.onDestroy()
         // Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
         val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        Log.d(TAG, "Anzahl der gelöschten Zeilen: " + number)
         savePlayingQueue()
         // Callbacks deaktivieren
         if(MediaControllerCompat.getMediaController(this) != null){
@@ -131,126 +130,6 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             }*/
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    // Bundle für das PlayingFragment bereitstellen
-    private fun prepareBundle(): Bundle{
-        val args = Bundle()
-        val meta = MediaControllerCompat.getMediaController(this).metadata
-        val data = meta.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) + "__" +
-                meta.getString(MediaMetadataCompat.METADATA_KEY_TITLE) + "__" +
-                meta.getString(MediaMetadataCompat.METADATA_KEY_ARTIST) + "__" +
-                meta.getString(MediaMetadataCompat.METADATA_KEY_ALBUM) + "__" +
-                meta.getLong(MediaMetadataCompat.METADATA_KEY_DURATION) + "__" +
-                meta.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI) + "__" +
-                meta.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS)
-        val queue = MediaControllerCompat.getMediaController(this).queue
-        var items = ""
-        var i = 0
-        while (i < queue.size){
-            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
-            i++
-        }
-        items = items.substring(0, items.length - 2)
-        args.putString("Q", items)
-        args.putString("T", data)
-        args.putInt("S", MediaControllerCompat.getMediaController(this).playbackState.state)
-        return args
-    }
-    // Setup beenden, wenn der Zugriff erlaubt wurde
-    fun completeSetup(){
-        // Setup MediaBrowser
-        val c = ComponentName(applicationContext, MusicService::class.java)
-        mbrowser = MediaBrowserCompat(this, c, connectionCallback, null)
-        mbrowser.connect()
-        // Broadcast für die Musikkontrolle setzen
-        val ifilter = IntentFilter()
-        ifilter.addAction("PLAY")
-        ifilter.addAction("NEXT")
-    }
-    // Berechtigung abfragen (Marshmallow+ )
-    fun checkReadPermission(): Boolean{
-        if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            this.requestPermissions(Array(1, { _ -> Manifest.permission.READ_EXTERNAL_STORAGE}), PERMISSION_REQUEST)
-            return false
-        } else {
-            return true
-        }
-    }
-    fun changeDesign(){
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        var design = sp.getInt(PREF_DESIGN, 0)
-        Log.d(TAG, "Design: " + design)
-        if(design == 0) design = 1
-            else design = 0
-        sp.edit().putInt(PREF_DESIGN, design).commit()
-        ThemeChanger().changeToTheme(this)
-    }
-
-    // Methoden, die aus den inneren Klassen aufgerufen werden (Zugriff auf Attribute von MainActivity)
-    // UI, Musikkontrolle oder Anzeigen anderer Fragments (Alben etc)
-    fun setupUI(){
-        // Listener
-        ib_main_play.setOnClickListener { onClickPlay() }
-        ib_main_next.setOnClickListener { onClickNext() }
-        val mc = MediaControllerCompat.getMediaController(this)
-        // update Bar mit aktuellen Infos
-        if(mc.playbackState.state == PlaybackStateCompat.STATE_PLAYING){
-            ib_state.background = resources.getDrawable(R.mipmap.ic_pause)
-        } else {
-            ib_state.background = resources.getDrawable(R.mipmap.ic_play)
-        }
-        if(design == 0){
-            ib_state.backgroundTintList = ColorStateList.valueOf(R.color.black)
-            ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            ib_main_next.backgroundTintList = ColorStateList.valueOf(R.color.black)
-            ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-        }
-        tv_title.text = mc.metadata.description.title
-        tv_interpret.text = mc.metadata.description.subtitle
-        // register Callback
-        mc.registerCallback(controllerCallback)
-    }
-    fun setData(pdata: MediaMetadataCompat, queue: MutableList<MediaSessionCompat.QueueItem>){
-        Log.d(TAG, "prepareBundle(): QueueLänge: " + queue.size)
-        var items = ""
-        var i = 0
-        while (i < queue.size){
-            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
-            i++
-        }
-        items = items.substring(0, items.length - 2)
-        updateInterface.updateMetadata(pdata, items)
-        metadata = pdata
-        tv_title.text = pdata.description.title
-        tv_interpret.text = pdata.description.subtitle
-    }
-    fun onClickPlay() {
-        val mc = MediaControllerCompat.getMediaController(this)
-        if(mc.playbackState.state == PlaybackStateCompat.STATE_PLAYING){
-            mc.transportControls.pause()
-        } else {
-            mc.transportControls.play()
-        }
-    }
-    fun onClickNext() {
-        MediaControllerCompat.getMediaController(this).transportControls.skipToNext()
-    }
-    fun showAlbums(){
-        val af = AlbumFragment(this)
-        val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
-        af.arguments = extras
-        fragmentManager.beginTransaction().replace(R.id.frame_layout, af).commit()
-    }
-    fun showTitles(){
-        val adf = AlbumDetailsFragment(this)
-        val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
-        adf.arguments = extras
-        fragmentManager.beginTransaction()
-                .addToBackStack(null)
-                .replace(R.id.frame_layout, adf).commit()
     }
 
     // Listener von AlbumFragment und AlbumDetailsFragment
@@ -304,6 +183,125 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         }
     }
 
+    // Methoden, die aus den inneren Klassen aufgerufen werden (Zugriff auf Attribute von MainActivity)
+    // UI, Musikkontrolle oder Anzeigen anderer Fragments (Alben etc)
+    fun setupUI(){
+        // Listener
+        ib_main_play.setOnClickListener { onClickPlay() }
+        ib_main_next.setOnClickListener { onClickNext() }
+        val mc = MediaControllerCompat.getMediaController(this)
+        // update Bar mit aktuellen Infos
+        if(mc.playbackState.state == PlaybackStateCompat.STATE_PLAYING){
+            ib_state.background = resources.getDrawable(R.mipmap.ic_pause)
+        } else {
+            ib_state.background = resources.getDrawable(R.mipmap.ic_play)
+        }
+        if(design == 0){
+            ib_state.backgroundTintList = ColorStateList.valueOf(R.color.black)
+            ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+            ib_main_next.backgroundTintList = ColorStateList.valueOf(R.color.black)
+            ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+        }
+        tv_title.text = mc.metadata.description.title
+        tv_interpret.text = mc.metadata.description.subtitle
+        // register Callback
+        mc.registerCallback(controllerCallback)
+    }
+    fun setData(pdata: MediaMetadataCompat, queue: MutableList<MediaSessionCompat.QueueItem>){
+        var items = ""
+        var i = 0
+        while (i < queue.size){
+            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+            i++
+        }
+        items = items.substring(0, items.length - 2)
+        updateInterface.updateMetadata(pdata, items)
+        metadata = pdata
+        tv_title.text = pdata.description.title
+        tv_interpret.text = pdata.description.subtitle
+    }
+    fun onClickPlay() {
+        val mc = MediaControllerCompat.getMediaController(this)
+        if(mc.playbackState.state == PlaybackStateCompat.STATE_PLAYING){
+            mc.transportControls.pause()
+        } else {
+            mc.transportControls.play()
+        }
+    }
+    fun onClickNext() {
+        MediaControllerCompat.getMediaController(this).transportControls.skipToNext()
+    }
+    fun showAlbums(){
+        val af = AlbumFragment(this)
+        val extras = Bundle()
+        extras.putParcelableArrayList("Liste", medialist)
+        af.arguments = extras
+        fragmentManager.beginTransaction().replace(R.id.frame_layout, af).commit()
+    }
+    fun showTitles(){
+        val adf = AlbumDetailsFragment(this)
+        val extras = Bundle()
+        extras.putParcelableArrayList("Liste", medialist)
+        adf.arguments = extras
+        fragmentManager.beginTransaction()
+                .addToBackStack(null)
+                .replace(R.id.frame_layout, adf).commit()
+    }
+
+    // Bundle für das PlayingFragment bereitstellen
+    private fun prepareBundle(): Bundle{
+        val args = Bundle()
+        val meta = MediaControllerCompat.getMediaController(this).metadata
+        val data = meta.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID) + "__" +
+                meta.getString(MediaMetadataCompat.METADATA_KEY_TITLE) + "__" +
+                meta.getString(MediaMetadataCompat.METADATA_KEY_ARTIST) + "__" +
+                meta.getString(MediaMetadataCompat.METADATA_KEY_ALBUM) + "__" +
+                meta.getLong(MediaMetadataCompat.METADATA_KEY_DURATION) + "__" +
+                meta.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI) + "__" +
+                meta.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS)
+        val queue = MediaControllerCompat.getMediaController(this).queue
+        var items = ""
+        var i = 0
+        while (i < queue.size){
+            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+            i++
+        }
+        items = items.substring(0, items.length - 2)
+        args.putString("Q", items)
+        args.putString("T", data)
+        args.putInt("S", MediaControllerCompat.getMediaController(this).playbackState.state)
+        return args
+    }
+    // Setup beenden, wenn der Zugriff erlaubt wurde
+    fun completeSetup(){
+        // Setup MediaBrowser
+        val c = ComponentName(applicationContext, MusicService::class.java)
+        mbrowser = MediaBrowserCompat(this, c, connectionCallback, null)
+        mbrowser.connect()
+        // Broadcast für die Musikkontrolle setzen
+        val ifilter = IntentFilter()
+        ifilter.addAction("PLAY")
+        ifilter.addAction("NEXT")
+    }
+    // Berechtigung abfragen (Marshmallow+ )
+    fun checkReadPermission(): Boolean{
+        if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            this.requestPermissions(Array(1, { _ -> Manifest.permission.READ_EXTERNAL_STORAGE}), PERMISSION_REQUEST)
+            return false
+        } else {
+            return true
+        }
+    }
+    fun changeDesign(){
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+        var design = sp.getInt(PREF_DESIGN, 0)
+        Log.d(TAG, "Design: " + design)
+        if(design == 0) design = 1
+        else design = 0
+        sp.edit().putInt(PREF_DESIGN, design).commit()
+        ThemeChanger().changeToTheme(this)
+    }
+
     // Datenbank
     fun savePlayingQueue(){
         var i = 0
@@ -350,7 +348,6 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 c.moveToFirst()
                 var i: Long = 0
                 val mc = MediaControllerCompat.getMediaController(this)
-                Log.d(TAG, "restore Queue mit " + c.count + " Datensätzen")
                 // ersten Datensatz in die aktuelle Wiedergabe schreiben und an den Service weitergeben
                 val builder = MediaMetadataCompat.Builder()
                 builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, c.getString(c.getColumnIndex(SongDB.COLUMN_ID)))
