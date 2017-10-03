@@ -145,7 +145,6 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 meta.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI) + "__" +
                 meta.getLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS)
         val queue = MediaControllerCompat.getMediaController(this).queue
-        Log.d(TAG, "prepareBundle(): QueueLänge: " + queue.size)
         var items = ""
         var i = 0
         while (i < queue.size){
@@ -310,7 +309,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         var i = 0
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird
-        if(playingQueue.size > 0){
+        if(playingQueue.size > 0 && MediaControllerCompat.getMediaController(this).playbackState.state != PlaybackStateCompat.STATE_PLAYING){
             Log.d(TAG, "save Queue")
             // aktuelle Metadaten sichern
             var values = ContentValues()
