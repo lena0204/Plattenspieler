@@ -4,6 +4,7 @@ import android.app.Fragment
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +19,7 @@ import kotlinx.android.synthetic.main.fragment_album_details.*
  */
 class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
 
+    val TAG = "AlbumDetailsFragment"
     lateinit var listener: onClick
     var data = ArrayList<TitleModel>()
     lateinit var fab_shuffle: ImageButton
@@ -61,7 +63,10 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
                 data.add(TitleModel(titleid, title, titleinterpret, titlecover))
             }
         }
-        if(album.isNotEmpty()) this.activity.actionBar.title = album
+        if(album.isNotEmpty()){
+            this.activity.actionBar.title = album
+            Log.d(TAG, "Albumtitel: " + album)
+        }
         recycler_album_details.layoutManager = LinearLayoutManager(activity)
         val aa = TitleAdapter(data, this)
         recycler_album_details.adapter = aa

@@ -100,6 +100,7 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     override fun onLoadChildren(parentId: String, result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>) {
         // eigene Hierachie aufbauen mit Browsable und Playable MediaItems
+        Log.d(TAG, "onLoadChildren in Service with ParentID: " + parentId)
         if(parentId == musicProvider.ROOT_ID){
             sendRootChildren(result)
         } else if(parentId.contains("ALBUM-")){
@@ -110,6 +111,7 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     private fun sendAlbumChildren(result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>, albumid: String){
         // alle Titel eines Albums (SELECT und WHERE festlegen)
+
         val projection = Array<String>(3, init = {i -> ""})
         projection[0] = MediaStore.Audio.Media._ID
         projection[1] = MediaStore.Audio.Media.TITLE
@@ -177,7 +179,7 @@ class MusicService(): MediaBrowserServiceCompat() {
                 this.startService(android.content.Intent(c, com.lk.plattenspieler.background.MusicService::class.java))
                 serviceStarted = true
             }
-            if(msession.isActive){
+            if(!msession.isActive){
                 msession.isActive = true
             }
             // METADATEN setzen
@@ -247,16 +249,18 @@ class MusicService(): MediaBrowserServiceCompat() {
         // AudioFocus freigeben
         am.abandonAudioFocus(amCallback)
         audioFocus = AUDIO_LOSS
-        // Player stoppen
-        musicPlayer!!.stop()
-        musicPlayer!!.release()
-        musicPlayer = null
         // Session und Service beenden
-        this.stopForeground(true)
-        nm.cancel(ID)
         msession.release()
         this.stopSelf()
         serviceStarted = false
+        // Player stoppen
+        musicPlayer!!.stop()
+        musicPlayer!!.reset()
+        musicPlayer!!.release()
+        musicPlayer = null
+        // endgültig beenden
+        msession.isActive = false
+        this.stopForeground(true)
     }
     fun handleOnNext(){
         if(!playingQueue.isEmpty()){

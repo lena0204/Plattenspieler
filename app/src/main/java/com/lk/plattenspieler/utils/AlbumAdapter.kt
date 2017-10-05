@@ -62,7 +62,9 @@ class AlbumAdapter(data: ArrayList<AlbumModel>, listener: Click) : RecyclerView.
             tvAlbum = v.tv_album_title
             tvArtist = v.tv_album_artist
             ivCover = v.iv_album_cover
-            v.setOnClickListener { cl.onClick(tvId.text.toString()) }
+            v.setOnClickListener {
+                cl.onClick(tvId.text.toString())
+            }
         }
         fun getTvID(): TextView { return tvId }
         fun getTvAlbum(): TextView { return tvAlbum }

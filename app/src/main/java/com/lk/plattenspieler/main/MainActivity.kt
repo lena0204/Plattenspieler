@@ -135,6 +135,13 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     // Listener von AlbumFragment und AlbumDetailsFragment
     override fun onClickAlbum(albumid: String) {
         val mediaid = "ALBUM-" + albumid
+        Log.d(TAG, "onClickAlbum, with id: " + albumid)
+        /*
+        * Beim zweiten Anklicken eines Albums im Fragment kommt er bis hier her, aber subscribe kommt
+        * nicht in den Callback vom Service (onLoadChildren);
+        * eine Möglichkeit wäre unsubscribe aufzurufen, wenn alle Daten im Callback angekommen sind;
+        * evtl behebt das den Fehler
+        * */
         mbrowser.subscribe(mediaid, subscriptionCallback)
     }
     override fun onClickTitle(titleid: String) {
@@ -210,11 +217,13 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     fun setData(pdata: MediaMetadataCompat, queue: MutableList<MediaSessionCompat.QueueItem>){
         var items = ""
         var i = 0
-        while (i < queue.size){
-            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
-            i++
+        if(queue.size > 0) {
+            while (i < queue.size) {
+                items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+                i++
+            }
+            items = items.substring(0, items.length - 2)
         }
-        items = items.substring(0, items.length - 2)
         updateInterface.updateMetadata(pdata, items)
         metadata = pdata
         tv_title.text = pdata.description.title
@@ -242,6 +251,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         val adf = AlbumDetailsFragment(this)
         val extras = Bundle()
         extras.putParcelableArrayList("Liste", medialist)
+        Log.d(TAG, "showTitles")
         adf.arguments = extras
         fragmentManager.beginTransaction()
                 .addToBackStack(null)
@@ -262,11 +272,13 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         val queue = MediaControllerCompat.getMediaController(this).queue
         var items = ""
         var i = 0
-        while (i < queue.size){
-            items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
-            i++
+        if(queue.size > 0) {
+            while (i < queue.size) {
+                items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+                i++
+            }
+            items = items.substring(0, items.length - 2)
         }
-        items = items.substring(0, items.length - 2)
         args.putString("Q", items)
         args.putString("T", data)
         args.putInt("S", MediaControllerCompat.getMediaController(this).playbackState.state)
