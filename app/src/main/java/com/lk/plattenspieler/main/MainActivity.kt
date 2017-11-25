@@ -135,12 +135,11 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     // Listener von AlbumFragment und AlbumDetailsFragment
     override fun onClickAlbum(albumid: String) {
         val mediaid = "ALBUM-" + albumid
-        Log.d(TAG, "onClickAlbum, with id: " + albumid)
         /*
         * Beim zweiten Anklicken eines Albums im Fragment kommt er bis hier her, aber subscribe kommt
         * nicht in den Callback vom Service (onLoadChildren);
         * eine Möglichkeit wäre unsubscribe aufzurufen, wenn alle Daten im Callback angekommen sind;
-        * evtl behebt das den Fehler
+        * evtl behebt das den Fehler -> ja tut es
         * */
         mbrowser.subscribe(mediaid, subscriptionCallback)
     }
@@ -204,9 +203,9 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             ib_state.background = resources.getDrawable(R.mipmap.ic_play)
         }
         if(design == 0){
-            ib_state.backgroundTintList = ColorStateList.valueOf(R.color.black)
+            ib_state.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
             ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            ib_main_next.backgroundTintList = ColorStateList.valueOf(R.color.black)
+            ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
             ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
         tv_title.text = mc.metadata.description.title
@@ -272,7 +271,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         val queue = MediaControllerCompat.getMediaController(this).queue
         var items = ""
         var i = 0
-        if(queue.size > 0) {
+        if(queue != null && queue.size > 0) {
             while (i < queue.size) {
                 items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
                 i++
@@ -451,6 +450,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 }
                 showTitles()
             }
+            mbrowser.unsubscribe(parentId);
         }
     }
     inner class MusicControllerCallback(act: Activity): MediaControllerCompat.Callback(){
@@ -468,6 +468,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         override fun onMetadataChanged(metadata: MediaMetadataCompat) {
             // update Bar mit aktuellen Infos
             // TODO Das Interface erhält teilweise kein Update, Ausnahmefälle
+            Log.d(TAG,"setData, Aufruf für die Textleiste")
             setData(metadata, MediaControllerCompat.getMediaController(this@MainActivity).queue)
         }
         override fun onPlaybackStateChanged(state: PlaybackStateCompat) {
@@ -478,9 +479,9 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 ib_state.background = resources.getDrawable(R.mipmap.ic_play)
             }
             if(design == 0){
-                ib_state.backgroundTintList = ColorStateList.valueOf(R.color.black)
+                ib_state.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
                 ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-                ib_main_next.backgroundTintList = ColorStateList.valueOf(R.color.black)
+                ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
                 ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
             }
         }

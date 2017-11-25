@@ -85,6 +85,10 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
+        Log.d(TAG, "Playbackstate: " + msession.controller.playbackState.state)
+        if(msession.controller.playbackState.state == PlaybackStateCompat.STATE_PAUSED) {
+            handleOnStop()
+        }
         Log.d(TAG, "Service started: " + this.serviceStarted)
         // der Intent, der benutzt wurde für bind()
         return bool
@@ -100,7 +104,6 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     override fun onLoadChildren(parentId: String, result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>) {
         // eigene Hierachie aufbauen mit Browsable und Playable MediaItems
-        Log.d(TAG, "onLoadChildren in Service with ParentID: " + parentId)
         if(parentId == musicProvider.ROOT_ID){
             sendRootChildren(result)
         } else if(parentId.contains("ALBUM-")){
@@ -313,7 +316,11 @@ class MusicService(): MediaBrowserServiceCompat() {
             number = playingQueue.size.toString()
         }
         // Daten aktualisieren und setzen
+        Log.d(TAG, "Aktuelle Metadaten setzen")
         currentMediaMetaData = musicProvider.getMediaDescription(currentMediaId, number)
+        if(currentMediaMetaData == null){
+            Log.d(TAG, "Metadaten sind null")
+        }
         msession.setMetadata(currentMediaMetaData)
     }
     fun updatePlaybackstate(state: Int){

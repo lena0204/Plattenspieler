@@ -46,7 +46,6 @@ class AlbumFragment(): Fragment(), AlbumAdapter.Click {
         setupRecyclerView(args.getParcelableArrayList("Liste"))
     }
 
-    // TODO teilweise lassen sich manche Einträge in der Liste nicht anklicken
     private fun setupRecyclerView(list: ArrayList<MediaBrowserCompat.MediaItem>){
         val data = ArrayList<AlbumModel>()
         for(item in list){

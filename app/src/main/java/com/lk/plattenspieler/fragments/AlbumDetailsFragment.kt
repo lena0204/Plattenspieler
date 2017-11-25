@@ -65,7 +65,6 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
         }
         if(album.isNotEmpty()){
             this.activity.actionBar.title = album
-            Log.d(TAG, "Albumtitel: " + album)
         }
         recycler_album_details.layoutManager = LinearLayoutManager(activity)
         val aa = TitleAdapter(data, this)
