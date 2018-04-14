@@ -7,10 +7,12 @@
         Musik angezeigt werden.</string>
 
     <!-- Menü -->
+    <string name="menu_dark_light">Hell / Dunkel</string>
     <string name="menu_change_design">Design wechseln</string>
-    <string name="menu_change_to_light">Zu hellem Design wechseln</string>
-    <string name="menu_change_to_dark">Zu dunklem Design wechseln</string>
-    <string name="menu_delete_database">Datenbank löschen</string>
+    <string name="menu_teal">Grünes Design anwenden</string>
+    <string name="menu_pink">Pinkes Design anwenden</string>
+    <string name="menu_remove_playing">Wiedergabe löschen</string>
+    <!--<string name="menu_delete_database">Datenbank löschen</string>-->
 
 
     <!-- Wiedergabe -->

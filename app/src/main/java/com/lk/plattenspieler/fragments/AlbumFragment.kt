@@ -1,8 +1,8 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Fragment
+import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -46,7 +46,7 @@ class AlbumFragment(): Fragment(), AlbumAdapter.Click {
         setupRecyclerView(args.getParcelableArrayList("Liste"))
     }
 
-    private fun setupRecyclerView(list: ArrayList<MediaBrowserCompat.MediaItem>){
+    private fun setupRecyclerView(list: ArrayList<MediaBrowser.MediaItem>){
         val data = ArrayList<AlbumModel>()
         for(item in list){
             var albumid = item.description.mediaId

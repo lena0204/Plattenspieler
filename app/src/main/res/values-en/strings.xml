@@ -2,20 +2,23 @@
 <resources>
 
     <string name="app_name">Gramophone</string>
-    <string name="action_playing">Playing</string>
+    <string name="action_playing">Playback</string>
     <string name="cd_cover">Album cover</string>
     <string name="songs">Songs</string>
-    <string name="toast_no_permission">No permission to read the storage, so no music can be shown.</string>
+    <string name="toast_no_permission">No permission to read the storage,
+        therefore no songs can be shown.</string>
 
     <!-- Menü -->
+    <string name="menu_dark_light">Light / Dark</string>
     <string name="menu_change_design">Change design</string>
-    <string name="menu_change_to_light">Change to light design</string>
-    <string name="menu_change_to_dark">Change to dark design</string>
-    <string name="menu_delete_database">Delete Database</string>
+    <string name="menu_teal">Use teal design</string>
+    <string name="menu_pink">Use pink design</string>
+    <string name="menu_remove_playing">Delete playlist</string>
+    <!--<string name="menu_delete_database">Delete database</string>-->
 
 
     <!-- Wiedergabe -->
-    <string name="no_title">No current playlist</string>
-    <string name="queue_title">Playing</string>
+    <string name="no_title">No playback</string>
+    <string name="queue_title">Current playback</string>
 
 </resources>

@@ -1,30 +1,32 @@
 package com.lk.plattenspieler.background
 
+import android.annotation.TargetApi
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.media.AudioManager
-import android.media.MediaPlayer
+import android.media.browse.MediaBrowser
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Bundle
+import android.os.ResultReceiver
 import android.provider.MediaStore
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaBrowserServiceCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
+import android.service.media.MediaBrowserService
 import android.support.v4.media.session.MediaButtonReceiver
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import android.support.v7.app.NotificationCompat
 import android.util.Log
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
+import android.app.NotificationChannel
+import android.media.*
+import android.os.Build
+import android.support.annotation.RequiresApi
 
 /**
  * Created by Lena on 08.06.17.
  */
-class MusicService(): MediaBrowserServiceCompat() {
+class MusicService: MediaBrowserService() {
 
     private val TAG = "MusicService"
     //private val brn = BroadcastReceiverNoisy()
@@ -34,18 +36,27 @@ class MusicService(): MediaBrowserServiceCompat() {
     private val AUDIO_LOSS = 1
     private val AUDIO_DUCK = 2
     private val AUDIO_PAUSE_PLAYING = 3
+    private val CHANNEL_ID = "plattenspieler_playback"
+    private val audioAttr = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .setUsage(AudioAttributes.USAGE_MEDIA).build()
+    @TargetApi(26)
+    private val audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(audioAttr)
+            .setOnAudioFocusChangeListener(amCallback)
+            .build()
 
-    lateinit private var playbackState: PlaybackStateCompat.Builder
-    lateinit private var metadataState: MediaMetadataCompat.Builder
-    lateinit private var msession: MediaSessionCompat
+    lateinit private var playbackState: PlaybackState.Builder
+    lateinit private var metadataState: MediaMetadata.Builder
+    lateinit private var msession: MediaSession
     lateinit private var c: android.content.Context
     lateinit private var musicProvider: MusicProvider
     lateinit private var am: AudioManager
     lateinit private var nm: NotificationManager
 
-    private var playingQueue = mutableListOf<MediaSessionCompat.QueueItem>()
+    private var playingQueue = mutableListOf<MediaSession.QueueItem>()
     private var playingID: Long = 0
-    private var currentMediaMetaData: MediaMetadataCompat? = null
+    private var currentMediaMetaData: MediaMetadata? = null
     private var currentMediaFile: String? = null
     private var currentMediaId: String? = null
     private var musicPlayer: MediaPlayer? = null
@@ -53,6 +64,7 @@ class MusicService(): MediaBrowserServiceCompat() {
     private var serviceStarted = false
     private var positionMs = -1
     private var audioFocus = AUDIO_LOSS
+    private var shuffleOn = false
 
     override fun onCreate() {
         super.onCreate()
@@ -63,30 +75,31 @@ class MusicService(): MediaBrowserServiceCompat() {
         nm = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         // Session aufsetzen (mit Provider, Token, Callback und Flags setzen)
         musicProvider = MusicProvider(c)
-        msession = MediaSessionCompat(c, TAG)
-        msession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
-        msession.setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
+        msession = MediaSession(c, TAG)
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            msession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS)
+        }
         msession.setCallback(MusicSessionCallback())
         sessionToken = msession.sessionToken
         // Playback und Metadata initialisieren
-        playbackState = PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY)
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE)
-        metadataState = MediaMetadataCompat.Builder()
+        playbackState = PlaybackState.Builder()
+                .setActions(PlaybackState.ACTION_PLAY)
+                .setActions(PlaybackState.ACTION_PLAY_PAUSE)
+        metadataState = MediaMetadata.Builder()
         msession.setPlaybackState(playbackState.build())
         msession.setMetadata(metadataState.build())
         // Queuetitel setzen
         msession.setQueueTitle(getString(R.string.queue_title))
     }
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Auf Benachrichtigung reagieren
+    /*override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // TODO Auf Benachrichtigung reagieren -> aktuelle Lösung benutzt SupportLibrary
         MediaButtonReceiver.handleIntent(msession, intent)
         return super.onStartCommand(intent, flags, startId)
-    }
+    }*/
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
         Log.d(TAG, "Playbackstate: " + msession.controller.playbackState.state)
-        if(msession.controller.playbackState.state == PlaybackStateCompat.STATE_PAUSED) {
+        if(msession.controller.playbackState.state == PlaybackState.STATE_PAUSED) {
             handleOnStop()
         }
         Log.d(TAG, "Service started: " + this.serviceStarted)
@@ -95,14 +108,14 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
 
     // Hierachie der Musiktitel
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): MediaBrowserServiceCompat.BrowserRoot? {
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): MediaBrowserService.BrowserRoot? {
         // nur mein eigenes Paket zulassen zum Abfragen
         if(this.packageName == clientPackageName){
-            return MediaBrowserServiceCompat.BrowserRoot(musicProvider.ROOT_ID, null)
+            return MediaBrowserService.BrowserRoot(musicProvider.ROOT_ID, null)
         }
-        return MediaBrowserServiceCompat.BrowserRoot("", null)
+        return MediaBrowserService.BrowserRoot("", null)
     }
-    override fun onLoadChildren(parentId: String, result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+    override fun onLoadChildren(parentId: String, result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         // eigene Hierachie aufbauen mit Browsable und Playable MediaItems
         if(parentId == musicProvider.ROOT_ID){
             sendRootChildren(result)
@@ -112,10 +125,9 @@ class MusicService(): MediaBrowserServiceCompat() {
             android.util.Log.e(TAG, "No known parent ID")       // Fehler
         }
     }
-    private fun sendAlbumChildren(result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>, albumid: String){
+    private fun sendAlbumChildren(result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>, albumid: String){
         // alle Titel eines Albums (SELECT und WHERE festlegen)
-
-        val projection = Array<String>(3, init = {i -> ""})
+        val projection = Array(3, init = {_ -> ""})
         projection[0] = MediaStore.Audio.Media._ID
         projection[1] = MediaStore.Audio.Media.TITLE
         projection[2] = MediaStore.Audio.Media.ARTIST
@@ -124,7 +136,7 @@ class MusicService(): MediaBrowserServiceCompat() {
         // Datenbank abfragen
         val cursor = contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,selection,null,null)
         val list = MutableList(cursor.count,
-                { i -> MediaBrowserCompat.MediaItem(MediaDescriptionCompat.Builder().setMediaId(i.toString()).build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE) } )
+                { i -> MediaBrowser.MediaItem(MediaDescription.Builder().setMediaId(i.toString()).build(), MediaBrowser.MediaItem.FLAG_PLAYABLE) } )
         if(cursor.moveToFirst()){
             // Pfad zum Albumcover abfragen
             var cover = ""
@@ -144,10 +156,10 @@ class MusicService(): MediaBrowserServiceCompat() {
         cursor.close()
         result.sendResult(list)
     }
-    private fun sendRootChildren(result: MediaBrowserServiceCompat.Result<MutableList<MediaBrowserCompat.MediaItem>>){
+    private fun sendRootChildren(result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>){
         // Alben abfragen (SELECT, ORDERBY definieren)
         val orderby = MediaStore.Audio.Albums.ALBUM + " ASC"
-        val projection = Array<String>(5, init = {_ -> ""})
+        val projection = Array(5, init = {_ -> ""})
         projection[0] = MediaStore.Audio.Albums._ID
         projection[1] = MediaStore.Audio.Albums.ALBUM
         projection[2] = MediaStore.Audio.Albums.ALBUM_ART
@@ -156,7 +168,7 @@ class MusicService(): MediaBrowserServiceCompat() {
         // Datenbankabfrage und Weitergabe an den Provider
         val cursor = contentResolver.query(android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, null,null,null,orderby)
         val list = MutableList(cursor.count,
-                { i -> MediaBrowserCompat.MediaItem(MediaDescriptionCompat.Builder().setMediaId(i.toString()).build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE) } )
+                { i -> MediaBrowser.MediaItem(MediaDescription.Builder().setMediaId(i.toString()).build(), MediaBrowser.MediaItem.FLAG_BROWSABLE) } )
         if(cursor.moveToFirst()){
             musicProvider.getAlbums(cursor, list)
         }
@@ -174,7 +186,12 @@ class MusicService(): MediaBrowserServiceCompat() {
             return
         }
         // request AudioFocus, nur spielen falls gestattet -> AUDIOFOCUS_GAIN -> dauerhaft
-        val result = am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        val result: Int
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            result = am.requestAudioFocus(audioFocusRequest)
+        } else {
+            result = am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        }
         if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
             // Service starten und Session aktiv setzen
             audioFocus = AUDIO_FOCUS
@@ -194,12 +211,12 @@ class MusicService(): MediaBrowserServiceCompat() {
                     musicPlayer!!.seekTo(positionMs)
                 }
                 musicPlayer!!.start()
-                updatePlaybackstate(PlaybackStateCompat.STATE_PLAYING)
+                updatePlaybackstate(PlaybackState.STATE_PLAYING)
                 // starte im Vordergrund mit Benachrichtigung
-                this.startForeground(ID, showNotification(PlaybackStateCompat.STATE_PLAYING, currentMediaMetaData).build())
+                this.startForeground(ID, showNotification(PlaybackState.STATE_PLAYING, currentMediaMetaData).build())
             }
             musicPlayer!!.setOnErrorListener { _, what, extra ->
-                Log.e(TAG, "MusicPlayerError: " + what + "; " + extra)
+                Log.e(TAG, "MusicPlayerError: $what; $extra")
                 false
             }
             musicPlayer!!.setOnCompletionListener { _ ->
@@ -217,13 +234,16 @@ class MusicService(): MediaBrowserServiceCompat() {
                     handleOnStop()
                 }
             }
-            musicPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
+            musicPlayer!!.setAudioAttributes(audioAttr)
             musicPlayer!!.setDataSource(currentMediaFile)
             musicPlayer!!.prepareAsync()
         }
     }
     fun handleOnPlayFromId(pId: String?){
+        Log.d(TAG, "handleOnPlayFromId")
         playingQueue.clear()
+        shuffleOn = false
+        // Standardmäßig ausschalten wenn neu abgespielt wird, falls shuffle wird das später gesetzt
         msession.setQueue(playingQueue)
         positionMs = -1
         currentMediaId = pId
@@ -232,6 +252,7 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     fun handleOnPrepareFromId(pId: String?){
         // Nach dem Neustart der App und dem Wiederherstellen der Playliste
+        Log.d(TAG, "handleOnPrepareFromId")
         positionMs = -1
         currentMediaId = pId
         currentMediaFile = musicProvider.getFileFromMediaId(currentMediaId)
@@ -239,7 +260,7 @@ class MusicService(): MediaBrowserServiceCompat() {
     }
     fun handleOnPause() {
         musicPlayer!!.pause()
-        updatePlaybackstate(PlaybackStateCompat.STATE_PAUSED)
+        updatePlaybackstate(PlaybackState.STATE_PAUSED)
         this.stopForeground(false)
     }
     fun handleOnStop(){
@@ -247,19 +268,24 @@ class MusicService(): MediaBrowserServiceCompat() {
         // update Metadata, state und die Playliste
         playingQueue.clear()
         playingID = 0
+        shuffleOn = false
         msession.setQueue(playingQueue)
-        updatePlaybackstate(PlaybackStateCompat.STATE_STOPPED)
+        updatePlaybackstate(PlaybackState.STATE_STOPPED)
         // AudioFocus freigeben
-        am.abandonAudioFocus(amCallback)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            am.abandonAudioFocusRequest(audioFocusRequest)
+        } else {
+            am.abandonAudioFocus(amCallback)
+        }
         audioFocus = AUDIO_LOSS
         // Session und Service beenden
         msession.release()
         this.stopSelf()
         serviceStarted = false
         // Player stoppen
-        musicPlayer!!.stop()
-        musicPlayer!!.reset()
-        musicPlayer!!.release()
+        musicPlayer?.stop()
+        musicPlayer?.reset()
+        musicPlayer?.release()
         musicPlayer = null
         // endgültig beenden
         msession.isActive = false
@@ -281,34 +307,53 @@ class MusicService(): MediaBrowserServiceCompat() {
         }
     }
 
+
     // Update der Abspieldaten und Benachrichtigung erstellen
-    fun showNotification(state: Int, metadata: MediaMetadataCompat?): NotificationCompat.Builder{
-        // TODO Cancel Button anzeigen
-        val nb = NotificationCompat.Builder(this)
-        nb.setContentTitle(metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE))
-        nb.setContentText(metadata?.getString(MediaMetadataCompat.METADATA_KEY_ARTIST))
+    private fun showNotification(state: Int, metadata: MediaMetadata?): Notification.Builder{
+        Log.i(TAG, shuffleOn.toString())
+        val nb: Notification.Builder
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createChannel()
+            nb = Notification.Builder(this, CHANNEL_ID)
+        } else {
+            nb = Notification.Builder(this)
+        }
+        nb.setContentTitle(metadata?.getString(MediaMetadata.METADATA_KEY_TITLE))
+        nb.setContentText(metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST))
         nb.setSmallIcon(R.drawable.notification_stat_playing)
-        nb.setLargeIcon(BitmapFactory.decodeFile(metadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI)))
+        nb.setLargeIcon(BitmapFactory.decodeFile(metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
         // Media Style aktivieren
-        nb.setStyle(NotificationCompat.MediaStyle()
+        nb.setStyle(Notification.MediaStyle()
                 .setMediaSession(sessionToken)
                 .setShowActionsInCompactView(1,2))
         val i = Intent(applicationContext, MainActivity::class.java)
         nb.setContentIntent(PendingIntent.getActivity(this, 0, i,0))
         // korrekt anzeigen, ob Shuffle aktiviert ist
-        if(msession.controller.isShuffleModeEnabled){
-            nb.addAction(R.mipmap.ic_shuffle, "Shuffle", null)
+        if(shuffleOn){
+            nb.addAction(Notification.Action.Builder(R.mipmap.ic_shuffle, "Shuffle", null).build())
         } else {
-            nb.addAction(R.color.transparent, "Shuffle", null)
+            nb.addAction(Notification.Action.Builder(R.color.transparent, "Shuffle", null).build())
         }
         // passendes Icon für Play / Pause anzeigen
-        if(state == PlaybackStateCompat.STATE_PLAYING){
-            nb.addAction(R.mipmap.ic_pause, "Pause", MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackStateCompat.ACTION_PAUSE))
+        if(state == PlaybackState.STATE_PLAYING){
+            nb.addAction(Notification.Action.Builder(R.mipmap.ic_pause, "Pause",
+                    MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_PAUSE)).build())
         } else {
-            nb.addAction(R.mipmap.ic_play, "Play", MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackStateCompat.ACTION_PLAY))
+            nb.addAction(Notification.Action.Builder(R.mipmap.ic_play, "Play",
+                    MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_PLAY)).build())
         }
-        nb.addAction(R.mipmap.ic_next, "Next", MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackStateCompat.ACTION_SKIP_TO_NEXT))
+        nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_SKIP_TO_NEXT)).build())
         return nb
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createChannel() {
+        val channel = NotificationChannel(CHANNEL_ID, "Music playback", NotificationManager.IMPORTANCE_LOW)
+        channel.description = "Music playback controls"
+        channel.setShowBadge(false)
+        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        nm.createNotificationChannel(channel)
     }
     fun updateMetadata(){
         var number = "0"
@@ -316,52 +361,57 @@ class MusicService(): MediaBrowserServiceCompat() {
             number = playingQueue.size.toString()
         }
         // Daten aktualisieren und setzen
-        Log.d(TAG, "Aktuelle Metadaten setzen")
         currentMediaMetaData = musicProvider.getMediaDescription(currentMediaId, number)
         if(currentMediaMetaData == null){
             Log.d(TAG, "Metadaten sind null")
         }
         msession.setMetadata(currentMediaMetaData)
+        //Log.d(TAG, "Aktuelle Metadaten setzen")
     }
-    fun updatePlaybackstate(state: Int){
-        if(state == PlaybackStateCompat.STATE_PLAYING){
+    private fun updatePlaybackstate(state: Int){
+        if(state == PlaybackState.STATE_PLAYING){
             // anfangen oder weiterspielen
-            playbackState.setActions(PlaybackStateCompat.ACTION_PAUSE
-                    or PlaybackStateCompat.ACTION_STOP
-                    or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                    or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE_ENABLED)
+            playbackState.setActions(PlaybackState.ACTION_PAUSE
+                    or PlaybackState.ACTION_STOP
+                    or PlaybackState.ACTION_SKIP_TO_NEXT)
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
-            playbackState.setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f)
+            playbackState.setState(PlaybackState.STATE_PLAYING, position, 1.0f)
             nm.notify(ID, showNotification(state, currentMediaMetaData).build())
-        } else if(state == PlaybackStateCompat.STATE_PAUSED ||
-                state == PlaybackStateCompat.STATE_SKIPPING_TO_NEXT){
-            playbackState.setActions(PlaybackStateCompat.ACTION_PLAY
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-                    or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                    or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE_ENABLED)
+        } else if(state == PlaybackState.STATE_PAUSED ||
+                state == PlaybackState.STATE_SKIPPING_TO_NEXT){
+            playbackState.setActions(PlaybackState.ACTION_PLAY
+                    or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID
+                    or PlaybackState.ACTION_SKIP_TO_NEXT)
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
-            playbackState.setState(PlaybackStateCompat.STATE_PAUSED, position, 1.0f)
+            playbackState.setState(PlaybackState.STATE_PAUSED, position, 1.0f)
             nm.notify(ID,showNotification(state, currentMediaMetaData).build())
-        } else if(state == PlaybackStateCompat.STATE_STOPPED){
-            playbackState.setActions(PlaybackStateCompat.ACTION_PLAY
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-                    or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE_ENABLED)
+        } else if(state == PlaybackState.STATE_STOPPED){
+            playbackState.setActions(PlaybackState.ACTION_PLAY
+                    or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)
             positionMs = 0
-            playbackState.setState(PlaybackStateCompat.STATE_STOPPED, 0, 1.0f)
+            playbackState.setState(PlaybackState.STATE_STOPPED, 0, 1.0f)
             nm.cancel(ID)
         }
+        val extras = Bundle();
+        extras.putBoolean("shuffle", shuffleOn)
+        playbackState.setExtras(extras)
         msession.setPlaybackState(playbackState.build())
     }
 
     // innere Callbacks vom MainActivity und vom AudioManager
-    inner class MusicSessionCallback: MediaSessionCompat.Callback(){
+    inner class MusicSessionCallback: MediaSession.Callback(){
         override fun onPlay() {
             handleOnPlay()
         }
-        override fun onPlayFromMediaId(mediaId: String?, extras: Bundle) {
-            handleOnPlayFromId(mediaId)
+        override fun onPlayFromMediaId(mediaId: String, extras: Bundle) {
+            shuffleOn = false
+            if(extras.containsKey("I")){
+                handleOnPlayFromId(mediaId)
+            } else {
+                handleOnPrepareFromId(mediaId)
+            }
         }
         override fun onPause() {
             handleOnPause()
@@ -373,53 +423,66 @@ class MusicService(): MediaBrowserServiceCompat() {
             handleOnNext()
         }
 
-        override fun onPrepareFromMediaId(mediaId: String?, extras: Bundle?) {
-            handleOnPrepareFromId(mediaId)
+        override fun onMediaButtonEvent(mediaButtonIntent: Intent?): Boolean{
+            Log.i(TAG, "onMediaButtonEvent")
+            return super.onMediaButtonEvent(mediaButtonIntent)
         }
-        override fun onSetShuffleModeEnabled(enabled: Boolean) {
-            msession.setShuffleModeEnabled(enabled)
-        }
-        override fun onAddQueueItem(description: MediaDescriptionCompat) {
-            playingQueue.add(MediaSessionCompat.QueueItem(description, playingID++))
-            msession.setQueue(playingQueue)
-            // Zum sicherstellen, dass die richtige Anzahl an Liedern angezeigt wird
-            updateMetadata()
-        }
-        override fun onRemoveQueueItem(description: MediaDescriptionCompat) {
-            super.onRemoveQueueItem(description)
-            var i = 0
-            // Description aus der Liste entfernen und aktualisieren
-            while(i < playingQueue.size){
-                if(playingQueue[i].description == description){
-                    playingQueue.removeAt(i)
-                    i = playingQueue.size
+
+        override fun onCommand(command: String, args: Bundle?, cb: ResultReceiver?) {
+            //super.onCommand(command, args, cb)
+            when(command){
+                "add" -> {
+                    val md = args?.get("S") as MediaDescription
+                    playingQueue.add(MediaSession.QueueItem(md, playingID++))
                     msession.setQueue(playingQueue)
-                } else {
-                    i++
+                    // Zum sicherstellen, dass die richtige Anzahl an Liedern angezeigt wird
+                    updateMetadata()
+                }
+                "shuffle" -> {
+                    Log.d(TAG,"Shuffle true")
+                    shuffleOn = true
+                }
+                "remove" -> {
+                    var i = 0
+                    // Description aus der Liste entfernen und aktualisieren
+                    while(i < playingQueue.size){
+                        if(playingQueue[i].description == args?.get("S") as MediaDescription){
+                            playingQueue.removeAt(i)
+                            i = playingQueue.size
+                            msession.setQueue(playingQueue)
+                        } else {
+                            i++
+                        }
+                    }
+                    updateMetadata()
                 }
             }
-            updateMetadata()
         }
     }
     inner class AudioFocusCallback: AudioManager.OnAudioFocusChangeListener{
         override fun onAudioFocusChange(focusChange: Int) {
             // Fälle abfragen und entsprechend pausieren oder leiser stellen
-            if(focusChange == AudioManager.AUDIOFOCUS_LOSS){
-                handleOnStop()
-                audioFocus = AUDIO_LOSS
-            } else if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                if(musicPlayer!!.isPlaying){
-                    handleOnPause()
-                    audioFocus = AUDIO_PAUSE_PLAYING
+            when(focusChange){
+                AudioManager.AUDIOFOCUS_LOSS -> {
+                    handleOnStop()
+                    audioFocus = AUDIO_LOSS
                 }
-            } else if(focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
-                musicPlayer!!.setVolume(0.3f, 0.3f)
-                audioFocus = AUDIO_DUCK
-            } else if(focusChange == AudioManager.AUDIOFOCUS_GAIN){
-                if(audioFocus == AUDIO_PAUSE_PLAYING){
-                    handleOnPlay()
-                } else {
-                    musicPlayer!!.setVolume(0.8f, 0.8f)     // generell leiser spielen
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    if(musicPlayer!!.isPlaying){
+                        handleOnPause()
+                        audioFocus = AUDIO_PAUSE_PLAYING
+                    }
+                }
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                    musicPlayer!!.setVolume(0.3f, 0.3f)
+                    audioFocus = AUDIO_DUCK
+                }
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    if(audioFocus == AUDIO_PAUSE_PLAYING){
+                        handleOnPlay()
+                    } else {
+                        musicPlayer!!.setVolume(0.8f, 0.8f)     // generell leiser spielen
+                    }
                 }
             }
         }

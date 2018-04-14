@@ -1,6 +1,5 @@
 package com.lk.plattenspieler.utils
 
-import android.graphics.Bitmap
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
@@ -41,8 +40,8 @@ class AlbumAdapter(data: ArrayList<AlbumModel>, listener: Click) : RecyclerView.
         // passendes Icon setzen
         holder.getIvCover().setImageBitmap(album.cover)
     }
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        val v = LayoutInflater.from(parent?.context).inflate(R.layout.row_album, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album, parent, false)
         return ViewHolder(v)
     }
     override fun getItemCount(): Int {

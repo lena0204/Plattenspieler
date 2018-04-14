@@ -3,27 +3,23 @@ package com.lk.plattenspieler.background
 import android.content.Context
 import android.database.Cursor
 import android.graphics.BitmapFactory
+import android.media.MediaDescription
+import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
 import android.provider.MediaStore
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
 import android.util.Log
 
 /**
  * Created by Lena on 08.06.17.
  */
-class MusicProvider(context: Context) {
+class MusicProvider(private val c: Context) {
 
     // Zugriff auf die Datenbanken mit der Musik und Aufbereitung der Daten
-
-    val c: Context
-    init { c = context }
 
     val ROOT_ID = "__ ROOT__"
     val TAG = "MusicProvider"
 
-    fun getTitles(c: Cursor, list: MutableList<MediaBrowserCompat.MediaItem>, cover: String): MutableList<MediaBrowserCompat.MediaItem>{
+    fun getTitles(c: Cursor, list: MutableList<MediaBrowser.MediaItem>, cover: String): MutableList<MediaBrowser.MediaItem>{
         var i = 0
         c.moveToFirst()
         do {
@@ -31,17 +27,17 @@ class MusicProvider(context: Context) {
             val tracktitle = c.getString(c.getColumnIndex(MediaStore.Audio.Media.TITLE))
             val interpret = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ARTIST))
             val album = c.getString(c.getColumnIndex(MediaStore.Audio.Media.ALBUM))
-            val description = MediaDescriptionCompat.Builder()
+            val description = MediaDescription.Builder()
                     .setMediaId(trackid)
                     .setDescription(album + "__" + cover)
                     .setTitle(tracktitle)
                     .setSubtitle(interpret)
-            list.set(i, MediaBrowserCompat.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_PLAYABLE))
+            list[i] = MediaBrowser.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_PLAYABLE)
             i++
         } while(c.moveToNext())
         return list
     }
-    fun getAlbums(c: Cursor, list: MutableList<MediaBrowserCompat.MediaItem>): MutableList<MediaBrowserCompat.MediaItem>{
+    fun getAlbums(c: Cursor, list: MutableList<MediaBrowser.MediaItem>): MutableList<MediaBrowser.MediaItem>{
         var i = 0
         c.moveToFirst()
         do {
@@ -51,12 +47,12 @@ class MusicProvider(context: Context) {
             val albumartist = c.getString(c.getColumnIndex(MediaStore.Audio.Albums.ARTIST))
             val albumart = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
             albumid = "ALBUM-" + albumid
-            val description = MediaDescriptionCompat.Builder()
+            val description = MediaDescription.Builder()
                     .setMediaId(albumid)
                     .setTitle(albumtitle)
                     .setSubtitle(albumartist)
                     .setDescription(albumart + "__" + albumtracks)
-            list.set(i, MediaBrowserCompat.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_BROWSABLE))
+            list.set(i, MediaBrowser.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_BROWSABLE))
             i++
         } while(c.moveToNext())
         return list
@@ -79,10 +75,10 @@ class MusicProvider(context: Context) {
         cursor.close()
         return result
     }
-    fun getMediaDescription(mediaId: String?, songnumber: String?): MediaMetadataCompat?{
+    fun getMediaDescription(mediaId: String?, songnumber: String?): MediaMetadata?{
         var selection: String?
         if(mediaId != null){
-            val result = MediaMetadataCompat.Builder()
+            val result = MediaMetadata.Builder()
             // eine spezifische ID abfragen, sonst den ersten Titel
             selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
             val projection = Array<String>(6, init = { i -> "" } )
@@ -95,20 +91,20 @@ class MusicProvider(context: Context) {
             val cursor = c.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection, null, null)
             if(cursor != null){
                 cursor.moveToFirst()
-                result.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, mediaId)
-                result.putString(MediaMetadataCompat.METADATA_KEY_TITLE,
+                result.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
+                result.putString(MediaMetadata.METADATA_KEY_TITLE,
                         cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)))
-                result.putString(MediaMetadataCompat.METADATA_KEY_ARTIST,
+                result.putString(MediaMetadata.METADATA_KEY_ARTIST,
                         cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)))
-                result.putString(MediaMetadataCompat.METADATA_KEY_ALBUM,
+                result.putString(MediaMetadata.METADATA_KEY_ALBUM,
                         cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)))
                 // Duration verlangt einen Long
-                result.putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
+                result.putLong(MediaMetadata.METADATA_KEY_DURATION,
                         cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
                 // Liederanzahl
                 if(!songnumber.isNullOrEmpty()){
                     val nr = songnumber!!.toLong()
-                    result.putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, nr)
+                    result.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, nr)
                 }
                 // Albumcover abfragen, um es in die Wiedergabe einzubinden
                 val albumid = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
@@ -119,9 +115,9 @@ class MusicProvider(context: Context) {
                 val calbums = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projection_album, select, null, null)
                 if(calbums != null){
                     calbums.moveToFirst()
-                    result.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, calbums.getString(calbums.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)))
+                    result.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, calbums.getString(calbums.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)))
                     val bitmap = BitmapFactory.decodeFile(calbums.getString(calbums.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)))
-                    result.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, bitmap)
+                    result.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
                 }
                 calbums.close()
             }

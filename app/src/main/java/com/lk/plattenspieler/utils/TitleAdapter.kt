@@ -36,8 +36,8 @@ class TitleAdapter(data: ArrayList<TitleModel>, listener: TitleAdapter.onClickTi
         // passendes Icon setzen
         holder.getIvCover().setImageBitmap(title.cover)
     }
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolderTitle {
-        val v = LayoutInflater.from(parent?.context).inflate(R.layout.row_album_details, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderTitle {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album_details, parent, false)
         return ViewHolderTitle(v)
     }
     override fun getItemCount(): Int {

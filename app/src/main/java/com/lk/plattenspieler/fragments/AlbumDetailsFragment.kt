@@ -1,8 +1,9 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Fragment
+import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
+import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,21 +11,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter
 import com.lk.plattenspieler.utils.TitleModel
 import kotlinx.android.synthetic.main.fragment_album_details.*
 
 /**
- * Created by Lena on 08.06.17.
- */
+* Erstellt von Lena am 08.06.17.
+*/
 class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
 
     val TAG = "AlbumDetailsFragment"
-    lateinit var listener: onClick
-    var data = ArrayList<TitleModel>()
-    lateinit var fab_shuffle: ImageButton
+    private lateinit var listener: onClick
+    private var data = ArrayList<TitleModel>()
+    private lateinit var fabShuffle: ImageButton
 
-    constructor(act: AlbumDetailsFragment.onClick): this(){
+    constructor(act: AlbumDetailsFragment.onClick): this() {
         listener = act
     }
     // Interface und Listener zum Durchreichen bis zu Activity
@@ -39,18 +42,24 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val v = inflater.inflate(R.layout.fragment_album_details, container, false)
-        fab_shuffle = v.findViewById(R.id.fab_shuffle) as ImageButton
+        fabShuffle = v.findViewById(R.id.fab_shuffle) as ImageButton
+        val design = PreferenceManager.getDefaultSharedPreferences(context).getInt(MainActivity.PREF_DESIGN, 0)
+        if(design == ThemeChanger.THEME_LIGHT || design == ThemeChanger.THEME_DARK){
+            fabShuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity.theme)
+        } else {
+            fabShuffle.background = resources.getDrawable(R.drawable.fab_background_teal, activity.theme)
+        }
         return v
     }
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        val args = this.arguments.getParcelableArrayList<MediaBrowserCompat.MediaItem>("Liste")
-        fab_shuffle.setOnClickListener { listener.onShuffleClick(data[0].id) }
+        val args = this.arguments.getParcelableArrayList<MediaBrowser.MediaItem>("Liste")
+        fabShuffle.setOnClickListener { listener.onShuffleClick(data[0].id) }
         setupRecyclerView(args)
     }
 
-    private fun setupRecyclerView(list: ArrayList<MediaBrowserCompat.MediaItem>){
-        data = ArrayList<TitleModel>()
+    private fun setupRecyclerView(list: ArrayList<MediaBrowser.MediaItem>){
+        data = ArrayList()
         var album = ""
         for(item in list){
             val titleid = item.description.mediaId

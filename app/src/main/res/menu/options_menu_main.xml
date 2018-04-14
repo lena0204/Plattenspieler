@@ -5,5 +5,16 @@
         android:id="@+id/menu_change_design"
         android:title="@string/menu_change_design"
         android:showAsAction="never"/>
+    <item
+        android:id="@+id/menu_dark_light"
+        android:title="@string/menu_dark_light"
+        android:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_remove_playing"
+        android:title="@string/menu_remove_playing"
+        android:showAsAction="never"/>
+
+
 
 </menu>
