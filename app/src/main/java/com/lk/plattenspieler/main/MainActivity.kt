@@ -42,7 +42,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         val PREF_SHUFFLE = "shuffle"
     }
 
-    val TAG = "MainActivity"
+    val TAG = "com.lk.pl-MainActivity"
     private val PERMISSION_REQUEST = 8009
     private val connectionCallback = BrowserConnectionCallback(this)
     val controllerCallback = MusicControllerCallback(this)

@@ -17,7 +17,7 @@ class MusicProvider(private val c: Context) {
     // Zugriff auf die Datenbanken mit der Musik und Aufbereitung der Daten
 
     val ROOT_ID = "__ ROOT__"
-    val TAG = "MusicProvider"
+    val TAG = "com.lk.pl-MusicProvider"
 
     fun getTitles(c: Cursor, list: MutableList<MediaBrowser.MediaItem>, cover: String): MutableList<MediaBrowser.MediaItem>{
         var i = 0

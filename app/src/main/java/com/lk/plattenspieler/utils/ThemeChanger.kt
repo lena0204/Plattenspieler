@@ -16,7 +16,7 @@ class ThemeChanger{
         val THEME_LIGHT_T = 2
         val THEME_DARK_T = 3
     }
-    private val TAG = "ThemeChanger"
+    private val TAG = "com.lk.pl-ThemeChanger"
 
     // ändert das Theme, indem das Theme übergeben wird und die Activity neugestartet wird
     // wobei dabei die zweite Methode ausgeführt wird

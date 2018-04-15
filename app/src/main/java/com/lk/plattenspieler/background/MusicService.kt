@@ -28,7 +28,7 @@ import android.support.annotation.RequiresApi
  */
 class MusicService: MediaBrowserService() {
 
-    private val TAG = "MusicService"
+    private val TAG = "com.lk.pl-MusicService"
     //private val brn = BroadcastReceiverNoisy()
     private val amCallback = AudioFocusCallback()
     private val ID: Int = 88

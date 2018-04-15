@@ -27,7 +27,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 
     // TODO Sekundenticker für den Fortschritt im Lied einrichten
 
-    private val TAG = "PlayingFragment"
+    private val TAG = "com.lk.pl-PlayingFragment"
     private var iv_shuffle: ImageView? = null
     private var lv_playlist: ListView? = null
     //private var shuffle_bo: Boolean = false

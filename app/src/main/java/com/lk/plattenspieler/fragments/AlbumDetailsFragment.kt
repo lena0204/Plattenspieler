@@ -22,7 +22,7 @@ import kotlinx.android.synthetic.main.fragment_album_details.*
 */
 class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
 
-    val TAG = "AlbumDetailsFragment"
+    val TAG = "com.lk.pl-AlbumDetailsFragment"
     private lateinit var listener: onClick
     private var data = ArrayList<TitleModel>()
     private lateinit var fabShuffle: ImageButton

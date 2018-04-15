@@ -20,7 +20,7 @@ class AlbumFragment(): Fragment(), AlbumAdapter.Click {
 
     // Listener und Interface, um onClick weiterzureichen
     lateinit var listener: onClick
-    val TAG = "AlbumFragment"
+    val TAG = "com.lk.pl-AlbumFragment"
     var args = Bundle()
 
     constructor(f: AlbumFragment.onClick): this(){
