@@ -13,21 +13,13 @@ import kotlinx.android.synthetic.main.row_album.view.*
 /**
  * Created by Lena on 08.06.17.
  */
-class AlbumAdapter(data: ArrayList<AlbumModel>, listener: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
+class AlbumAdapter(private var dataset: ArrayList<AlbumModel>, val cl: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
 
     val TAG = "AlbumAdapter"
 
     // Interface, um mit dem Fragment zu kommunzieren
     interface Click{
         fun onClick(albumid: String)
-    }
-
-    var dataset: ArrayList<AlbumModel>
-    var cl: Click
-
-    init{
-        dataset = data
-        cl = listener
     }
 
     // ViewHolder Methoden
@@ -44,9 +36,7 @@ class AlbumAdapter(data: ArrayList<AlbumModel>, listener: Click) : RecyclerView.
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album, parent, false)
         return ViewHolder(v)
     }
-    override fun getItemCount(): Int {
-        return dataset.size
-    }
+    override fun getItemCount(): Int = dataset.size
 
     // ViewHolder Klasse
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
@@ -65,13 +55,10 @@ class AlbumAdapter(data: ArrayList<AlbumModel>, listener: Click) : RecyclerView.
                 cl.onClick(tvId.text.toString())
             }
         }
-        fun getTvID(): TextView { return tvId }
-        fun getTvAlbum(): TextView { return tvAlbum }
-        fun getTvArtist(): TextView { return tvArtist }
-        fun getIvCover(): ImageView { return ivCover }
-        fun callListener(){
-
-        }
+        fun getTvID(): TextView = tvId
+        fun getTvAlbum(): TextView = tvAlbum
+        fun getTvArtist(): TextView = tvArtist
+        fun getIvCover(): ImageView = ivCover
 
     }
 

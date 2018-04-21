@@ -11,7 +11,7 @@ import android.util.Log
 class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
 
     private val DATABASE_NAME = "songs.db"
-    private val DATABASE_VERSION = 1
+    private val DATABASE_VERSION = 2
 
     companion object Spalten {
         val TABLE_SONGS = "songs"
@@ -22,6 +22,7 @@ class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
         val COLUMN_COVER_URI = "cover_uri"
         val COLUMN_NUMTRACKS = "num_tracks"
         val COLUMN_DURATION = "duration"
+        val COLUMN_FILE = "file_path"
     }
 
     // Datenbank und Tabelle erstellen
@@ -32,7 +33,8 @@ class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
             COLUMN_ARTIST + " text not null, " +
             COLUMN_COVER_URI + " text not null, " +
             COLUMN_NUMTRACKS + " text not null, " +
-            COLUMN_DURATION + " text not null " +
+            COLUMN_DURATION + " text not null, " +
+            COLUMN_FILE + " text not null " +
             ");"
 
     override fun onCreate(sqLiteDatabase: SQLiteDatabase) {
@@ -42,7 +44,7 @@ class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, iOld: Int, iNew: Int) {
         Log.w(SongDB::class.java.name, "Upgrading database from version " + iOld
                 + " to " + iNew + " which will destroy all old data.")
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS" + TABLE_SONGS)
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS $TABLE_SONGS")
         onCreate(sqLiteDatabase)
     }
 

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Plattenspieler</string>
     <string name="action_playing">Wiedergabe</string>
+    <string name="action_lyrics">Lyrics</string>
     <string name="cd_cover">Album Cover</string>
     <string name="songs">Lieder</string>
     <string name="toast_no_permission">Keine Berechtigung, den Speicher zu lesen, deshalb kann keine
@@ -18,4 +19,11 @@
     <!-- Wiedergabe -->
     <string name="no_title">Keine Wiedergabe</string>
     <string name="queue_title">Aktuelle Wiedergabe</string>
+
+    <string name="iv_cd_lyrics">Liedtext vorhanden</string>
+    <string name="iv_cd_shuffle">Zufallswiedergabe</string>
+    <string name="iv_cd_fab_shuffle">Zufallswiedergabe starten</string>
+    <string name="iv_cd_play">Abspielen oder Pausieren</string>
+    <string name="iv_cd_next">Nächstes Lied abspielen</string>
+    <string name="iv_cd_cover">Albumcover</string>
 </resources>

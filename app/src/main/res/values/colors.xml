@@ -12,5 +12,6 @@
     <color name="light_grey">#fdfdfd</color>
     <color name="lv_divider">#67fdfdfd</color>
     <color name="darker">#9000</color>
+    <color name="moredark">#b000</color>
     <color name="transparent">#0000</color>
 </resources>

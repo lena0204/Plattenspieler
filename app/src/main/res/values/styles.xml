@@ -12,6 +12,7 @@
         <item name="android:colorPrimary">@color/colorPrimary</item>
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/black</item>
     </style>
 
     <style name="AppThemeT" parent="android:Theme.Material.Light.DarkActionBar">
@@ -25,6 +26,7 @@
         <item name="android:colorPrimary">@color/colorPrimary_t</item>
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark_t</item>
         <item name="android:colorAccent">@color/colorAccent_t</item>
+        <item name="android:colorBackground">@color/black</item>
     </style>
 
 </resources>

@@ -20,18 +20,18 @@ import kotlinx.android.synthetic.main.fragment_album_details.*
 /**
 * Erstellt von Lena am 08.06.17.
 */
-class AlbumDetailsFragment(): Fragment(), TitleAdapter.onClickTitle {
+class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
 
-    val TAG = "com.lk.pl-AlbumDetailsFragment"
-    private lateinit var listener: onClick
+    private val TAG = "com.lk.pl-AlbumDetailsFragment"
+    private lateinit var listener: OnClick
     private var data = ArrayList<TitleModel>()
     private lateinit var fabShuffle: ImageButton
 
-    constructor(act: AlbumDetailsFragment.onClick): this() {
+    constructor(act: AlbumDetailsFragment.OnClick): this() {
         listener = act
     }
     // Interface und Listener zum Durchreichen bis zu Activity
-    interface onClick{
+    interface OnClick{
         fun onClickTitle(titleid: String)
         fun onShuffleClick(ptitleid: String)
     }

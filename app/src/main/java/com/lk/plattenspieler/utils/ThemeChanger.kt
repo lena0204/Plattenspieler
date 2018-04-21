@@ -11,10 +11,10 @@ import com.lk.plattenspieler.R
 class ThemeChanger{
 
     companion object {
-        val THEME_LIGHT = 0
-        val THEME_DARK = 1
-        val THEME_LIGHT_T = 2
-        val THEME_DARK_T = 3
+        const val THEME_LIGHT = 0
+        const val THEME_DARK = 1
+        const val THEME_LIGHT_T = 2
+        const val THEME_DARK_T = 3
     }
     private val TAG = "com.lk.pl-ThemeChanger"
 

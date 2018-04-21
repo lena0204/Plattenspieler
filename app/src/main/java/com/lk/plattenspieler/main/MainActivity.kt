@@ -34,18 +34,20 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
 
-class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onClick {
+class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnClick {
 
     companion object {
-        val PREF_PLAYING = "playing"
-        val PREF_DESIGN = "design"
-        val PREF_SHUFFLE = "shuffle"
+        const val PREF_PLAYING = "playing"
+        const val PREF_DESIGN = "design"
+        const val PREF_SHUFFLE = "shuffle"
     }
 
-    val TAG = "com.lk.pl-MainActivity"
+	// TODO Log in eine Datei schreiben für bessere Fehlersuche
+
+    private val TAG = "com.lk.pl-MainActivity"
     private val PERMISSION_REQUEST = 8009
     private val connectionCallback = BrowserConnectionCallback(this)
-    val controllerCallback = MusicControllerCallback(this)
+    val controllerCallback = MusicControllerCallback()
     val subscriptionCallback = MusicSubscriptionCallback()
     private var medialist = ArrayList<MediaBrowser.MediaItem>()
     private var playingQueue = mutableListOf<MediaSession.QueueItem>()
@@ -54,9 +56,9 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     private var shuffleOn = false
 
     lateinit var mbrowser: MediaBrowser
-    private lateinit var tv_title: TextView
-    private lateinit var tv_interpret: TextView
-    private lateinit var ib_state: ImageButton
+    private lateinit var tvTitle: TextView
+    private lateinit var tvInterpret: TextView
+    private lateinit var ibState: ImageButton
     private lateinit var updateInterface: CallbackPlaying
     private lateinit var metadata: MediaMetadata
     private lateinit var sharedPreferences: SharedPreferences
@@ -89,9 +91,9 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             }
 
         }
-        tv_title = this.findViewById(R.id.tv_main_title) as TextView
-        tv_interpret = this.findViewById(R.id.tv_main_interpret) as TextView
-        ib_state = this.findViewById(R.id.ib_main_play) as ImageButton
+        tvTitle = this.findViewById(R.id.tv_main_title) as TextView
+        tvInterpret = this.findViewById(R.id.tv_main_interpret) as TextView
+        ibState = this.findViewById(R.id.ib_main_play) as ImageButton
         // Audiotyp für die Lautstärkekontrolle auf Musik setzen
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         // Permission abfragen, braucht die Berechtigung den Speicher zu lesen
@@ -112,7 +114,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     override fun onDestroy() {
         super.onDestroy()
         // Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
-        val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
+        contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         savePlayingQueue()
         // Callbacks deaktivieren
         if(mediaController != null){
@@ -126,6 +128,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         this.menu = menu
         val design = sharedPreferences.getInt(PREF_DESIGN, 0)
         var optionDesign = ""
+		// Designoptionene dynamisch je nach Design anpassen
         when(design){
             ThemeChanger.THEME_LIGHT, ThemeChanger.THEME_DARK ->
                 optionDesign = resources.getString(R.string.menu_teal)
@@ -161,7 +164,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
 
     // Listener von AlbumFragment und AlbumDetailsFragment
     override fun onClickAlbum(albumid: String) {
-        val mediaid = "ALBUM-" + albumid
+        val mediaid = "ALBUM-$albumid"
         /*
         * Beim zweiten Anklicken eines Albums im Fragment kommt er bis hier her, aber subscribe kommt
         * nicht in den Callback vom Service (onLoadChildren);
@@ -172,7 +175,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     }
     override fun onClickTitle(titleid: String) {
         val mc = mediaController
-        val args = Bundle()
+        var args = Bundle()
         args.putInt("I", 1)
         mc.transportControls.playFromMediaId(titleid, args)
         // Stelle in der Medialiste suchen und alle ab da an die Queue anhängen
@@ -186,7 +189,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         if(indexInMedialist != -1){
             var i = indexInMedialist + 1
             while(i < medialist.size){
-                val args = Bundle()
+				args = Bundle()
                 args.putParcelable("S", medialist[i].description)
                 mc.sendCommand("add", args, null)
                 i++
@@ -206,22 +209,22 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             listSongs.add(item)
         }
         listSongs.forEach { item -> log += "${item.description.title}; " }
-        Log.d(TAG, "1:" + log)
+        Log.d(TAG, "1:$log")
         val random = Random()
         // ERSTEN Titel zufällig auswählen und ABSPIELEN, ABER NICHT anhängen, weil sich das sonst doppelt
         var i = random.nextInt(listSongs.size)
-        Log.d(TAG, "Erster Random:" + i)
+        Log.d(TAG, "Erster Random:$i")
         if(!listSongs[i].description.mediaId.isNullOrEmpty()){
             titleid = listSongs[i].description.mediaId.toString()
         }
-        val args = Bundle()
+        var args = Bundle()
         args.putInt("I", 1)
         mc.transportControls.playFromMediaId(titleid, args)
         listSongs.removeAt(i)
         // zufällige Liste erstellen und an die QUEUE hängen, ersten Titel aus der Queue abspielen
         while(!listSongs.isEmpty()){
             i = random.nextInt(listSongs.size)
-            val args = Bundle()
+			args = Bundle()
             args.putParcelable("S", listSongs[i].description)
             mc.sendCommand("add", args, null)
             listSongs.removeAt(i)
@@ -240,27 +243,27 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         val mc = mediaController
         // update Bar mit aktuellen Infos
         if(mc.playbackState.state == PlaybackState.STATE_PLAYING){
-            ib_state.background = resources.getDrawable(R.mipmap.ic_pause, theme)
+            ibState.background = resources.getDrawable(R.mipmap.ic_pause, theme)
         } else {
-            ib_state.background = resources.getDrawable(R.mipmap.ic_play, theme)
+            ibState.background = resources.getDrawable(R.mipmap.ic_play, theme)
         }
         if(design == ThemeChanger.THEME_LIGHT || design == ThemeChanger.THEME_LIGHT_T){
-            ib_state.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+            ibState.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
+            ibState.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
             ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
             ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
-        tv_title.text = mc.metadata.description.title
-        tv_interpret.text = mc.metadata.description.subtitle
+        tvTitle.text = mc.metadata.description.title
+        tvInterpret.text = mc.metadata.description.subtitle
         // register Callback
         mc.registerCallback(controllerCallback)
         if(mc.playbackState.extras?.getBoolean("shuffle") != null){
             shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
         }
-        Log.d(TAG, "Ende setupUI, mit shuffleOn: " + shuffleOn)
+        Log.d(TAG, "Ende setupUI, mit shuffleOn: $shuffleOn")
     }
     fun setData(pdata: MediaMetadata, queue: MutableList<MediaSession.QueueItem>){
-        // TODO ordentlich Aufrüumen nachdem die Wiedergabeliste gelöscht wurde
+        // TODO ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
         var i = 0
         if(queue.size > 0) {
@@ -272,8 +275,8 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         }
         updateInterface.updateMetadata(pdata, items)
         metadata = pdata
-        tv_title.text = pdata.description.title
-        tv_interpret.text = pdata.description.subtitle
+        tvTitle.text = pdata.description.title
+        tvInterpret.text = pdata.description.subtitle
     }
     fun onClickPlay() {
         val mc = mediaController
@@ -314,7 +317,8 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 meta.getString(MediaMetadata.METADATA_KEY_ALBUM) + "__" +
                 meta.getLong(MediaMetadata.METADATA_KEY_DURATION) + "__" +
                 meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI) + "__" +
-                meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS)
+                meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS) + "__" +
+                meta.getString(MediaMetadata.METADATA_KEY_WRITER)
         val queue = mediaController.queue
         var items = ""
         var i = 0
@@ -325,7 +329,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             }
             items = items.substring(0, items.length - 2)
         }
-        Log.d(TAG, "PrepareBundle, shuffle ist " + shuffleOn)
+        Log.d(TAG, "PrepareBundle, shuffle ist $shuffleOn")
         args.putString("Q", items)
         args.putString("T", data)
         args.putInt("S", mediaController.playbackState.state)
@@ -345,35 +349,35 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     }
     // Berechtigung abfragen (Marshmallow+ )
     private fun checkReadPermission(): Boolean{
-        if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+        return if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             this.requestPermissions(Array(1, { _ -> Manifest.permission.READ_EXTERNAL_STORAGE}), PERMISSION_REQUEST)
-            return false
+			false
         } else {
-            return true
+			true
         }
     }
     private fun changeDesign(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
-        Log.d(TAG, "Design: " + design)
+        Log.d(TAG, "Design: $design")
         when(design){
             ThemeChanger.THEME_LIGHT -> design = ThemeChanger.THEME_LIGHT_T
             ThemeChanger.THEME_DARK -> design = ThemeChanger.THEME_DARK_T
             ThemeChanger.THEME_LIGHT_T -> design = ThemeChanger.THEME_LIGHT
             ThemeChanger.THEME_DARK_T -> design = ThemeChanger.THEME_DARK
         }
-        sharedPreferences.edit().putInt(PREF_DESIGN, design).commit()
+        sharedPreferences.edit().putInt(PREF_DESIGN, design).apply()
         ThemeChanger().changeToTheme(this)
     }
     private fun changeLightDark(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
-        Log.d(TAG, "Design: " + design)
+        Log.d(TAG, "Design: $design")
         when(design){
             ThemeChanger.THEME_LIGHT -> design = ThemeChanger.THEME_DARK
             ThemeChanger.THEME_DARK -> design = ThemeChanger.THEME_LIGHT
             ThemeChanger.THEME_LIGHT_T -> design = ThemeChanger.THEME_DARK_T
             ThemeChanger.THEME_DARK_T -> design = ThemeChanger.THEME_LIGHT_T
         }
-        sharedPreferences.edit().putInt(PREF_DESIGN, design).commit()
+        sharedPreferences.edit().putInt(PREF_DESIGN, design).apply()
         ThemeChanger().changeToTheme(this)
     }
     private fun stopAndRemovePlaying(){
@@ -386,16 +390,17 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
         }
         // Datenbank löschen
         val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        Log.d(TAG, "Anzahl der gelöschten Zeilen: " + number)
+        Log.d(TAG, "Anzahl der gelöschten Zeilen: $number")
     }
 
     // Datenbank
+    // TODO Error: hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
     private fun savePlayingQueue(){
         var i = 0
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird
         //Log.d(TAG, playingQueue.size.toString() + " Lieder in Playlist")
-        val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
+        contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         if(playingQueue.size > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
             Log.d(TAG, "save Queue")
             // aktuelle Metadaten sichern
@@ -407,7 +412,8 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             values.put(SongDB.COLUMN_COVER_URI, metadata.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
             values.put(SongDB.COLUMN_DURATION, metadata.getLong(MediaMetadata.METADATA_KEY_DURATION).toString())
             values.put(SongDB.COLUMN_NUMTRACKS, metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString())
-            contentResolver.insert(SongContentProvider.CONTENT_URI, values)
+            values.put(SongDB.COLUMN_FILE, metadata.getString(MediaMetadata.METADATA_KEY_WRITER))
+			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Länge der Schlange: " + playingQueue.size)
             //  TODO Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
@@ -426,7 +432,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
                 contentResolver.insert(SongContentProvider.CONTENT_URI, values)
                 i++
             }
-            Log.d(TAG, "Speicherung von Shuffle mit " + shuffleOn)
+            Log.d(TAG, "Speicherung von Shuffle mit $shuffleOn")
             sharedPreferences.edit().putBoolean(PREF_PLAYING, true)
                     .putBoolean(PREF_SHUFFLE,shuffleOn).apply()
         }
@@ -473,7 +479,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             if(shuffleOn){
                 mc.sendCommand("shuffle", null, null)
             }
-            Log.d(TAG, "Auslesen von Shuffle mit " + shuffleOn)
+            Log.d(TAG, "Auslesen von Shuffle mit $shuffleOn")
         }
     }
     private fun getProjection(): Array<String>{
@@ -489,11 +495,7 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
     }
 
     // Callbacks vom MusicService und PlayingFragment
-    inner class BrowserConnectionCallback(act: Activity): MediaBrowser.ConnectionCallback(){
-
-        val activity: Activity
-
-        init { activity = act }
+    inner class BrowserConnectionCallback(private val activity: Activity): MediaBrowser.ConnectionCallback(){
 
         override fun onConnected() {
             val token = mbrowser.sessionToken
@@ -523,28 +525,21 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             medialist = ArrayList()
             if(parentId == mbrowser.root){
                 // Basisabfrage auf die Alben
-                var c = 0
                 for(i in children){
-                    medialist.add(children[c])
-                    c++
+                    medialist.add(i)
                 }
                 showAlbums()
             } else if(parentId.contains("ALBUM-")){
                 // ein Album wurde abgefragt
-                var c = 0
                 for(i in children){
-                    medialist.add(children[c])
-                    c++
+                    medialist.add(i)
                 }
                 showTitles()
             }
-            mbrowser.unsubscribe(parentId);
+            mbrowser.unsubscribe(parentId)
         }
     }
-    inner class MusicControllerCallback(act: Activity): MediaController.Callback(){
-
-        val a: Activity
-        init{ a = act }
+    inner class MusicControllerCallback: MediaController.Callback(){
 
         override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>) {
             super.onQueueChanged(queue)
@@ -563,17 +558,19 @@ class MainActivity : Activity(), AlbumFragment.onClick, AlbumDetailsFragment.onC
             Log.d(TAG, "playbackstate changed")
             // update Bar
             if(state.state == PlaybackState.STATE_PLAYING){
-                ib_state.background = resources.getDrawable(R.mipmap.ic_pause)
+                ibState.background = resources.getDrawable(R.mipmap.ic_pause, theme)
             } else {
-                ib_state.background = resources.getDrawable(R.mipmap.ic_play)
+                ibState.background = resources.getDrawable(R.mipmap.ic_play, theme)
             }
             if(design == 0){
-                ib_state.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-                ib_state.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+                ibState.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
+                ibState.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
                 ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
                 ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
             }
-            shuffleOn = state.extras.getBoolean("shuffle")
+			if(state.extras != null){
+				shuffleOn = state.extras.getBoolean("shuffle")
+			}
             updateInterface.updateShuffleMode(shuffleOn)
         }
     }

@@ -17,6 +17,7 @@ import android.widget.ListView
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
 import com.lk.plattenspieler.utils.ThemeChanger
+import com.mpatric.mp3agic.Mp3File
 import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
 
@@ -25,31 +26,55 @@ import kotlinx.android.synthetic.main.fragment_playing.view.*
  */
 class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 
-    // TODO Sekundenticker für den Fortschritt im Lied einrichten
+    // TODO Sekundenticker für den Fortschritt im Lied einrichten (Seekbar)
+    // TODO Previous button um zum Anfang des Liedes zu springen
+    // TODO Wischgesten um dieses Fragment aufzurufen und zu verstecken
+    // TODO Lyrics einbinden -> werden welche mitgeschickt? oder eigene Datenbank aufbauen? (mit export)
 
-    private val TAG = "com.lk.pl-PlayingFragment"
-    private var iv_shuffle: ImageView? = null
-    private var lv_playlist: ListView? = null
+    private val TAG = "com.lk.pl-PlayingFrag"
+    private var ivShuffle: ImageView? = null
+	private var ivLyrics: ImageView? = null
+    private var lvPlaylist: ListView? = null
     //private var shuffle_bo: Boolean = false
     private lateinit var args: Bundle
     private var created = false         // Abfangen, dass das Fragment noch nicht angezeigt wird
+	private var lyrics: String? = null
+	private var coverPath: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         val v = inflater.inflate(R.layout.fragment_playing, container, false)
-        iv_shuffle = v.iv_playing_shuffle
-        lv_playlist = v.lv_playing_list
+        ivShuffle = v.iv_playing_shuffle
+        lvPlaylist = v.lv_playing_list
+		ivLyrics = v.iv_playing_lyrics
         //updateShuffleMode()
+		ivLyrics?.setOnClickListener {
+			if(lyrics != null) {
+				val args = Bundle()
+				args.putString("L", lyrics)
+				args.putString("C", coverPath)
+				val lyricsf = LyricsFragment()
+				lyricsf.arguments = args
+				fragmentManager.beginTransaction()
+						.addToBackStack(null)
+						.replace(R.id.frame_layout, lyricsf, "TAG_LYRICS")
+						.commit()
+			}
+		}
         return v
     }
+    // TODO Lyrics mit Hilfe von Media.DATA auslesen und anzeigen, falls lyrics nicht null sind
+	// TODO Einstellung, ob die Lyrics angezeigt werden sollen
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Buttons reichen die Nachrichten über Broadcasts weiter, damit die Interfaces sich
         // nicht in die Quere kommen
         val accentcolor = ThemeChanger().getAccentColor(
                 PreferenceManager.getDefaultSharedPreferences(context).getInt(MainActivity.PREF_DESIGN, 0))
-        iv_shuffle?.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity.theme))
-        iv_shuffle?.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+        ivShuffle?.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity.theme))
+        ivShuffle?.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+		ivLyrics?.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity.theme))
+		ivLyrics?.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         activity.actionBar.setTitle(R.string.action_playing)
         args = this.arguments
         created = true
@@ -76,11 +101,29 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
                 dur /= 1000
                 val min = (dur / 60).toInt()
                 val sec = (dur % 60).toInt()
-                val s = String.format("%02d", sec)
-                tv_playing_duration.text = "$min:$s"
+                var s = String.format("%02d", sec)
+				s = "$min:$s"
+                tv_playing_duration.text = s
                 // Cover anzeigen
                 val cover = Drawable.createFromPath(dataArray[5])
+				coverPath = dataArray[5]
                 ll_playing_fragment.background = cover
+				// Lyrics abfragen
+				ivLyrics?.alpha = 0.4f
+				this.lyrics = null
+				val mp3file = Mp3File(dataArray[7])
+				Log.v(TAG, "Lyrics testen ...")
+				if(mp3file.hasId3v2Tag()){
+					var lyrics = mp3file.id3v2Tag.lyrics
+					if(lyrics != null){
+						ivLyrics?.alpha = 1.0f
+						this.lyrics = lyrics
+						if(lyrics.length > 60){
+							lyrics = lyrics.substring(0,60)
+						}
+						Log.d(TAG, "Datei hat Lyrics abgespeichert: $lyrics")
+					}
+				}
             }
         }
         Log.i(TAG, "Hat Key shuffle: " + args.containsKey("shuffle").toString())
@@ -90,7 +133,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
     private fun setPlaylist(items: String){
         val itemsArray = items.split(Regex("__"))
         val stringItems: Array<String> = itemsArray.toTypedArray()
-        lv_playlist?.adapter = ArrayAdapter(context, R.layout.row_playlist_tv, stringItems)
+        lvPlaylist?.adapter = ArrayAdapter(context, R.layout.row_playlist_tv, stringItems)
     }
 
     // Updates während des Anzeigen dieses Fragments
@@ -105,10 +148,23 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
                 dur /= 1000
                 val min = (dur / 60).toInt()
                 val sec = dur % 60
-                val s = String.format("%02d", sec)
-                tv_playing_duration.text = "$min:$s"
+                var s = String.format("%02d", sec)
+				s = "$min:$s"
+                tv_playing_duration.text = s
                 val cover = Drawable.createFromPath(data.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
                 ll_playing_fragment.background = cover
+				coverPath = data.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
+				// Lyrics abfragen
+				ivLyrics?.alpha = 0.4f
+				val mp3file = Mp3File(data.getString(MediaMetadata.METADATA_KEY_WRITER))
+				if(mp3file.hasId3v2Tag()){
+					val lyrics = mp3file.id3v2Tag.lyrics
+					if(lyrics != null){
+						Log.d(TAG, "Datei hat Lyrics abgespeichert")
+						ivLyrics?.alpha = 1.0f
+						this.lyrics = lyrics
+					}
+				}
             }
         }
     }
@@ -116,11 +172,11 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
     // Button passend anzeigen, wenn Zufallswiedergabe erfolgt
     override fun updateShuffleMode(mode: Boolean) {
         if(mode){
-            iv_shuffle?.alpha = 1.0f
+            ivShuffle?.alpha = 1.0f
             Log.d(TAG, "Shuffle true mit alpha")
             //shuffle_bo = true
         } else {
-            iv_shuffle?.alpha = 0.0f
+            ivShuffle?.alpha = 0.0f
             Log.d(TAG, "Shuffle false mit alpha")
             //shuffle_bo = false
         }

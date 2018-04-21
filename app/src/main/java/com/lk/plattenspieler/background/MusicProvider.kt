@@ -46,13 +46,13 @@ class MusicProvider(private val c: Context) {
             val albumtracks = c.getString(c.getColumnIndex(MediaStore.Audio.Albums.NUMBER_OF_SONGS))
             val albumartist = c.getString(c.getColumnIndex(MediaStore.Audio.Albums.ARTIST))
             val albumart = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
-            albumid = "ALBUM-" + albumid
+            albumid = "ALBUM-$albumid"
             val description = MediaDescription.Builder()
                     .setMediaId(albumid)
                     .setTitle(albumtitle)
                     .setSubtitle(albumartist)
                     .setDescription(albumart + "__" + albumtracks)
-            list.set(i, MediaBrowser.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_BROWSABLE))
+            list[i] = MediaBrowser.MediaItem(description.build(), MediaBrowser.MediaItem.FLAG_BROWSABLE)
             i++
         } while(c.moveToNext())
         return list
@@ -64,7 +64,7 @@ class MusicProvider(private val c: Context) {
             selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
         }
         var result = "ERROR"
-        val projection = Array<String>(2, init = { i -> "" } )
+        val projection = Array(2, init = { _ -> "" } )
         projection[0] = MediaStore.Audio.Media._ID
         projection[1] = MediaStore.Audio.Media.DATA
         val cursor = c.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection, null, null)
@@ -76,18 +76,20 @@ class MusicProvider(private val c: Context) {
         return result
     }
     fun getMediaDescription(mediaId: String?, songnumber: String?): MediaMetadata?{
-        var selection: String?
+        val selection: String?
+		//var datafile = ""
         if(mediaId != null){
             val result = MediaMetadata.Builder()
             // eine spezifische ID abfragen, sonst den ersten Titel
             selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
-            val projection = Array<String>(6, init = { i -> "" } )
+            val projection = Array(7, init = { _ -> "" } )
             projection[0] = MediaStore.Audio.Media._ID
             projection[1] = MediaStore.Audio.Media.TITLE
             projection[2] = MediaStore.Audio.Media.ALBUM
             projection[3] = MediaStore.Audio.Media.ARTIST
             projection[4] = MediaStore.Audio.Media.DURATION
             projection[5] = MediaStore.Audio.Media.ALBUM_ID
+            projection[6] = MediaStore.Audio.Media.DATA
             val cursor = c.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection, null, null)
             if(cursor != null){
                 cursor.moveToFirst()
@@ -101,6 +103,8 @@ class MusicProvider(private val c: Context) {
                 // Duration verlangt einen Long
                 result.putLong(MediaMetadata.METADATA_KEY_DURATION,
                         cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
+                result.putString(MediaMetadata.METADATA_KEY_WRITER,
+                        cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)))
                 // Liederanzahl
                 if(!songnumber.isNullOrEmpty()){
                     val nr = songnumber!!.toLong()
@@ -108,11 +112,11 @@ class MusicProvider(private val c: Context) {
                 }
                 // Albumcover abfragen, um es in die Wiedergabe einzubinden
                 val albumid = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
-                val projection_album = Array<String>(2, init = { _ -> "" } )
-                projection_album[0] = MediaStore.Audio.Albums._ID
-                projection_album[1] = MediaStore.Audio.Albums.ALBUM_ART
+                val projectionAlbum = Array(2, init = { _ -> "" } )
+                projectionAlbum[0] = MediaStore.Audio.Albums._ID
+                projectionAlbum[1] = MediaStore.Audio.Albums.ALBUM_ART
                 val select = MediaStore.Audio.Albums._ID + "='" + albumid + "'"
-                val calbums = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projection_album, select, null, null)
+                val calbums = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projectionAlbum, select, null, null)
                 if(calbums != null){
                     calbums.moveToFirst()
                     result.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, calbums.getString(calbums.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)))
@@ -120,8 +124,31 @@ class MusicProvider(private val c: Context) {
                     result.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
                 }
                 calbums.close()
+				//datafile = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
             }
             cursor.close()
+			// check if tags are readable and lyrics are there
+			// TODO Media.DATA in die MediaDescription (Metadata.KEY_WRITER) übertragen und dort speichern (andere Übertragungen anpassen)
+			/*var ausgabe = ""
+			if(datafile != "") {
+				val mp3file = Mp3File(datafile)
+				if (mp3file.hasId3v1Tag()) {
+					ausgabe += "MP3File v1: hat ID3v1 Tag; "
+					val title = mp3file.id3v1Tag.title
+					ausgabe +="MP3File v1: Titel ist $title; Mp3File v1: Comment ist ${mp3file.id3v1Tag.comment}.\n"
+				}
+				if (mp3file.hasId3v2Tag()) {
+					ausgabe += "MP3File: hat ID3v2 Tag; "
+					var title = mp3file.id3v2Tag.title
+					ausgabe += "MP3File v2: Titel ist $title"
+					title = mp3file.id3v2Tag.lyrics
+					if (title != null && title.length > 35) {
+						title = title.substring(0, 33)
+					}
+					ausgabe += "MP3File v2: Lyrics: $title"
+				}
+				Log.d(TAG, ausgabe)
+			}*/
             return result.build()
         }
         return null

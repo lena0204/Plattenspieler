@@ -18,15 +18,15 @@ import kotlinx.android.synthetic.main.fragment_album.*
  */
 class AlbumFragment(): Fragment(), AlbumAdapter.Click {
 
+    private val TAG = "com.lk.pl-AlbumFragment"
     // Listener und Interface, um onClick weiterzureichen
-    lateinit var listener: onClick
-    val TAG = "com.lk.pl-AlbumFragment"
-    var args = Bundle()
+    private lateinit var listener: OnClick
+    private var args = Bundle()
 
-    constructor(f: AlbumFragment.onClick): this(){
+    constructor(f: AlbumFragment.OnClick): this(){
         listener = f
     }
-    interface onClick{
+    interface OnClick{
         fun onClickAlbum(albumid: String)
     }
 

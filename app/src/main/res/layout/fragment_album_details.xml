@@ -13,6 +13,7 @@
 
     <ImageButton
         android:id="@+id/fab_shuffle"
+        android:contentDescription="@string/iv_cd_fab_shuffle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"

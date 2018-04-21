@@ -12,21 +12,12 @@ import kotlinx.android.synthetic.main.row_album_details.view.*
 /**
  * Created by Lena on 08.06.17.
  */
-class TitleAdapter(data: ArrayList<TitleModel>, listener: TitleAdapter.onClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
+class TitleAdapter(private var dataset: ArrayList<TitleModel>, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
 
     // Interface, um mit dem Fragment zu kommunzieren
-    interface onClickTitle{
+    interface OnClickTitle{
         fun onClick(albumid: String)
     }
-
-    var dataset: ArrayList<TitleModel>
-    var cl: onClickTitle
-
-    init{
-        dataset = data
-        cl = listener
-    }
-
 
     override fun onBindViewHolder(holder: ViewHolderTitle, position: Int) {
         val title = dataset[position]
@@ -40,9 +31,7 @@ class TitleAdapter(data: ArrayList<TitleModel>, listener: TitleAdapter.onClickTi
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album_details, parent, false)
         return ViewHolderTitle(v)
     }
-    override fun getItemCount(): Int {
-        return dataset.size
-    }
+    override fun getItemCount(): Int = dataset.size
 
     // ViewHolder Klasse
     inner class ViewHolderTitle(v: View) : RecyclerView.ViewHolder(v) {
@@ -59,10 +48,10 @@ class TitleAdapter(data: ArrayList<TitleModel>, listener: TitleAdapter.onClickTi
             ivCover = v.iv_title_cover
             v.setOnClickListener { cl.onClick(tvId.text.toString()) }
         }
-        fun getTvID(): TextView { return tvId }
-        fun getTvTitle(): TextView { return tvTitle }
-        fun getIvCover(): ImageView { return ivCover }
-        fun getTvInterpret(): TextView { return tvInterpret }
+        fun getTvID(): TextView = tvId
+        fun getTvTitle(): TextView = tvTitle
+        fun getIvCover(): ImageView = ivCover
+        fun getTvInterpret(): TextView = tvInterpret
 
     }
 

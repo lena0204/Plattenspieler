@@ -29,20 +29,38 @@
             android:textSize="16sp"
             android:textColor="@color/light_grey"
             android:gravity="end"/>
-        <TextView
-            android:id="@+id/tv_playing_songnumber"
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/light_grey"
-            android:gravity="end"/>
-        <ImageView
-            android:id="@+id/iv_playing_shuffle"
-            android:background="@mipmap/ic_shuffle"
-            android:backgroundTint="@color/colorAccent"
-            android:alpha="0.4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:contentDescription="@string/iv_cd_shuffle"
+                android:id="@+id/iv_playing_shuffle"
+                android:background="@mipmap/ic_shuffle"
+                android:backgroundTint="@color/colorAccent"
+                android:alpha="0.4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <ImageView
+                android:contentDescription="@string/iv_cd_lyrics"
+                android:id="@+id/iv_playing_lyrics"
+                android:background="@mipmap/ic_lyrics"
+                android:backgroundTint="@color/colorAccent"
+                android:alpha="0.4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/iv_playing_shuffle"/>
+            <TextView
+                android:id="@+id/tv_playing_songnumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="@color/light_grey"
+                android:layout_alignParentEnd="true" />
+
+        </RelativeLayout>
+
 
     </LinearLayout>
 

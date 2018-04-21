@@ -5,6 +5,7 @@
     android:layout_height="wrap_content">
 
     <ImageView
+        android:contentDescription="@string/iv_cd_cover"
         android:layout_width="67dp"
         android:layout_height="67dp"
         android:id="@+id/iv_title_cover"

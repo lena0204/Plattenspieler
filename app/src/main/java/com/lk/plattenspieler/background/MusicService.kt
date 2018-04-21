@@ -46,13 +46,13 @@ class MusicService: MediaBrowserService() {
             .setOnAudioFocusChangeListener(amCallback)
             .build()
 
-    lateinit private var playbackState: PlaybackState.Builder
-    lateinit private var metadataState: MediaMetadata.Builder
-    lateinit private var msession: MediaSession
-    lateinit private var c: android.content.Context
-    lateinit private var musicProvider: MusicProvider
-    lateinit private var am: AudioManager
-    lateinit private var nm: NotificationManager
+    private lateinit var playbackState: PlaybackState.Builder
+    private lateinit var metadataState: MediaMetadata.Builder
+    private lateinit var msession: MediaSession
+    private lateinit var c: android.content.Context
+    private lateinit var musicProvider: MusicProvider
+    private lateinit var am: AudioManager
+    private lateinit var nm: NotificationManager
 
     private var playingQueue = mutableListOf<MediaSession.QueueItem>()
     private var playingID: Long = 0
@@ -76,9 +76,9 @@ class MusicService: MediaBrowserService() {
         // Session aufsetzen (mit Provider, Token, Callback und Flags setzen)
         musicProvider = MusicProvider(c)
         msession = MediaSession(c, TAG)
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        /*if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             msession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS)
-        }
+        }*/
         msession.setCallback(MusicSessionCallback())
         sessionToken = msession.sessionToken
         // Playback und Metadata initialisieren
@@ -186,11 +186,10 @@ class MusicService: MediaBrowserService() {
             return
         }
         // request AudioFocus, nur spielen falls gestattet -> AUDIOFOCUS_GAIN -> dauerhaft
-        val result: Int
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            result = am.requestAudioFocus(audioFocusRequest)
+        val result = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            am.requestAudioFocus(audioFocusRequest)
         } else {
-            result = am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+            am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
         if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
             // Service starten und Session aktiv setzen
@@ -309,17 +308,18 @@ class MusicService: MediaBrowserService() {
 
 
     // Update der Abspieldaten und Benachrichtigung erstellen
+    // TODO Anzahl der noch zu spielenden Lieder wird angezeigt, aber noch nicht schön
     private fun showNotification(state: Int, metadata: MediaMetadata?): Notification.Builder{
         Log.i(TAG, shuffleOn.toString())
-        val nb: Notification.Builder
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val nb = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
-            nb = Notification.Builder(this, CHANNEL_ID)
+			Notification.Builder(this, CHANNEL_ID)
         } else {
-            nb = Notification.Builder(this)
+            Notification.Builder(this)
         }
         nb.setContentTitle(metadata?.getString(MediaMetadata.METADATA_KEY_TITLE))
         nb.setContentText(metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST))
+        nb.setSubText(metadata?.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString() + " Lieder noch")
         nb.setSmallIcon(R.drawable.notification_stat_playing)
         nb.setLargeIcon(BitmapFactory.decodeFile(metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
         // Media Style aktivieren
@@ -394,7 +394,7 @@ class MusicService: MediaBrowserService() {
             playbackState.setState(PlaybackState.STATE_STOPPED, 0, 1.0f)
             nm.cancel(ID)
         }
-        val extras = Bundle();
+        val extras = Bundle()
         extras.putBoolean("shuffle", shuffleOn)
         playbackState.setExtras(extras)
         msession.setPlaybackState(playbackState.build())

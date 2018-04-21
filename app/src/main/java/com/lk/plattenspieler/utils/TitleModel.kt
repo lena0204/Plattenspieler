@@ -6,20 +6,11 @@ import android.graphics.BitmapFactory
 /**
  * Created by Lena on 08.06.17.
  */
-class TitleModel(pid:String, ptitle: String, pinterpret: String, part: String) {
+data class TitleModel(
+        var id: String,
+		var title: String,
+		var interpret: String,
+		private var titleart: String) {
 
-    var id: String
-    var title: String
-    var interpret: String
-    var titleart: String
-    var cover: Bitmap
-
-    init {
-        id = pid
-        title = ptitle
-        interpret = pinterpret
-        titleart = part
-        cover = BitmapFactory.decodeFile(titleart)
-    }
-
+	var cover: Bitmap = BitmapFactory.decodeFile(titleart)
 }
