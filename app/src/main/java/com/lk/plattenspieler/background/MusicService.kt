@@ -117,13 +117,11 @@ class MusicService: MediaBrowserService() {
     }
     override fun onLoadChildren(parentId: String, result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         // eigene Hierachie aufbauen mit Browsable und Playable MediaItems
-        if(parentId == musicProvider.ROOT_ID){
-            sendRootChildren(result)
-        } else if(parentId.contains("ALBUM-")){
-            sendAlbumChildren(result, parentId)
-        } else {
-            android.util.Log.e(TAG, "No known parent ID")       // Fehler
-        }
+        when{
+            parentId == musicProvider.ROOT_ID -> sendRootChildren(result)
+            parentId.contains("ALBUM-") -> sendAlbumChildren(result, parentId)
+			else -> android.util.Log.e(TAG, "No known parent ID")       // Fehler
+		}
     }
     private fun sendAlbumChildren(result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>, albumid: String){
         // alle Titel eines Albums (SELECT und WHERE festlegen)
@@ -308,7 +306,6 @@ class MusicService: MediaBrowserService() {
 
 
     // Update der Abspieldaten und Benachrichtigung erstellen
-    // TODO Anzahl der noch zu spielenden Lieder wird angezeigt, aber noch nicht schön
     private fun showNotification(state: Int, metadata: MediaMetadata?): Notification.Builder{
         Log.i(TAG, shuffleOn.toString())
         val nb = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -363,10 +360,9 @@ class MusicService: MediaBrowserService() {
         // Daten aktualisieren und setzen
         currentMediaMetaData = musicProvider.getMediaDescription(currentMediaId, number)
         if(currentMediaMetaData == null){
-            Log.d(TAG, "Metadaten sind null")
+            Log.e(TAG, "Metadaten sind null")
         }
         msession.setMetadata(currentMediaMetaData)
-        //Log.d(TAG, "Aktuelle Metadaten setzen")
     }
     private fun updatePlaybackstate(state: Int){
         if(state == PlaybackState.STATE_PLAYING){
@@ -424,7 +420,9 @@ class MusicService: MediaBrowserService() {
         }
 
         override fun onMediaButtonEvent(mediaButtonIntent: Intent?): Boolean{
-            Log.i(TAG, "onMediaButtonEvent")
+            Log.i(TAG, "onMediaButtonEvent" + mediaButtonIntent?.action
+					+ ";" + mediaButtonIntent?.data + ";" + mediaButtonIntent?.`package`)
+			//mediaButtonIntent?.action
             return super.onMediaButtonEvent(mediaButtonIntent)
         }
 
@@ -439,7 +437,6 @@ class MusicService: MediaBrowserService() {
                     updateMetadata()
                 }
                 "shuffle" -> {
-                    Log.d(TAG,"Shuffle true")
                     shuffleOn = true
                 }
                 "remove" -> {

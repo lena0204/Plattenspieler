@@ -42,7 +42,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         const val PREF_SHUFFLE = "shuffle"
     }
 
-	// TODO Log in eine Datei schreiben für bessere Fehlersuche
+	// TODO -- Log in eine Datei schreiben für bessere Fehlersuche
 
     private val TAG = "com.lk.pl-MainActivity"
     private val PERMISSION_REQUEST = 8009
@@ -198,7 +198,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         shuffleOn = false
         this.updateInterface.updateShuffleMode(shuffleOn)
     }
-    // TODO shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
+    // TODO -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
     override fun onShuffleClick(ptitleid: String) {
         var log = ""
         var titleid = ptitleid
@@ -208,12 +208,9 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         for(item in medialist){
             listSongs.add(item)
         }
-        listSongs.forEach { item -> log += "${item.description.title}; " }
-        Log.d(TAG, "1:$log")
         val random = Random()
         // ERSTEN Titel zufällig auswählen und ABSPIELEN, ABER NICHT anhängen, weil sich das sonst doppelt
         var i = random.nextInt(listSongs.size)
-        Log.d(TAG, "Erster Random:$i")
         if(!listSongs[i].description.mediaId.isNullOrEmpty()){
             titleid = listSongs[i].description.mediaId.toString()
         }
@@ -260,10 +257,9 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         if(mc.playbackState.extras?.getBoolean("shuffle") != null){
             shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
         }
-        Log.d(TAG, "Ende setupUI, mit shuffleOn: $shuffleOn")
     }
     fun setData(pdata: MediaMetadata, queue: MutableList<MediaSession.QueueItem>){
-        // TODO ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
+        // TODO -- ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
         var i = 0
         if(queue.size > 0) {
@@ -358,7 +354,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
     private fun changeDesign(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
-        Log.d(TAG, "Design: $design")
+        Log.d(TAG, "Farbe: $design")
         when(design){
             ThemeChanger.THEME_LIGHT -> design = ThemeChanger.THEME_LIGHT_T
             ThemeChanger.THEME_DARK -> design = ThemeChanger.THEME_DARK_T
@@ -370,7 +366,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
     private fun changeLightDark(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
-        Log.d(TAG, "Design: $design")
+        Log.d(TAG, "Hell/Dunkel: $design")
         when(design){
             ThemeChanger.THEME_LIGHT -> design = ThemeChanger.THEME_DARK
             ThemeChanger.THEME_DARK -> design = ThemeChanger.THEME_LIGHT
@@ -389,8 +385,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
             }
         }
         // Datenbank löschen
-        val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        Log.d(TAG, "Anzahl der gelöschten Zeilen: $number")
+        contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
     }
 
     // Datenbank
@@ -399,10 +394,8 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         var i = 0
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird
-        //Log.d(TAG, playingQueue.size.toString() + " Lieder in Playlist")
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         if(playingQueue.size > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
-            Log.d(TAG, "save Queue")
             // aktuelle Metadaten sichern
             var values = ContentValues()
             values.put(SongDB.COLUMN_ID, metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))
@@ -416,7 +409,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
 			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Länge der Schlange: " + playingQueue.size)
-            //  TODO Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
+            //  TODO -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
             //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
             while(i < playingQueue.size){
                 values = ContentValues()
@@ -429,10 +422,10 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
                 values.put(SongDB.COLUMN_COVER_URI, mediaArray[1])
                 values.put(SongDB.COLUMN_DURATION, "")
                 values.put(SongDB.COLUMN_NUMTRACKS, "")
+                values.put(SongDB.COLUMN_FILE, "")
                 contentResolver.insert(SongContentProvider.CONTENT_URI, values)
                 i++
             }
-            Log.d(TAG, "Speicherung von Shuffle mit $shuffleOn")
             sharedPreferences.edit().putBoolean(PREF_PLAYING, true)
                     .putBoolean(PREF_SHUFFLE,shuffleOn).apply()
         }
@@ -479,7 +472,6 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
             if(shuffleOn){
                 mc.sendCommand("shuffle", null, null)
             }
-            Log.d(TAG, "Auslesen von Shuffle mit $shuffleOn")
         }
     }
     private fun getProjection(): Array<String>{
@@ -549,13 +541,17 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         override fun onMetadataChanged(metadata: MediaMetadata) {
             super.onMetadataChanged(metadata)
             // update Bar mit aktuellen Infos
-            // TODO Das Interface erhält teilweise kein Update, Ausnahmefälle
-            Log.d(TAG,"setData, Aufruf für die Textleiste")
-            setData(metadata, mediaController.queue)
+            // TODO -- Das Interface erhält teilweise kein Update, Ausnahmefälle
+            //Log.d(TAG,"setData, Aufruf für die Textleiste")
+			val schlange = mediaController.queue
+			if(schlange == null){
+
+			} else {
+				setData(metadata, mediaController.queue)
+			}
         }
         override fun onPlaybackStateChanged(state: PlaybackState) {
             super.onPlaybackStateChanged(state)
-            Log.d(TAG, "playbackstate changed")
             // update Bar
             if(state.state == PlaybackState.STATE_PLAYING){
                 ibState.background = resources.getDrawable(R.mipmap.ic_pause, theme)

@@ -124,31 +124,8 @@ class MusicProvider(private val c: Context) {
                     result.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
                 }
                 calbums.close()
-				//datafile = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
             }
             cursor.close()
-			// check if tags are readable and lyrics are there
-			// TODO Media.DATA in die MediaDescription (Metadata.KEY_WRITER) übertragen und dort speichern (andere Übertragungen anpassen)
-			/*var ausgabe = ""
-			if(datafile != "") {
-				val mp3file = Mp3File(datafile)
-				if (mp3file.hasId3v1Tag()) {
-					ausgabe += "MP3File v1: hat ID3v1 Tag; "
-					val title = mp3file.id3v1Tag.title
-					ausgabe +="MP3File v1: Titel ist $title; Mp3File v1: Comment ist ${mp3file.id3v1Tag.comment}.\n"
-				}
-				if (mp3file.hasId3v2Tag()) {
-					ausgabe += "MP3File: hat ID3v2 Tag; "
-					var title = mp3file.id3v2Tag.title
-					ausgabe += "MP3File v2: Titel ist $title"
-					title = mp3file.id3v2Tag.lyrics
-					if (title != null && title.length > 35) {
-						title = title.substring(0, 33)
-					}
-					ausgabe += "MP3File v2: Lyrics: $title"
-				}
-				Log.d(TAG, ausgabe)
-			}*/
             return result.build()
         }
         return null
