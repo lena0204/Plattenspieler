@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaDescription
 import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
+import android.media.session.MediaSession
 import android.provider.MediaStore
 import android.util.Log
 
@@ -18,6 +19,71 @@ class MusicProvider(private val c: Context) {
 
     val ROOT_ID = "__ ROOT__"
     val TAG = "com.lk.pl-MusicProvider"
+
+	// ersten Titel festlegen, wenn alle Titel zufällig abgespielt werden sollen
+	fun getFirstTitle(): String{
+		// Albumdatenbankspalten
+		val projection = Array(1, init = {_ -> ""})
+		var result = ""
+		projection[0] = MediaStore.Audio.Albums._ID
+		val cursorAlbum = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projection, null, null, null)
+		// Titeldatenbankspalten
+		projection[0] = MediaStore.Audio.Media.ALBUM_ID
+		if(cursorAlbum.moveToFirst()){
+			val albumid = cursorAlbum.getString(cursorAlbum.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID))
+			val selection = android.provider.MediaStore.Audio.Media.ALBUM_ID + "='" + albumid + "'"
+			// Titeldatenbank abfragen
+			val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,selection,null,null)
+			if(cursorTitle.moveToFirst()){
+				result = cursorTitle.getString(cursorTitle.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+			}
+			cursorTitle.close()
+		}
+		cursorAlbum.close()
+		return result
+	}
+
+    fun getAllTitle(playingTitleId: String): MutableList<MediaSession.QueueItem>{
+		val liste = mutableListOf<MediaSession.QueueItem>()
+		var i = 1L // Counter für die Queue
+		// Albumdatenbankspalten
+		val projection = Array(3, init = {_ -> ""})
+		projection[0] = MediaStore.Audio.Albums._ID
+		projection[1] = MediaStore.Audio.Albums.ALBUM_ART
+		projection[2] = MediaStore.Audio.Albums.ALBUM
+		val cursorAlbum = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projection, null, null, null)
+		// Titeldatenbankspalten
+		projection[0] = MediaStore.Audio.Media._ID
+		projection[1] = MediaStore.Audio.Media.TITLE
+		projection[2] = MediaStore.Audio.Media.ARTIST
+		var cover: String
+		var albumid: String
+		if(cursorAlbum.moveToFirst()){
+			while(cursorAlbum.moveToNext()) { 	// für alle Alben die Titel abfragen und hinzufügen
+				albumid = cursorAlbum.getString(cursorAlbum.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID))
+				cover = cursorAlbum.getString(cursorAlbum.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
+				val selection = android.provider.MediaStore.Audio.Media.ALBUM_ID + "='" + albumid + "'"
+				// Titeldatenbank abfragen
+				val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null,selection,null,null)
+				val list = MutableList(cursorTitle.count,
+						{ _ -> MediaBrowser.MediaItem(MediaDescription.Builder().setMediaId(i.toString()).build(), MediaBrowser.MediaItem.FLAG_PLAYABLE) } )
+				if(cursorTitle.moveToFirst()){
+					// alle Titel des Albums auslesen
+					val titelliste = getTitles(cursorTitle, list, cover)
+					for(item in titelliste){
+						// Überprüfen ob der bereits Spielende dabei ist, falls ja, nicht hinzufügen
+						if(item.mediaId != playingTitleId){
+							liste.add(MediaSession.QueueItem(item.description, i++))
+						}
+					}
+				}
+				cursorTitle.close()
+			}
+		}
+		cursorAlbum.close()
+		Log.d(TAG, "Anzahl QueueItems: ${i-1}")
+		return liste
+    }
 
     fun getTitles(c: Cursor, list: MutableList<MediaBrowser.MediaItem>, cover: String): MutableList<MediaBrowser.MediaItem>{
         var i = 0

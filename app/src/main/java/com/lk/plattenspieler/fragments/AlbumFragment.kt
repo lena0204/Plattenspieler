@@ -58,9 +58,7 @@ class AlbumFragment(): Fragment(), AlbumAdapter.Click {
                 val albumartist = item.description.subtitle.toString()
                 val albumarray = item.description.description.toString().split("__".toRegex())
                 var albumart: Bitmap? = null
-				Log.d(TAG, "Albumarray:" + albumarray[0])
 				albumart = BitmapFactory.decodeFile(albumarray[0])
-
 				if (albumart == null){
 					albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
 				}

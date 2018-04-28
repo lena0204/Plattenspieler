@@ -11,9 +11,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.ImageView
-import android.widget.ListView
+import android.widget.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
 import com.lk.plattenspieler.utils.ThemeChanger

@@ -43,7 +43,6 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
 
  	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
-    // IDEA_ Zufallswiedergabe aller Titel -> Queue async aufbauen
 
     private val TAG = "com.lk.pl-MainActivity"
     private val PERMISSION_REQUEST = 8009
@@ -145,15 +144,10 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId){
-            R.id.menu_change_design -> {
-                changeDesign()
-            }
-            R.id.menu_remove_playing -> {
-                stopAndRemovePlaying()
-            }
-            R.id.menu_dark_light -> {
-                changeLightDark()
-            }
+            R.id.menu_change_design -> changeDesign()
+            R.id.menu_remove_playing -> stopAndRemovePlaying()
+            R.id.menu_dark_light -> changeLightDark()
+			R.id.menu_shuffle_all -> shuffleAll()
             /*R.id.menu_delete_database -> {
                 // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
                 val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
@@ -201,7 +195,6 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
 	// PROBLEM_  // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
     override fun onShuffleClick(ptitleid: String) {
-        var log = ""
         var titleid = ptitleid
         val mc = mediaController
         // Alles Items in listSongs kopieren, damit keine Operationen auf medialist stattfinden
@@ -271,10 +264,11 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         var items = ""
         var i = 0
         if(queue != null && queue.size > 0) {
-            while (i < queue.size) {
+            while (i < queue.size && i < 30) {		// Länge der Liste auf 30 begrenzen
                 items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
                 i++
             }
+			Log.d(TAG, "Länge Queue setData() $i")
             items = items.substring(0, items.length - 2)
         }
 		if(pdata != null && pdata.description.mediaId != null) {
@@ -335,11 +329,12 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         var items = ""
         var i = 0
         if(queue != null && queue.size > 0) {
-            while (i < queue.size) {
+            while (i < queue.size && i < 30) {	// Länge der Queue auf 30 begrenzen
                 items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
                 i++
             }
             items = items.substring(0, items.length - 2)
+			Log.d(TAG, "Anzahl Queueitems prepareBundle() $i")
         }
         Log.d(TAG, "PrepareBundle, shuffle ist $shuffleOn")
         args.putString("Q", items)
@@ -368,6 +363,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
 			true
         }
     }
+	// Menüoptionen
     private fun changeDesign(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
         Log.d(TAG, "Farbe: $design")
@@ -403,6 +399,11 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         // Datenbank löschen
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
     }
+	private fun shuffleAll(){
+		mediaController.sendCommand("addAll", null, null)
+		shuffleOn = true
+		this.updateInterface.updateShuffleMode(shuffleOn)
+	}
 
     // Datenbank
     // PROBLEM_ hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)

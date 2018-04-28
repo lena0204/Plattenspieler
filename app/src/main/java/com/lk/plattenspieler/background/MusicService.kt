@@ -22,6 +22,7 @@ import android.app.NotificationChannel
 import android.media.*
 import android.os.Build
 import android.support.annotation.RequiresApi
+import java.util.*
 
 /**
  * Created by Lena on 08.06.17.
@@ -303,9 +304,22 @@ class MusicService: MediaBrowserService() {
     }
 
 	fun addAllSongsToPlayingQueue(){
-
+		Log.d(TAG, "addAllSongsToPlayingQueue")
+		val playingID = musicProvider.getFirstTitle()
+		handleOnPlayFromId(playingID)
+		// alle anderen Songs zufällig hinzufügen
+		Log.d(TAG, "Queue erstellen ohne $playingID")
+		val listSongs = musicProvider.getAllTitle(playingID)
+		val random = Random()
+		var i: Int
+		while(!listSongs.isEmpty()){
+			i = random.nextInt(listSongs.size)
+			playingQueue.add(listSongs[i])
+			listSongs.removeAt(i)
+		}
+		Log.d(TAG, "Queue fertig mit Länge ${playingQueue.size}")
+		msession.setQueue(playingQueue)
 	}
-
 
     // Update der Abspieldaten und Benachrichtigung erstellen
     private fun showNotification(state: Int, metadata: MediaMetadata?): Notification.Builder{
@@ -424,7 +438,6 @@ class MusicService: MediaBrowserService() {
         override fun onMediaButtonEvent(mediaButtonIntent: Intent?): Boolean{
             Log.i(TAG, "onMediaButtonEvent" + mediaButtonIntent?.action
 					+ ";" + mediaButtonIntent?.data + ";" + mediaButtonIntent?.`package`)
-			//mediaButtonIntent?.action
             return super.onMediaButtonEvent(mediaButtonIntent)
         }
 
@@ -438,12 +451,8 @@ class MusicService: MediaBrowserService() {
                     // Zum sicherstellen, dass die richtige Anzahl an Liedern angezeigt wird
                     updateMetadata()
                 }
-                "addall" -> {
-                    addAllSongsToPlayingQueue()
-                }
-                "shuffle" -> {
-                    shuffleOn = true
-                }
+                "addAll" -> addAllSongsToPlayingQueue()
+                "shuffle" -> shuffleOn = true
                 "remove" -> {
                     var i = 0
                     // Description aus der Liste entfernen und aktualisieren

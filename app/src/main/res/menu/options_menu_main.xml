@@ -15,6 +15,10 @@
         android:title="@string/menu_remove_playing"
         android:showAsAction="never"/>
 
+    <item
+        android:id="@+id/menu_shuffle_all"
+        android:title="@string/menu_shuffle_all"
+        android:showAsAction="never"/>
 
 
 </menu>
