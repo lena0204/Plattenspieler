@@ -30,7 +30,7 @@ class AlbumAdapter(private var dataset: ArrayList<AlbumModel>, val cl: Click) : 
         val interpret = album.artist + " | " + album.songnumber
         holder.getTvArtist().text = interpret
         // passendes Icon setzen
-        holder.getIvCover().setImageBitmap(album.cover)
+        holder.getIvCover().setImageBitmap(album.albumart)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album, parent, false)

@@ -1,6 +1,8 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Fragment
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -22,7 +24,7 @@ import kotlinx.android.synthetic.main.fragment_album_details.*
 */
 class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
 
-    private val TAG = "com.lk.pl-AlbumDetailsFragment"
+    private val TAG = "com.lk.pl-AlbumDetailsF"
     private lateinit var listener: OnClick
     private var data = ArrayList<TitleModel>()
     private lateinit var fabShuffle: ImageButton
@@ -68,8 +70,12 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
                 val titleinterpret = item.description.subtitle.toString()
                 val titlearray = item.description.description.toString().split("__".toRegex())
                 album = titlearray[0]
-                val titlecover = titlearray[1]
-                data.add(TitleModel(titleid, title, titleinterpret, titlecover))
+                var titlecover: Bitmap? = null
+				titlecover = BitmapFactory.decodeFile(titlearray[1])
+				if(titlecover == null){
+					titlecover = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
+				}
+                data.add(TitleModel(titleid, title, titleinterpret, titlecover as Bitmap))
             }
         }
         if(album.isNotEmpty()){

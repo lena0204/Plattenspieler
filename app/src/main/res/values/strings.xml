@@ -26,4 +26,9 @@
     <string name="iv_cd_play">Abspielen oder Pausieren</string>
     <string name="iv_cd_next">Nächstes Lied abspielen</string>
     <string name="iv_cd_cover">Albumcover</string>
+
+    <!-- Dialog -->
+    <string name="dialog_title">Lyrics hinzufügen</string>
+    <string name="dialog_yes">Hinzufügen</string>
+    <string name="dialog_no">Abbrechen</string>
 </resources>

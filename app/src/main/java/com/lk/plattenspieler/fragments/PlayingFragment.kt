@@ -32,9 +32,9 @@ import java.io.File
  */
 class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 
-    // TODO Sekundenticker für den Fortschritt im Lied einrichten (Seekbar)
-    // TODO Previous button um zum Anfang des Liedes zu springen
-    // TODO -- Wischgesten um dieses Fragment aufzurufen und zu verstecken
+    // IDEA_ Sekundenticker für den Fortschritt im Lied einrichten (Seekbar)
+    // IDEA_ Previous button um zum Anfang des Liedes zu springen
+    // IDEA_ -- Wischgesten um dieses Fragment aufzurufen und zu verstecken
 
     private val TAG = "com.lk.pl-PlayingFrag"
     private var ivShuffle: ImageView? = null
@@ -67,7 +67,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 		}
         return v
     }
-	// TODO Lyrics schreiben über Menü
+	// TODO Lyrics schreiben über Menü -- IN ARBEIT
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // Buttons reichen die Nachrichten über Broadcasts weiter, damit die Interfaces sich

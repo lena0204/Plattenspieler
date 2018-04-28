@@ -91,11 +91,6 @@ class MusicService: MediaBrowserService() {
         // Queuetitel setzen
         msession.setQueueTitle(getString(R.string.queue_title))
     }
-    /*override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // TODO Auf Benachrichtigung reagieren -> aktuelle Lösung benutzt SupportLibrary
-        MediaButtonReceiver.handleIntent(msession, intent)
-        return super.onStartCommand(intent, flags, startId)
-    }*/
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
         Log.d(TAG, "Playbackstate: " + msession.controller.playbackState.state)
@@ -266,8 +261,11 @@ class MusicService: MediaBrowserService() {
         playingQueue.clear()
         playingID = 0
         shuffleOn = false
+		currentMediaFile = null
+		currentMediaId = null
         msession.setQueue(playingQueue)
         updatePlaybackstate(PlaybackState.STATE_STOPPED)
+        updateMetadata()
         // AudioFocus freigeben
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             am.abandonAudioFocusRequest(audioFocusRequest)
@@ -303,6 +301,10 @@ class MusicService: MediaBrowserService() {
             handleOnStop()
         }
     }
+
+	fun addAllSongsToPlayingQueue(){
+
+	}
 
 
     // Update der Abspieldaten und Benachrichtigung erstellen
@@ -435,6 +437,9 @@ class MusicService: MediaBrowserService() {
                     msession.setQueue(playingQueue)
                     // Zum sicherstellen, dass die richtige Anzahl an Liedern angezeigt wird
                     updateMetadata()
+                }
+                "addall" -> {
+                    addAllSongsToPlayingQueue()
                 }
                 "shuffle" -> {
                     shuffleOn = true

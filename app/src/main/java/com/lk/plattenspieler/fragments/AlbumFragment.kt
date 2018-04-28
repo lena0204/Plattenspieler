@@ -1,6 +1,8 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Fragment
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
@@ -55,9 +57,15 @@ class AlbumFragment(): Fragment(), AlbumAdapter.Click {
                 val albumtitle = item.description.title.toString()
                 val albumartist = item.description.subtitle.toString()
                 val albumarray = item.description.description.toString().split("__".toRegex())
-                val albumart = albumarray[0]
+                var albumart: Bitmap? = null
+				Log.d(TAG, "Albumarray:" + albumarray[0])
+				albumart = BitmapFactory.decodeFile(albumarray[0])
+
+				if (albumart == null){
+					albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
+				}
                 val albumtracks = albumarray[1] + " " + getString(R.string.songs)
-                data.add(AlbumModel(albumid, albumtitle, albumart, albumartist, albumtracks))
+                data.add(AlbumModel(albumid, albumtitle, albumart as Bitmap, albumartist, albumtracks))
             }
         }
         recycler_album.layoutManager = LinearLayoutManager(activity)

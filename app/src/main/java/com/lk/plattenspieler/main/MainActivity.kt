@@ -42,7 +42,8 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         const val PREF_SHUFFLE = "shuffle"
     }
 
-	// TODO -- Log in eine Datei schreiben für bessere Fehlersuche
+ 	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
+    // IDEA_ Zufallswiedergabe aller Titel -> Queue async aufbauen
 
     private val TAG = "com.lk.pl-MainActivity"
     private val PERMISSION_REQUEST = 8009
@@ -198,7 +199,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         shuffleOn = false
         this.updateInterface.updateShuffleMode(shuffleOn)
     }
-    // TODO -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
+	// PROBLEM_  // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
     override fun onShuffleClick(ptitleid: String) {
         var log = ""
         var titleid = ptitleid
@@ -250,29 +251,44 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
             ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
             ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
-        tvTitle.text = mc.metadata.description.title
-        tvInterpret.text = mc.metadata.description.subtitle
+		//Log.d(TAG, "SetupUI Metadaten .${mc.metadata.description.title}.")
+		if(mc.metadata.description.mediaId != null) {
+			tvTitle.text = mc.metadata.description.title
+			tvInterpret.text = mc.metadata.description.subtitle
+		} else {
+			tvTitle.text = resources.getString(R.string.no_title)
+			tvInterpret.text = ""
+		}
         // register Callback
         mc.registerCallback(controllerCallback)
         if(mc.playbackState.extras?.getBoolean("shuffle") != null){
             shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
         }
     }
-    fun setData(pdata: MediaMetadata, queue: MutableList<MediaSession.QueueItem>){
+	// FIXME untere Leiste auch löschen, wenn die Wiedergabeliste gelöscht wird (Update der Metadaten)
+    fun setData(pdata: MediaMetadata?, queue: MutableList<MediaSession.QueueItem>?){
         // TODO -- ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
         var i = 0
-        if(queue.size > 0) {
+        if(queue != null && queue.size > 0) {
             while (i < queue.size) {
                 items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
                 i++
             }
             items = items.substring(0, items.length - 2)
         }
-        updateInterface.updateMetadata(pdata, items)
-        metadata = pdata
-        tvTitle.text = pdata.description.title
-        tvInterpret.text = pdata.description.subtitle
+		if(pdata != null && pdata.description.mediaId != null) {
+			updateInterface.updateMetadata(pdata, items)
+			//Log.d(TAG, "setData Metadaten: .${pdata.description.mediaId}.")
+			metadata = pdata
+			tvTitle.text = pdata.description.title
+			tvInterpret.text = pdata.description.subtitle
+		} else {
+			// falls keine Wiedergabe stattfindet oder die Wiedergabe zu Ende / beendet wurde
+			Log.d(TAG, "pdata = null IS" + (pdata == null) + ", mediaId = null IS " + (pdata?.description?.mediaId))
+			tvTitle.text = resources.getString(R.string.no_title)
+			tvInterpret.text = ""
+		}
     }
     fun onClickPlay() {
         val mc = mediaController
@@ -389,7 +405,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
     }
 
     // Datenbank
-    // TODO Error: hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
+    // PROBLEM_ hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
     private fun savePlayingQueue(){
         var i = 0
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
@@ -409,7 +425,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
 			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Länge der Schlange: " + playingQueue.size)
-            //  TODO -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
+            //  PROBLEM_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
             //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
             while(i < playingQueue.size){
                 values = ContentValues()
@@ -538,17 +554,12 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
             playingQueue = queue
         }
 
-        override fun onMetadataChanged(metadata: MediaMetadata) {
+        override fun onMetadataChanged(metadata: MediaMetadata?) {
             super.onMetadataChanged(metadata)
             // update Bar mit aktuellen Infos
-            // TODO -- Das Interface erhält teilweise kein Update, Ausnahmefälle
+            // PROBLEM_ -- Das Interface erhält teilweise kein Update, Ausnahmefälle
             //Log.d(TAG,"setData, Aufruf für die Textleiste")
-			val schlange = mediaController.queue
-			if(schlange == null){
-
-			} else {
-				setData(metadata, mediaController.queue)
-			}
+			setData(metadata, mediaController.queue)
         }
         override fun onPlaybackStateChanged(state: PlaybackState) {
             super.onPlaybackStateChanged(state)
