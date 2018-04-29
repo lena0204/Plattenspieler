@@ -26,17 +26,26 @@ import com.lk.plattenspieler.R
 import com.lk.plattenspieler.background.MusicService
 import com.lk.plattenspieler.database.SongContentProvider
 import com.lk.plattenspieler.database.SongDB
-import com.lk.plattenspieler.fragments.AlbumDetailsFragment
-import com.lk.plattenspieler.fragments.AlbumFragment
-import com.lk.plattenspieler.fragments.PlayingFragment
+import com.lk.plattenspieler.fragments.*
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jaudiotagger.audio.AudioFileIO
+import org.jaudiotagger.audio.mp3.MP3File
+import org.jaudiotagger.tag.FieldKey
+import org.jaudiotagger.tag.TagField
+import org.jaudiotagger.tag.id3.ID3v24FieldKey
+import org.jaudiotagger.tag.mp4.Mp4FieldKey
+import org.jaudiotagger.tag.mp4.Mp4Tag
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
-class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnClick {
+class MainActivity : Activity(),
+        AlbumFragment.OnClick,
+        AlbumDetailsFragment.OnClick,
+		LyricsAddingDialog.OnSaveLyrics {
 
-    companion object {
+	companion object {
         const val PREF_PLAYING = "playing"
         const val PREF_DESIGN = "design"
         const val PREF_SHUFFLE = "shuffle"
@@ -224,6 +233,27 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         shuffleOn = true
         this.updateInterface.updateShuffleMode(shuffleOn)
     }
+	override fun onSaveLyrics(lyrics: String) {
+		Log.d(TAG, "Lyrics schreiben")
+		val datapath = metadata.getString(MediaMetadata.METADATA_KEY_WRITER)
+		if(datapath != null && datapath != ""){
+			Log.d(TAG, datapath)
+			if(datapath.contains("mp3")){
+				// Mp3 Datei
+				val mp3File = AudioFileIO.read(File(datapath)) as MP3File
+				if(mp3File.hasID3v2Tag()) {
+					mp3File.iD3v2TagAsv24.setField(FieldKey.LYRICS, lyrics)
+				} else {
+					Log.d(TAG, "Kein ID3v2 Tag vorhanden, keine Lyrics geschrieben.")
+				}
+				AudioFileIO.write(mp3File)
+			} else {
+				// m4a Datei
+				val m4aTag = AudioFileIO.read(File(datapath)).tag as Mp4Tag
+				m4aTag.setField(Mp4FieldKey.LYRICS, lyrics)
+			}
+		}
+	}
 
     // Methoden, die aus den inneren Klassen aufgerufen werden (Zugriff auf Attribute von MainActivity)
     // UI, Musikkontrolle oder Anzeigen anderer Fragments (Alben etc)
@@ -399,6 +429,8 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         // Datenbank löschen
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
     }
+	// FIXME erstes Lied hat keine Schlangenlänge in der Benachrichtigung
+	// TESTING_ Zufall wird nicht korrekt angezeigt
 	private fun shuffleAll(){
 		mediaController.sendCommand("addAll", null, null)
 		shuffleOn = true
@@ -412,7 +444,7 @@ class MainActivity : Activity(), AlbumFragment.OnClick, AlbumDetailsFragment.OnC
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        if(playingQueue.size > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
+        if(playingQueue.size > 0){
             // aktuelle Metadaten sichern
             var values = ContentValues()
             values.put(SongDB.COLUMN_ID, metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))

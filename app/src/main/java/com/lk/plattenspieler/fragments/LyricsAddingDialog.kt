@@ -4,6 +4,7 @@ import android.app.*
 import android.content.Context
 import android.os.Bundle
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.main.MainActivity
 import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
 
 /**
@@ -11,9 +12,15 @@ import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
  */
 class LyricsAddingDialog: DialogFragment(){
 
+	lateinit var listener: OnSaveLyrics
+
+	interface OnSaveLyrics{
+		fun onSaveLyrics(lyrics: String)
+	}
 
 	override fun onAttach(context: Context?) {
 		super.onAttach(context)
+		listener = context as MainActivity
 	}
 
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -26,8 +33,8 @@ class LyricsAddingDialog: DialogFragment(){
 		builder.setView(view)
 		builder.setPositiveButton(R.string.dialog_yes, { dialog, which ->
 			if(et.text != null && et.text.toString() != ""){
-				val liedtext = et.text.toString()
 				// Liedtext speichern
+				listener.onSaveLyrics(et.text.toString())
 			}
 		})
 		builder.setNegativeButton(R.string.dialog_no, {dialog, which ->

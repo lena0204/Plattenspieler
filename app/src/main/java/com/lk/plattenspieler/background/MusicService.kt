@@ -59,7 +59,7 @@ class MusicService: MediaBrowserService() {
     private var playingID: Long = 0
     private var currentMediaMetaData: MediaMetadata? = null
     private var currentMediaFile: String? = null
-    private var currentMediaId: String? = null
+    private var currentMediaId: String? = null	// TODO Metadata, ID, File zusammenführen
     private var musicPlayer: MediaPlayer? = null
     // Statusvariablen, um verschiedene Sachen abzufragen
     private var serviceStarted = false
@@ -206,7 +206,7 @@ class MusicService: MediaBrowserService() {
                 musicPlayer!!.start()
                 updatePlaybackstate(PlaybackState.STATE_PLAYING)
                 // starte im Vordergrund mit Benachrichtigung
-                this.startForeground(ID, showNotification(PlaybackState.STATE_PLAYING, currentMediaMetaData).build())
+                this.startForeground(ID, showNotification(PlaybackState.STATE_PLAYING).build())
             }
             musicPlayer!!.setOnErrorListener { _, what, extra ->
                 Log.e(TAG, "MusicPlayerError: $what; $extra")
@@ -319,10 +319,12 @@ class MusicService: MediaBrowserService() {
 		}
 		Log.d(TAG, "Queue fertig mit Länge ${playingQueue.size}")
 		msession.setQueue(playingQueue)
+
+        shuffleOn = true
 	}
 
     // Update der Abspieldaten und Benachrichtigung erstellen
-    private fun showNotification(state: Int, metadata: MediaMetadata?): Notification.Builder{
+    private fun showNotification(state: Int): Notification.Builder{
         Log.i(TAG, shuffleOn.toString())
         val nb = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
@@ -330,11 +332,11 @@ class MusicService: MediaBrowserService() {
         } else {
             Notification.Builder(this)
         }
-        nb.setContentTitle(metadata?.getString(MediaMetadata.METADATA_KEY_TITLE))
-        nb.setContentText(metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST))
-        nb.setSubText(metadata?.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString() + " Lieder noch")
+        nb.setContentTitle(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_TITLE))
+        nb.setContentText(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ARTIST))
+        nb.setSubText(currentMediaMetaData?.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString() + " Lieder noch")
         nb.setSmallIcon(R.drawable.notification_stat_playing)
-        nb.setLargeIcon(BitmapFactory.decodeFile(metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
+        nb.setLargeIcon(BitmapFactory.decodeFile(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
         // Media Style aktivieren
         nb.setStyle(Notification.MediaStyle()
                 .setMediaSession(sessionToken)
@@ -389,7 +391,7 @@ class MusicService: MediaBrowserService() {
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
             playbackState.setState(PlaybackState.STATE_PLAYING, position, 1.0f)
-            nm.notify(ID, showNotification(state, currentMediaMetaData).build())
+            nm.notify(ID, showNotification(state).build())
         } else if(state == PlaybackState.STATE_PAUSED ||
                 state == PlaybackState.STATE_SKIPPING_TO_NEXT){
             playbackState.setActions(PlaybackState.ACTION_PLAY
@@ -398,7 +400,7 @@ class MusicService: MediaBrowserService() {
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
             playbackState.setState(PlaybackState.STATE_PAUSED, position, 1.0f)
-            nm.notify(ID,showNotification(state, currentMediaMetaData).build())
+            nm.notify(ID,showNotification(state).build())
         } else if(state == PlaybackState.STATE_STOPPED){
             playbackState.setActions(PlaybackState.ACTION_PLAY
                     or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)

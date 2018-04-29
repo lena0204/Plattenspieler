@@ -19,7 +19,6 @@ import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.audio.mp3.MP3File
-import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.id3.ID3v24FieldKey
 import org.jaudiotagger.tag.mp4.Mp4FieldKey
 import org.jaudiotagger.tag.mp4.Mp4Tag
@@ -137,11 +136,11 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 				var lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
 				if (lyrics != null && lyrics != "") {
 					ivLyrics?.alpha = 1.0f
-					this.lyrics = lyrics
+					this.lyrics = lyrics/*
 					if (lyrics.length > 120) {
 						lyrics = lyrics.substring(0, 120)
 					}
-					Log.d(TAG, "MP3-Datei hat Lyrics abgespeichert: $lyrics")
+					Log.d(TAG, "MP3-Datei hat Lyrics abgespeichert: $lyrics")*/
 				}
 			}
 		} else {
@@ -150,11 +149,11 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 			var lyrics = m4aTag.getFirst(Mp4FieldKey.LYRICS)
 			if(lyrics != null  && lyrics != ""){
 				ivLyrics?.alpha = 1.0f
-				this.lyrics = lyrics
+				this.lyrics = lyrics/*
 				if (lyrics.length > 60) {
 					lyrics = lyrics.substring(0, 60)
 				}
-				Log.d(TAG, "M4A-Datei hat Lyrics abgespeichert: $lyrics")
+				Log.d(TAG, "M4A-Datei hat Lyrics abgespeichert: $lyrics")*/
 			}
 		}
 	}
