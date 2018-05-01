@@ -122,15 +122,16 @@ class MainActivity : Activity(),
     }
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "onDestroy")
         // Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
-        contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
+        // contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         savePlayingQueue()
         // Callbacks deaktivieren
         if(mediaController != null){
+            //Log.d(TAG, "mediacontroller noch aktiv")
             mediaController.unregisterCallback(controllerCallback)
         }
         mbrowser.disconnect()
-        Log.d(TAG, "onDestroy")
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
@@ -157,6 +158,7 @@ class MainActivity : Activity(),
             R.id.menu_remove_playing -> stopAndRemovePlaying()
             R.id.menu_dark_light -> changeLightDark()
 			R.id.menu_shuffle_all -> shuffleAll()
+			/*R.id.menu_add_lyrics -> addLyrics()*/
             /*R.id.menu_delete_database -> {
                 // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
                 val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
@@ -288,7 +290,7 @@ class MainActivity : Activity(),
             shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
         }
     }
-	// FIXME untere Leiste auch löschen, wenn die Wiedergabeliste gelöscht wird (Update der Metadaten)
+	// TESTING_ untere Leiste auch löschen, wenn die Wiedergabeliste gelöscht wird (Update der Metadaten)
     fun setData(pdata: MediaMetadata?, queue: MutableList<MediaSession.QueueItem>?){
         // TODO -- ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
@@ -298,7 +300,7 @@ class MainActivity : Activity(),
                 items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
                 i++
             }
-			Log.d(TAG, "Länge Queue setData() $i")
+			//Log.d(TAG, "Länge Queue setData() $i")
             items = items.substring(0, items.length - 2)
         }
 		if(pdata != null && pdata.description.mediaId != null) {
@@ -347,7 +349,7 @@ class MainActivity : Activity(),
     private fun prepareBundle(): Bundle{
         val args = Bundle()
         val meta = mediaController.metadata
-        val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" +
+        val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" + // FIXME NullPointerEx nach Wiedergabe löschen?
                 meta.getString(MediaMetadata.METADATA_KEY_TITLE) + "__" +
                 meta.getString(MediaMetadata.METADATA_KEY_ARTIST) + "__" +
                 meta.getString(MediaMetadata.METADATA_KEY_ALBUM) + "__" +
@@ -428,6 +430,7 @@ class MainActivity : Activity(),
         }
         // Datenbank löschen
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
+        sharedPreferences.edit().putBoolean(PREF_PLAYING, false).apply()
     }
 	// FIXME erstes Lied hat keine Schlangenlänge in der Benachrichtigung
 	// TESTING_ Zufall wird nicht korrekt angezeigt
@@ -436,17 +439,23 @@ class MainActivity : Activity(),
 		shuffleOn = true
 		this.updateInterface.updateShuffleMode(shuffleOn)
 	}
+	private fun addLyrics(){
+		val dialog = LyricsAddingDialog()
+		dialog.show(fragmentManager, "LyricsAddingDialog")
+	}
 
     // Datenbank
     // PROBLEM_ hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
     private fun savePlayingQueue(){
         var i = 0
+		Log.d(TAG, "savePlayingQueue(): Evtl Warteschlange abspeichern")
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
-        // nicht abgespielt wird
+        // nicht abgespielt wird -> sonst Sicherung über die Session
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        if(playingQueue.size > 0){
+        if(playingQueue.size > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
             // aktuelle Metadaten sichern
             var values = ContentValues()
+            // IDEA_ Wiedergabestelle speichern (Position und passend wiederherstellen)
             values.put(SongDB.COLUMN_ID, metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))
             values.put(SongDB.COLUMN_TITLE, metadata.getString(MediaMetadata.METADATA_KEY_TITLE))
             values.put(SongDB.COLUMN_ARTIST, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
@@ -457,7 +466,7 @@ class MainActivity : Activity(),
             values.put(SongDB.COLUMN_FILE, metadata.getString(MediaMetadata.METADATA_KEY_WRITER))
 			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
-            Log.d(TAG, "Länge der Schlange: " + playingQueue.size)
+            Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.size)
             //  PROBLEM_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
             //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
             while(i < playingQueue.size){
@@ -480,7 +489,12 @@ class MainActivity : Activity(),
         }
     }
     fun restorePlayingQueue(){
+        Log.d(TAG, "Einstellung Queue vorhanden: " + sharedPreferences.getBoolean(PREF_PLAYING, false))
+        /* Datenbank im Background handeln? 300 Songs brauchen doch etwas Zeit -> von außen sichtbar -> JA!
+           IDEA_ die Queue an sich im Hintergrund wiederherstellen -> dauert je nach Länge etwas
+        */
         if(sharedPreferences.getBoolean(PREF_PLAYING, false)){
+            Log.d(TAG, "Restoring")
             val projection = getProjection()
             val mc = mediaController
             val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
@@ -513,7 +527,10 @@ class MainActivity : Activity(),
                     mc.sendCommand("add", args, null)
                     c.moveToNext()
                 }
+                Log.d(TAG, "Länge Queue bei restoring : $i")
                 setData(builder.build(), playingQueue)
+            } else {
+                sharedPreferences.edit().putBoolean(PREF_PLAYING, false).apply()
             }
             c.close()
             // shuffle auslesen
@@ -620,6 +637,8 @@ class MainActivity : Activity(),
                 onClickPlay()
             } else if(intent?.action == "NEXT"){
                 onClickNext()
+            } else {
+                Log.d(TAG, "Intentaction: " + intent?.action)
             }
         }
     }

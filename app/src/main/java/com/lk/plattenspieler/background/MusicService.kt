@@ -4,8 +4,6 @@ import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.media.session.MediaSession
@@ -19,6 +17,7 @@ import android.util.Log
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
 import android.app.NotificationChannel
+import android.content.*
 import android.media.*
 import android.os.Build
 import android.support.annotation.RequiresApi
@@ -27,7 +26,7 @@ import java.util.*
 /**
  * Created by Lena on 08.06.17.
  */
-class MusicService: MediaBrowserService() {
+class MusicService: MediaBrowserService()  {
 
     private val TAG = "com.lk.pl-MusicService"
     //private val brn = BroadcastReceiverNoisy()
@@ -59,7 +58,7 @@ class MusicService: MediaBrowserService() {
     private var playingID: Long = 0
     private var currentMediaMetaData: MediaMetadata? = null
     private var currentMediaFile: String? = null
-    private var currentMediaId: String? = null	// TODO Metadata, ID, File zusammenführen
+    private var currentMediaId: String? = null
     private var musicPlayer: MediaPlayer? = null
     // Statusvariablen, um verschiedene Sachen abzufragen
     private var serviceStarted = false
@@ -94,12 +93,17 @@ class MusicService: MediaBrowserService() {
     }
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
-        Log.d(TAG, "Playbackstate: " + msession.controller.playbackState.state)
+		/*var state = ""
+		when(msession.controller.playbackState.state){
+			1 -> state = "stopped"
+			2 -> state = "paused"
+			3 -> state = "playing"
+		}
+        Log.d(TAG, "Playbackstate: $state")*/
         if(msession.controller.playbackState.state == PlaybackState.STATE_PAUSED) {
             handleOnStop()
         }
         Log.d(TAG, "Service started: " + this.serviceStarted)
-        // der Intent, der benutzt wurde für bind()
         return bool
     }
 
@@ -206,7 +210,7 @@ class MusicService: MediaBrowserService() {
                 musicPlayer!!.start()
                 updatePlaybackstate(PlaybackState.STATE_PLAYING)
                 // starte im Vordergrund mit Benachrichtigung
-                this.startForeground(ID, showNotification(PlaybackState.STATE_PLAYING).build())
+                this.startForeground(ID, MediaNotification(this).showNotification(PlaybackState.STATE_PLAYING).build())
             }
             musicPlayer!!.setOnErrorListener { _, what, extra ->
                 Log.e(TAG, "MusicPlayerError: $what; $extra")
@@ -319,57 +323,13 @@ class MusicService: MediaBrowserService() {
 		}
 		Log.d(TAG, "Queue fertig mit Länge ${playingQueue.size}")
 		msession.setQueue(playingQueue)
-
+		updateMetadata()		// TESTING_ shuffle und Länge korrekt anzeigen
+		nm.notify(ID, MediaNotification(this).showNotification(msession.controller.playbackState.state).build())
         shuffleOn = true
 	}
 
     // Update der Abspieldaten und Benachrichtigung erstellen
-    private fun showNotification(state: Int): Notification.Builder{
-        Log.i(TAG, shuffleOn.toString())
-        val nb = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createChannel()
-			Notification.Builder(this, CHANNEL_ID)
-        } else {
-            Notification.Builder(this)
-        }
-        nb.setContentTitle(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_TITLE))
-        nb.setContentText(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ARTIST))
-        nb.setSubText(currentMediaMetaData?.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString() + " Lieder noch")
-        nb.setSmallIcon(R.drawable.notification_stat_playing)
-        nb.setLargeIcon(BitmapFactory.decodeFile(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
-        // Media Style aktivieren
-        nb.setStyle(Notification.MediaStyle()
-                .setMediaSession(sessionToken)
-                .setShowActionsInCompactView(1,2))
-        val i = Intent(applicationContext, MainActivity::class.java)
-        nb.setContentIntent(PendingIntent.getActivity(this, 0, i,0))
-        // korrekt anzeigen, ob Shuffle aktiviert ist
-        if(shuffleOn){
-            nb.addAction(Notification.Action.Builder(R.mipmap.ic_shuffle, "Shuffle", null).build())
-        } else {
-            nb.addAction(Notification.Action.Builder(R.color.transparent, "Shuffle", null).build())
-        }
-        // passendes Icon für Play / Pause anzeigen
-        if(state == PlaybackState.STATE_PLAYING){
-            nb.addAction(Notification.Action.Builder(R.mipmap.ic_pause, "Pause",
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_PAUSE)).build())
-        } else {
-            nb.addAction(Notification.Action.Builder(R.mipmap.ic_play, "Play",
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_PLAY)).build())
-        }
-        nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(applicationContext, PlaybackState.ACTION_SKIP_TO_NEXT)).build())
-        return nb
-    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, "Music playback", NotificationManager.IMPORTANCE_LOW)
-        channel.description = "Music playback controls"
-        channel.setShowBadge(false)
-        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-        nm.createNotificationChannel(channel)
-    }
     fun updateMetadata(){
         var number = "0"
         if(!playingQueue.isEmpty()){
@@ -380,6 +340,15 @@ class MusicService: MediaBrowserService() {
         if(currentMediaMetaData == null){
             Log.e(TAG, "Metadaten sind null")
         }
+        // Broadcast rausschicken (für Lightning Launcher)
+        val extras = Bundle()
+        val track = Bundle()
+        track.putString("title", currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_TITLE))
+        track.putString("album", currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM))
+        track.putString("artist",currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ARTIST))
+        extras.putBundle("track", track)
+        extras.putString("aaPath", currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
+        sendBroadcast(Intent("com.lk.plattenspieler.metachanged").putExtras(extras))
         msession.setMetadata(currentMediaMetaData)
     }
     private fun updatePlaybackstate(state: Int){
@@ -391,7 +360,7 @@ class MusicService: MediaBrowserService() {
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
             playbackState.setState(PlaybackState.STATE_PLAYING, position, 1.0f)
-            nm.notify(ID, showNotification(state).build())
+            nm.notify(ID, MediaNotification(this).showNotification(state).build())
         } else if(state == PlaybackState.STATE_PAUSED ||
                 state == PlaybackState.STATE_SKIPPING_TO_NEXT){
             playbackState.setActions(PlaybackState.ACTION_PLAY
@@ -400,7 +369,7 @@ class MusicService: MediaBrowserService() {
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
             playbackState.setState(PlaybackState.STATE_PAUSED, position, 1.0f)
-            nm.notify(ID,showNotification(state).build())
+            nm.notify(ID, MediaNotification(this).showNotification(state).build())
         } else if(state == PlaybackState.STATE_STOPPED){
             playbackState.setActions(PlaybackState.ACTION_PLAY
                     or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)
@@ -496,6 +465,84 @@ class MusicService: MediaBrowserService() {
                     } else {
                         musicPlayer!!.setVolume(0.8f, 0.8f)     // generell leiser spielen
                     }
+                }
+            }
+        }
+    }
+
+    inner class MediaNotification(private val service: MusicService): BroadcastReceiver(){
+
+        private val ACTION_MEDIA_PLAY = "com.lk.pl-ACTION_MEDIA_PLAY"
+        private val ACTION_MEDIA_PAUSE = "com.lk.pl-ACTION_MEDIA_PAUSE"
+        private val ACTION_MEDIA_NEXT = "com.lk.pl-ACTION_MEDIA_NEXT"
+
+        fun showNotification(state: Int): Notification.Builder{
+            //Log.i(TAG, shuffleOn.toString())
+            // Channel ab Oreo erstellen
+            val nb = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                createChannel()
+                Notification.Builder(service, CHANNEL_ID)
+            } else {
+                Notification.Builder(service)
+            }
+            // Inhalt setzen
+            nb.setContentTitle(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_TITLE))
+            nb.setContentText(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ARTIST))
+            nb.setSubText(currentMediaMetaData?.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString() + " Lieder noch")
+            nb.setSmallIcon(R.drawable.notification_stat_playing)
+            nb.setLargeIcon(BitmapFactory.decodeFile(currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)))
+            // Media Style aktivieren
+            nb.setStyle(Notification.MediaStyle()
+                    .setMediaSession(sessionToken)
+                    .setShowActionsInCompactView(1,2))
+            val i = Intent(applicationContext, MainActivity::class.java)
+            nb.setContentIntent(PendingIntent.getActivity(service, 0, i, PendingIntent.FLAG_CANCEL_CURRENT))
+            // korrekt anzeigen, ob Shuffle aktiviert ist
+            if(shuffleOn){
+                nb.addAction(Notification.Action.Builder(R.mipmap.ic_shuffle, "Shuffle", null).build())
+            } else {
+                nb.addAction(Notification.Action.Builder(R.color.transparent, "Shuffle", null).build())
+            }
+            // passendes Icon für Play / Pause anzeigen
+            var pi: PendingIntent
+            if(state == PlaybackState.STATE_PLAYING){
+                pi = PendingIntent.getBroadcast(service, 100,
+                        Intent(ACTION_MEDIA_PAUSE).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+                nb.addAction(Notification.Action.Builder(R.mipmap.ic_pause, "Pause",pi).build())
+            } else {
+                pi = PendingIntent.getBroadcast(service, 100,
+                        Intent(ACTION_MEDIA_PLAY).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+                nb.addAction(Notification.Action.Builder(R.mipmap.ic_play, "Play", pi).build())
+            }
+            pi = PendingIntent.getBroadcast(service, 100,
+                    Intent(ACTION_MEDIA_NEXT).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+            nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next", pi).build())
+            registerBroadcast()
+            return nb
+        }
+        @RequiresApi(Build.VERSION_CODES.O)
+        private fun createChannel() {
+            val channel = NotificationChannel(CHANNEL_ID, "Music playback", NotificationManager.IMPORTANCE_LOW)
+            channel.description = "Music playback controls"
+            channel.setShowBadge(false)
+            channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            nm.createNotificationChannel(channel)
+        }
+        private fun registerBroadcast(){
+            val ifilter = IntentFilter()
+            ifilter.addAction(ACTION_MEDIA_PLAY)
+            ifilter.addAction(ACTION_MEDIA_PAUSE)
+            ifilter.addAction(ACTION_MEDIA_NEXT)
+            service.registerReceiver(this, ifilter)
+        }
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if(intent != null){
+                when(intent.action){
+                    ACTION_MEDIA_PLAY -> service.handleOnPlay()
+                    ACTION_MEDIA_PAUSE -> service.handleOnPause()
+                    ACTION_MEDIA_NEXT -> service.handleOnNext()
+                    else -> Log.d(TAG, "Neuer Intent mit Action:${intent.action}")
                 }
             }
         }
