@@ -143,7 +143,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 					Log.d(TAG, "MP3-Datei hat Lyrics abgespeichert: $lyrics")*/
 				}
 			}
-		} else {
+		} else if(filepath.contains("m4a")) {
 			// m4a Datei
 			val m4aTag = AudioFileIO.read(File(filepath)).tag as Mp4Tag
 			var lyrics = m4aTag.getFirst(Mp4FieldKey.LYRICS)

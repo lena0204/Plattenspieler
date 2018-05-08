@@ -27,6 +27,7 @@ import com.lk.plattenspieler.background.MusicService
 import com.lk.plattenspieler.database.SongContentProvider
 import com.lk.plattenspieler.database.SongDB
 import com.lk.plattenspieler.fragments.*
+import com.lk.plattenspieler.utils.MediaStack
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jaudiotagger.audio.AudioFileIO
@@ -78,6 +79,7 @@ class MainActivity : Activity(),
         fun updateShuffleMode(mode: Boolean)
     }
 
+    // ------------ Create MainActivity --------
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -91,12 +93,14 @@ class MainActivity : Activity(),
             // Bundle mit den Wiedergabedaten erstellen
             if(!pf.isVisible){
                 val args = prepareBundle()
-                pf.arguments = args
-                // Fragment ersetzen
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.frame_layout, pf, "TAG_PLAYING")
-                        .commit()
+                if(args != null) {
+                    pf.arguments = args
+                    // Fragment ersetzen
+                    fragmentManager.beginTransaction()
+                            .addToBackStack(null)
+                            .replace(R.id.frame_layout, pf, "TAG_PLAYING")
+                            .commit()
+                }
             }
 
         }
@@ -110,6 +114,93 @@ class MainActivity : Activity(),
             completeSetup()
         }
     }
+
+    private fun prepareBundle(): Bundle?{
+        val args = Bundle()
+        val meta = mediaController.metadata
+        if(meta != null) {
+            // TESTING_ NullPointerEx nach Wiedergabe löschen?
+            val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" +
+                    meta.getString(MediaMetadata.METADATA_KEY_TITLE) + "__" +
+                    meta.getString(MediaMetadata.METADATA_KEY_ARTIST) + "__" +
+                    meta.getString(MediaMetadata.METADATA_KEY_ALBUM) + "__" +
+                    meta.getLong(MediaMetadata.METADATA_KEY_DURATION) + "__" +
+                    meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI) + "__" +
+                    meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS) + "__" +
+                    meta.getString(MediaMetadata.METADATA_KEY_WRITER)
+            val queue = mediaController.queue
+            var items = ""
+            var i = 0
+            if (queue != null && queue.size > 0) {
+                while (i < queue.size && i < 30) {    // Länge der Queue auf 30 begrenzen
+                    items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+                    i++
+                }
+                items = items.substring(0, items.length - 2)
+                Log.d(TAG, "Anzahl Queueitems prepareBundle() $i")
+            }
+            Log.d(TAG, "PrepareBundle, shuffle ist $shuffleOn")
+            args.putString("Q", items)
+            args.putString("T", data)
+            args.putInt("S", mediaController.playbackState.state)
+            args.putBoolean("shuffle", shuffleOn)
+            return args
+        }
+        return null
+    }
+    private fun completeSetup(){
+        // Setup MediaBrowser
+        val c = ComponentName(applicationContext, MusicService::class.java)
+        mbrowser = MediaBrowser(this, c, connectionCallback, null)
+        mbrowser.connect()
+        // Broadcast für die Musikkontrolle setzen
+        val ifilter = IntentFilter()
+        ifilter.addAction("PLAY")
+        ifilter.addAction("NEXT")
+    }
+    fun setupUI(){
+        // Listener
+        ib_main_play.setOnClickListener { onClickPlay() }
+        ib_main_next.setOnClickListener { onClickNext() }
+        ib_main_previous.setOnClickListener { onClickPrevious() }
+        val mc = mediaController
+        // update Bar mit aktuellen Infos
+        if(mc.playbackState.state == PlaybackState.STATE_PLAYING){
+            ibState.background = resources.getDrawable(R.mipmap.ic_pause, theme)
+        } else {
+            ibState.background = resources.getDrawable(R.mipmap.ic_play, theme)
+        }
+        if(design == ThemeChanger.THEME_LIGHT || design == ThemeChanger.THEME_LIGHT_T){
+            ibState.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
+            ibState.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+            ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
+            ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+            ib_main_previous.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
+            ib_main_previous.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+        }
+        //Log.d(TAG, "SetupUI Metadaten .${mc.metadata.description.title}.")
+        if(mc.metadata.description.mediaId != null) {
+            tvTitle.text = mc.metadata.description.title
+            tvInterpret.text = mc.metadata.description.subtitle
+        } else {
+            tvTitle.text = resources.getString(R.string.no_title)
+            tvInterpret.text = ""
+        }
+        // register Callback
+        mc.registerCallback(controllerCallback)
+        if(mc.playbackState.extras?.getBoolean("shuffle") != null){
+            shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
+        }
+    }
+    private fun checkReadPermission(): Boolean{
+        return if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            this.requestPermissions(Array(1, { _ -> Manifest.permission.READ_EXTERNAL_STORAGE}), PERMISSION_REQUEST)
+            false
+        } else {
+            true
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(requestCode == PERMISSION_REQUEST){
@@ -134,41 +225,8 @@ class MainActivity : Activity(),
         mbrowser.disconnect()
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        this.menu = menu
-        val design = sharedPreferences.getInt(PREF_DESIGN, 0)
-        var optionDesign = ""
-		// Designoptionene dynamisch je nach Design anpassen
-        when(design){
-            ThemeChanger.THEME_LIGHT, ThemeChanger.THEME_DARK ->
-                optionDesign = resources.getString(R.string.menu_teal)
-            ThemeChanger.THEME_LIGHT_T, ThemeChanger.THEME_DARK_T ->
-                optionDesign = resources.getString(R.string.menu_pink)
-        }
-        menu?.findItem(R.id.menu_change_design)?.title = optionDesign
-        return true
-    }
-    override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.options_menu_main, pmenu)
-        return true
-    }
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId){
-            R.id.menu_change_design -> changeDesign()
-            R.id.menu_remove_playing -> stopAndRemovePlaying()
-            R.id.menu_dark_light -> changeLightDark()
-			R.id.menu_shuffle_all -> shuffleAll()
-			/*R.id.menu_add_lyrics -> addLyrics()*/
-            /*R.id.menu_delete_database -> {
-                // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
-                val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-                Log.d(TAG, "Anzahl der gelöschten Zeilen: " + number)
-            }*/
-        }
-        return super.onOptionsItemSelected(item)
-    }
 
-    // Listener von AlbumFragment und AlbumDetailsFragment
+    // ---------------- Listener und zugehörige Methoden ----------
     override fun onClickAlbum(albumid: String) {
         val mediaid = "ALBUM-$albumid"
         /*
@@ -204,7 +262,7 @@ class MainActivity : Activity(),
         shuffleOn = false
         this.updateInterface.updateShuffleMode(shuffleOn)
     }
-	// PROBLEM_  // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
+	// TESTING_ // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
     override fun onShuffleClick(ptitleid: String) {
         var titleid = ptitleid
         val mc = mediaController
@@ -257,40 +315,40 @@ class MainActivity : Activity(),
 		}
 	}
 
-    // Methoden, die aus den inneren Klassen aufgerufen werden (Zugriff auf Attribute von MainActivity)
-    // UI, Musikkontrolle oder Anzeigen anderer Fragments (Alben etc)
-    fun setupUI(){
-        // Listener
-        ib_main_play.setOnClickListener { onClickPlay() }
-        ib_main_next.setOnClickListener { onClickNext() }
+    fun onClickPlay() {
         val mc = mediaController
-        // update Bar mit aktuellen Infos
         if(mc.playbackState.state == PlaybackState.STATE_PLAYING){
-            ibState.background = resources.getDrawable(R.mipmap.ic_pause, theme)
+            mc.transportControls.pause()
         } else {
-            ibState.background = resources.getDrawable(R.mipmap.ic_play, theme)
-        }
-        if(design == ThemeChanger.THEME_LIGHT || design == ThemeChanger.THEME_LIGHT_T){
-            ibState.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ibState.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-        }
-		//Log.d(TAG, "SetupUI Metadaten .${mc.metadata.description.title}.")
-		if(mc.metadata.description.mediaId != null) {
-			tvTitle.text = mc.metadata.description.title
-			tvInterpret.text = mc.metadata.description.subtitle
-		} else {
-			tvTitle.text = resources.getString(R.string.no_title)
-			tvInterpret.text = ""
-		}
-        // register Callback
-        mc.registerCallback(controllerCallback)
-        if(mc.playbackState.extras?.getBoolean("shuffle") != null){
-            shuffleOn = mc.playbackState.extras.getBoolean("shuffle")
+            mc.transportControls.play()
         }
     }
-	// TESTING_ untere Leiste auch löschen, wenn die Wiedergabeliste gelöscht wird (Update der Metadaten)
+    fun onClickNext() {
+        mediaController.transportControls.skipToNext()
+    }
+    private fun onClickPrevious(){
+        mediaController.transportControls.skipToPrevious()
+    }
+
+
+    // ---------------- Callback-Methoden -----------------
+    fun showAlbums(){
+        val af = AlbumFragment(this)
+        val extras = Bundle()
+        extras.putParcelableArrayList("Liste", medialist)
+        af.arguments = extras
+        fragmentManager.beginTransaction().replace(R.id.frame_layout, af).commit()
+    }
+    fun showTitles(){
+        val adf = AlbumDetailsFragment(this)
+        val extras = Bundle()
+        extras.putParcelableArrayList("Liste", medialist)
+        Log.d(TAG, "showTitles")
+        adf.arguments = extras
+        fragmentManager.beginTransaction()
+                .addToBackStack(null)
+                .replace(R.id.frame_layout, adf).commit()
+    }
     fun setData(pdata: MediaMetadata?, queue: MutableList<MediaSession.QueueItem>?){
         // TODO -- ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
@@ -316,86 +374,43 @@ class MainActivity : Activity(),
 			tvInterpret.text = ""
 		}
     }
-    fun onClickPlay() {
-        val mc = mediaController
-        if(mc.playbackState.state == PlaybackState.STATE_PLAYING){
-            mc.transportControls.pause()
-        } else {
-            mc.transportControls.play()
+
+
+    // ------------- Menü -------------
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        this.menu = menu
+        val design = sharedPreferences.getInt(PREF_DESIGN, 0)
+        var optionDesign = ""
+        // Designoptionene dynamisch je nach Design anpassen
+        when(design){
+            ThemeChanger.THEME_LIGHT, ThemeChanger.THEME_DARK ->
+                optionDesign = resources.getString(R.string.menu_teal)
+            ThemeChanger.THEME_LIGHT_T, ThemeChanger.THEME_DARK_T ->
+                optionDesign = resources.getString(R.string.menu_pink)
         }
+        menu?.findItem(R.id.menu_change_design)?.title = optionDesign
+        return true
     }
-    fun onClickNext() {
-        mediaController.transportControls.skipToNext()
+    override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.options_menu_main, pmenu)
+        return true
     }
-    fun showAlbums(){
-        val af = AlbumFragment(this)
-        val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
-        af.arguments = extras
-        fragmentManager.beginTransaction().replace(R.id.frame_layout, af).commit()
-    }
-    fun showTitles(){
-        val adf = AlbumDetailsFragment(this)
-        val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
-        Log.d(TAG, "showTitles")
-        adf.arguments = extras
-        fragmentManager.beginTransaction()
-                .addToBackStack(null)
-                .replace(R.id.frame_layout, adf).commit()
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId){
+            R.id.menu_change_design -> changeDesign()
+            R.id.menu_remove_playing -> stopAndRemovePlaying()
+            R.id.menu_dark_light -> changeLightDark()
+            R.id.menu_shuffle_all -> shuffleAll()
+        /*R.id.menu_add_lyrics -> addLyrics()*/
+        /*R.id.menu_delete_database -> {
+            // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
+            val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
+            Log.d(TAG, "Anzahl der gelöschten Zeilen: " + number)
+        }*/
+        }
+        return super.onOptionsItemSelected(item)
     }
 
-    // Bundle für das PlayingFragment bereitstellen
-    private fun prepareBundle(): Bundle{
-        val args = Bundle()
-        val meta = mediaController.metadata
-        val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" + // FIXME NullPointerEx nach Wiedergabe löschen?
-                meta.getString(MediaMetadata.METADATA_KEY_TITLE) + "__" +
-                meta.getString(MediaMetadata.METADATA_KEY_ARTIST) + "__" +
-                meta.getString(MediaMetadata.METADATA_KEY_ALBUM) + "__" +
-                meta.getLong(MediaMetadata.METADATA_KEY_DURATION) + "__" +
-                meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI) + "__" +
-                meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS) + "__" +
-                meta.getString(MediaMetadata.METADATA_KEY_WRITER)
-        val queue = mediaController.queue
-        var items = ""
-        var i = 0
-        if(queue != null && queue.size > 0) {
-            while (i < queue.size && i < 30) {	// Länge der Queue auf 30 begrenzen
-                items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
-                i++
-            }
-            items = items.substring(0, items.length - 2)
-			Log.d(TAG, "Anzahl Queueitems prepareBundle() $i")
-        }
-        Log.d(TAG, "PrepareBundle, shuffle ist $shuffleOn")
-        args.putString("Q", items)
-        args.putString("T", data)
-        args.putInt("S", mediaController.playbackState.state)
-        args.putBoolean("shuffle", shuffleOn)
-        return args
-    }
-    // Setup beenden, wenn der Zugriff erlaubt wurde
-    private fun completeSetup(){
-        // Setup MediaBrowser
-        val c = ComponentName(applicationContext, MusicService::class.java)
-        mbrowser = MediaBrowser(this, c, connectionCallback, null)
-        mbrowser.connect()
-        // Broadcast für die Musikkontrolle setzen
-        val ifilter = IntentFilter()
-        ifilter.addAction("PLAY")
-        ifilter.addAction("NEXT")
-    }
-    // Berechtigung abfragen (Marshmallow+ )
-    private fun checkReadPermission(): Boolean{
-        return if(this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            this.requestPermissions(Array(1, { _ -> Manifest.permission.READ_EXTERNAL_STORAGE}), PERMISSION_REQUEST)
-			false
-        } else {
-			true
-        }
-    }
-	// Menüoptionen
     private fun changeDesign(){
         var design = sharedPreferences.getInt(PREF_DESIGN, 0)
         Log.d(TAG, "Farbe: $design")
@@ -406,6 +421,7 @@ class MainActivity : Activity(),
             ThemeChanger.THEME_DARK_T -> design = ThemeChanger.THEME_DARK
         }
         sharedPreferences.edit().putInt(PREF_DESIGN, design).apply()
+        savePlayingQueue()  // zur sicherheit falls vorher noch eine andere Liste gespeichert ist
         ThemeChanger().changeToTheme(this)
     }
     private fun changeLightDark(){
@@ -418,6 +434,7 @@ class MainActivity : Activity(),
             ThemeChanger.THEME_DARK_T -> design = ThemeChanger.THEME_LIGHT_T
         }
         sharedPreferences.edit().putInt(PREF_DESIGN, design).apply()
+        savePlayingQueue()  // zur sicherheit falls vorher noch eine andere Liste gespeichert ist
         ThemeChanger().changeToTheme(this)
     }
     private fun stopAndRemovePlaying(){
@@ -432,8 +449,6 @@ class MainActivity : Activity(),
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         sharedPreferences.edit().putBoolean(PREF_PLAYING, false).apply()
     }
-	// FIXME erstes Lied hat keine Schlangenlänge in der Benachrichtigung
-	// TESTING_ Zufall wird nicht korrekt angezeigt
 	private fun shuffleAll(){
 		mediaController.sendCommand("addAll", null, null)
 		shuffleOn = true
@@ -444,7 +459,8 @@ class MainActivity : Activity(),
 		dialog.show(fragmentManager, "LyricsAddingDialog")
 	}
 
-    // Datenbank
+
+    // ------------------ Datenbank ------------------
     // PROBLEM_ hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
     private fun savePlayingQueue(){
         var i = 0
@@ -467,7 +483,7 @@ class MainActivity : Activity(),
 			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.size)
-            //  PROBLEM_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
+            //  TESTING_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
             //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
             while(i < playingQueue.size){
                 values = ContentValues()
@@ -484,6 +500,7 @@ class MainActivity : Activity(),
                 contentResolver.insert(SongContentProvider.CONTENT_URI, values)
                 i++
             }
+            Log.d(TAG, "QueueItems gespeichert $i")
             sharedPreferences.edit().putBoolean(PREF_PLAYING, true)
                     .putBoolean(PREF_SHUFFLE,shuffleOn).apply()
         }
@@ -499,6 +516,7 @@ class MainActivity : Activity(),
             val mc = mediaController
             val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
             if(c != null && c.count != 0) {
+                Log.d(TAG, c.count.toString() + " Zeilen bei restoring")
                 c.moveToFirst()
                 var i: Long = 0
                 // ersten Datensatz in die aktuelle Wiedergabe schreiben und an den Service weitergeben
@@ -530,6 +548,7 @@ class MainActivity : Activity(),
                 Log.d(TAG, "Länge Queue bei restoring : $i")
                 setData(builder.build(), playingQueue)
             } else {
+                Log.d(TAG, "Cursor ist null oder leer")
                 sharedPreferences.edit().putBoolean(PREF_PLAYING, false).apply()
             }
             c.close()
@@ -552,7 +571,8 @@ class MainActivity : Activity(),
         return p
     }
 
-    // Callbacks vom MusicService und PlayingFragment
+
+    // ---------------- Callbacks vom MusicService und PlayingFragment -----------
     inner class BrowserConnectionCallback(private val activity: Activity): MediaBrowser.ConnectionCallback(){
 
         override fun onConnected() {

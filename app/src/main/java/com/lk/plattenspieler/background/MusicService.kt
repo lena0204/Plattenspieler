@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.ResultReceiver
 import android.provider.MediaStore
 import android.service.media.MediaBrowserService
-import android.support.v4.media.session.MediaButtonReceiver
 import android.util.Log
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
@@ -21,6 +20,7 @@ import android.content.*
 import android.media.*
 import android.os.Build
 import android.support.annotation.RequiresApi
+import com.lk.plattenspieler.utils.MediaStack
 import java.util.*
 
 /**
@@ -32,6 +32,10 @@ class MusicService: MediaBrowserService()  {
     //private val brn = BroadcastReceiverNoisy()
     private val amCallback = AudioFocusCallback()
     private val ID: Int = 88
+    private val STATE_STOP = 1
+    private val STATE_PLAY = 2
+    private val STATE_PAUSE = 3
+    private val STATE_NEXT = 4
     private val AUDIO_FOCUS = 0
     private val AUDIO_LOSS = 1
     private val AUDIO_DUCK = 2
@@ -55,6 +59,7 @@ class MusicService: MediaBrowserService()  {
     private lateinit var nm: NotificationManager
 
     private var playingQueue = mutableListOf<MediaSession.QueueItem>()
+    private var mediaStack = MediaStack()
     private var playingID: Long = 0
     private var currentMediaMetaData: MediaMetadata? = null
     private var currentMediaFile: String? = null
@@ -65,6 +70,7 @@ class MusicService: MediaBrowserService()  {
     private var positionMs = -1
     private var audioFocus = AUDIO_LOSS
     private var shuffleOn = false
+    private var playingstate = STATE_STOP
 
     override fun onCreate() {
         super.onCreate()
@@ -107,7 +113,7 @@ class MusicService: MediaBrowserService()  {
         return bool
     }
 
-    // Hierachie der Musiktitel
+    // -------------- Hierachie der Musiktitel --------------
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): MediaBrowserService.BrowserRoot? {
         // nur mein eigenes Paket zulassen zum Abfragen
         if(this.packageName == clientPackageName){
@@ -174,7 +180,7 @@ class MusicService: MediaBrowserService()  {
         result.sendResult(list)
     }
 
-    // Methoden zur Verwaltung des Musikplayers
+    // --------------- Methoden zur Verwaltung des Musikplayers ------------
     fun handleOnPlay(){
         if(musicPlayer != null){
             if(musicPlayer!!.isPlaying) musicPlayer!!.stop()
@@ -209,6 +215,7 @@ class MusicService: MediaBrowserService()  {
                 }
                 musicPlayer!!.start()
                 updatePlaybackstate(PlaybackState.STATE_PLAYING)
+                playingstate = STATE_PLAY
                 // starte im Vordergrund mit Benachrichtigung
                 this.startForeground(ID, MediaNotification(this).showNotification(PlaybackState.STATE_PLAYING).build())
             }
@@ -219,6 +226,7 @@ class MusicService: MediaBrowserService()  {
             musicPlayer!!.setOnCompletionListener { _ ->
                 // neuen Titel abspielen falls vorhanden; von der Schlange holen und Werte zurücksetzen
                 if(!playingQueue.isEmpty()){
+                    mediaStack.pushMedia(currentMediaMetaData)
                     Log.d(TAG, "onPlay(), Größe: " + playingQueue.size)
                     val queueItem = playingQueue[0]
                     playingQueue.removeAt(0)
@@ -256,18 +264,56 @@ class MusicService: MediaBrowserService()  {
         updateMetadata()
     }
     fun handleOnPause() {
+        playingstate = STATE_PAUSE
         musicPlayer!!.pause()
         updatePlaybackstate(PlaybackState.STATE_PAUSED)
         this.stopForeground(false)
     }
+    fun handleOnPrevious(){
+        val previous = mediaStack.popMedia()
+        if(previous != null){
+            if(msession.controller.playbackState.position >= 15000){
+                positionMs = 0      // zum Anfang des Liedes skippen, wenn schon mehr als 15s gespielt wurde
+            } else {
+                Log.d(TAG, "Vorgänger ist vorhanden mit Titel: " + previous.getString(MediaMetadata.METADATA_KEY_TITLE))
+                playingQueue.add(0, MediaSession.QueueItem(currentMediaMetaData?.description, playingID++))
+                currentMediaId = previous.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)
+                currentMediaFile = previous.getString(MediaMetadata.METADATA_KEY_WRITER)
+                currentMediaMetaData = previous
+                msession.setQueue(playingQueue)
+            }
+        } else {
+            positionMs = -1     // erstes Lied in der Queue
+            Log.d(TAG, "Vorgänger ist NULL, nichts passiert.")
+        }
+        handleOnPlay()
+    }
+    fun handleOnNext(){
+        if(!playingQueue.isEmpty()){
+            // von der Schlange holen und Werte zurücksetzen
+            mediaStack.pushMedia(currentMediaMetaData)
+            Log.d(TAG, "onNext(), Größe: " + playingQueue.size)
+            val queueItem = playingQueue[0]
+            playingQueue.removeAt(0)
+            positionMs = 0
+            currentMediaId = queueItem.description.mediaId
+            currentMediaFile = musicProvider.getFileFromMediaId(currentMediaId)
+            msession.setQueue(playingQueue)
+            handleOnPlay()
+        } else {
+            handleOnStop()
+        }
+    }
     fun handleOnStop(){
         Log.d(TAG, "handleOnStop")
         // update Metadata, state und die Playliste
+        playingstate = STATE_STOP
         playingQueue.clear()
+        mediaStack.popAll()
         playingID = 0
         shuffleOn = false
-		currentMediaFile = null
-		currentMediaId = null
+        currentMediaFile = null
+        currentMediaId = null
         msession.setQueue(playingQueue)
         updatePlaybackstate(PlaybackState.STATE_STOPPED)
         updateMetadata()
@@ -291,21 +337,6 @@ class MusicService: MediaBrowserService()  {
         msession.isActive = false
         this.stopForeground(true)
     }
-    fun handleOnNext(){
-        if(!playingQueue.isEmpty()){
-            // von der Schlange holen und Werte zurücksetzen
-            Log.d(TAG, "onNext(), Größe: " + playingQueue.size)
-            val queueItem = playingQueue[0]
-            playingQueue.removeAt(0)
-            positionMs = 0
-            currentMediaId = queueItem.description.mediaId
-            currentMediaFile = musicProvider.getFileFromMediaId(currentMediaId)
-            msession.setQueue(playingQueue)
-            handleOnPlay()
-        } else {
-            handleOnStop()
-        }
-    }
 
 	fun addAllSongsToPlayingQueue(){
 		Log.d(TAG, "addAllSongsToPlayingQueue")
@@ -323,13 +354,12 @@ class MusicService: MediaBrowserService()  {
 		}
 		Log.d(TAG, "Queue fertig mit Länge ${playingQueue.size}")
 		msession.setQueue(playingQueue)
-		updateMetadata()		// TESTING_ shuffle und Länge korrekt anzeigen
+		updateMetadata()
 		nm.notify(ID, MediaNotification(this).showNotification(msession.controller.playbackState.state).build())
         shuffleOn = true
 	}
 
-    // Update der Abspieldaten und Benachrichtigung erstellen
-
+    // ------------------ Update der Abspieldaten ----------------
     fun updateMetadata(){
         var number = "0"
         if(!playingQueue.isEmpty()){
@@ -349,6 +379,7 @@ class MusicService: MediaBrowserService()  {
         extras.putBundle("track", track)
         extras.putString("aaPath", currentMediaMetaData?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
         sendBroadcast(Intent("com.lk.plattenspieler.metachanged").putExtras(extras))
+        // IDEA_ Broadcast sticky ?
         msession.setMetadata(currentMediaMetaData)
     }
     private fun updatePlaybackstate(state: Int){
@@ -383,7 +414,7 @@ class MusicService: MediaBrowserService()  {
         msession.setPlaybackState(playbackState.build())
     }
 
-    // innere Callbacks vom MainActivity und vom AudioManager
+    // ----------------- Callbacks und Notification ---------------
     inner class MusicSessionCallback: MediaSession.Callback(){
         override fun onPlay() {
             handleOnPlay()
@@ -404,6 +435,10 @@ class MusicService: MediaBrowserService()  {
         }
         override fun onSkipToNext() {
             handleOnNext()
+        }
+
+        override fun onSkipToPrevious() {
+            handleOnPrevious()
         }
 
         override fun onMediaButtonEvent(mediaButtonIntent: Intent?): Boolean{
@@ -496,7 +531,7 @@ class MusicService: MediaBrowserService()  {
                     .setMediaSession(sessionToken)
                     .setShowActionsInCompactView(1,2))
             val i = Intent(applicationContext, MainActivity::class.java)
-            nb.setContentIntent(PendingIntent.getActivity(service, 0, i, PendingIntent.FLAG_CANCEL_CURRENT))
+            nb.setContentIntent(PendingIntent.getActivity(service, 0, i, PendingIntent.FLAG_UPDATE_CURRENT))
             // korrekt anzeigen, ob Shuffle aktiviert ist
             if(shuffleOn){
                 nb.addAction(Notification.Action.Builder(R.mipmap.ic_shuffle, "Shuffle", null).build())
@@ -507,15 +542,15 @@ class MusicService: MediaBrowserService()  {
             var pi: PendingIntent
             if(state == PlaybackState.STATE_PLAYING){
                 pi = PendingIntent.getBroadcast(service, 100,
-                        Intent(ACTION_MEDIA_PAUSE).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+                        Intent(ACTION_MEDIA_PAUSE).setPackage(service.packageName), 0)
                 nb.addAction(Notification.Action.Builder(R.mipmap.ic_pause, "Pause",pi).build())
             } else {
                 pi = PendingIntent.getBroadcast(service, 100,
-                        Intent(ACTION_MEDIA_PLAY).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+                        Intent(ACTION_MEDIA_PLAY).setPackage(service.packageName), 0)
                 nb.addAction(Notification.Action.Builder(R.mipmap.ic_play, "Play", pi).build())
             }
             pi = PendingIntent.getBroadcast(service, 100,
-                    Intent(ACTION_MEDIA_NEXT).setPackage(service.packageName), PendingIntent.FLAG_CANCEL_CURRENT)
+                    Intent(ACTION_MEDIA_NEXT).setPackage(service.packageName), 0)
             nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next", pi).build())
             registerBroadcast()
             return nb
@@ -538,10 +573,31 @@ class MusicService: MediaBrowserService()  {
 
         override fun onReceive(context: Context?, intent: Intent?) {
             if(intent != null){
+                Log.d(TAG, "onReceive: " + intent.action)
                 when(intent.action){
-                    ACTION_MEDIA_PLAY -> service.handleOnPlay()
-                    ACTION_MEDIA_PAUSE -> service.handleOnPause()
-                    ACTION_MEDIA_NEXT -> service.handleOnNext()
+                    ACTION_MEDIA_PLAY -> {
+                        if(playingstate == STATE_PAUSE){
+                            service.handleOnPlay()
+                            playingstate = STATE_PLAY
+                            Log.d(TAG, "PLAY: playingstate: " + playingstate + ", Playbackstate:" + msession.controller.playbackState.state)
+
+                        }
+                    }
+                    ACTION_MEDIA_PAUSE -> {
+                        if(playingstate == STATE_PLAY){
+                            service.handleOnPause()
+                            playingstate = STATE_PAUSE
+                            Log.d(TAG, "PAUSE: playingstate: " + playingstate + ", Playbackstate:" + msession.controller.playbackState.state)
+
+                        }
+                    }
+                    ACTION_MEDIA_NEXT -> {
+                        if(playingstate == STATE_PLAY || playingstate == STATE_PAUSE) {
+                            service.handleOnNext()
+                            playingstate = STATE_NEXT
+                            Log.d(TAG, "NEXT: playingstate: " + playingstate + ", Playbackstate:" + msession.controller.playbackState.state)
+                        }
+                    }
                     else -> Log.d(TAG, "Neuer Intent mit Action:${intent.action}")
                 }
             }

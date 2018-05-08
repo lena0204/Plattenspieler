@@ -27,6 +27,7 @@
     <string name="iv_cd_fab_shuffle">Zufallswiedergabe starten</string>
     <string name="iv_cd_play">Abspielen oder Pausieren</string>
     <string name="iv_cd_next">Nächstes Lied abspielen</string>
+    <string name="iv_cd_previous">Vorheriges Lied abspielen</string>
     <string name="iv_cd_cover">Albumcover</string>
 
     <!-- Dialog -->
