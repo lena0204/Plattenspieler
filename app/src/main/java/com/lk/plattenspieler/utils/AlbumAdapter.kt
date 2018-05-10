@@ -1,19 +1,19 @@
 package com.lk.plattenspieler.utils
 
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.models.MusicList
 import kotlinx.android.synthetic.main.row_album.view.*
 
 /**
  * Created by Lena on 08.06.17.
  */
-class AlbumAdapter(private var dataset: ArrayList<AlbumModel>, val cl: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
+class AlbumAdapter(private var dataset: MusicList, val cl: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
 
     val TAG = "AlbumAdapter"
 
@@ -24,19 +24,19 @@ class AlbumAdapter(private var dataset: ArrayList<AlbumModel>, val cl: Click) : 
 
     // ViewHolder Methoden
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val album = dataset[position]
+        val album = dataset.getItemAt(position)
         holder.getTvID().text = album.id
-        holder.getTvAlbum().text = album.title
-        val interpret = album.artist + " | " + album.songnumber
+        holder.getTvAlbum().text = album.album
+        val interpret = album.artist + " | " + album.alltracks
         holder.getTvArtist().text = interpret
         // passendes Icon setzen
-        holder.getIvCover().setImageBitmap(album.albumart)
+        holder.getIvCover().setImageBitmap(album.cover)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album, parent, false)
         return ViewHolder(v)
     }
-    override fun getItemCount(): Int = dataset.size
+    override fun getItemCount(): Int = dataset.countItems()
 
     // ViewHolder Klasse
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {

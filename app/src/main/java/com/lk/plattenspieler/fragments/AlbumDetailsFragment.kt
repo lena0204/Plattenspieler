@@ -3,20 +3,18 @@ package com.lk.plattenspieler.fragments
 import android.app.Fragment
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.models.MusicList
 import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter
-import com.lk.plattenspieler.utils.TitleModel
 import kotlinx.android.synthetic.main.fragment_album_details.*
 
 /**
@@ -26,7 +24,7 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
 
     private val TAG = "com.lk.pl-AlbumDetailsF"
     private lateinit var listener: OnClick
-    private var data = ArrayList<TitleModel>()
+    private var data = MusicList()
     private lateinit var fabShuffle: ImageButton
 
     constructor(act: AlbumDetailsFragment.OnClick): this() {
@@ -55,35 +53,30 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
     }
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        val args = this.arguments.getParcelableArrayList<MediaBrowser.MediaItem>("Liste")
-        fabShuffle.setOnClickListener { listener.onShuffleClick(data[0].id) }
-        setupRecyclerView(args)
+        fabShuffle.setOnClickListener { listener.onShuffleClick(data.getItemAt(0).id) }
+        setupRecyclerView(this.arguments.getParcelable("Liste"))
     }
 
-    private fun setupRecyclerView(list: ArrayList<MediaBrowser.MediaItem>){
-        data = ArrayList()
+    private fun setupRecyclerView(list: MusicList){
+        data = MusicList()
         var album = ""
         for(item in list){
-            val titleid = item.description.mediaId
-            if(titleid != null && item.description.description != null){
-                val title = item.description.title.toString()
-                val titleinterpret = item.description.subtitle.toString()
-                val titlearray = item.description.description.toString().split("__".toRegex())
-                album = titlearray[0]
-                var titlecover: Bitmap? = null
-				titlecover = BitmapFactory.decodeFile(titlearray[1])
+            if(!item.isEmpty()){
+                album = item.album
+                var titlecover: Bitmap?
+				titlecover = BitmapFactory.decodeFile(item.cover_uri)
 				if(titlecover == null){
 					titlecover = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
 				}
-                data.add(TitleModel(titleid, title, titleinterpret, titlecover as Bitmap))
+                item.cover = titlecover
+                data.addItem(item)
             }
         }
         if(album.isNotEmpty()){
             this.activity.actionBar.title = album
         }
         recycler_album_details.layoutManager = LinearLayoutManager(activity)
-        val aa = TitleAdapter(data, this)
-        recycler_album_details.adapter = aa
+        recycler_album_details.adapter = TitleAdapter(data, this)
     }
 
 }

@@ -1,6 +1,5 @@
-package com.lk.plattenspieler.utils
+package com.lk.plattenspieler.models
 
-import android.media.MediaMetadata
 import android.util.Log
 
 /**
@@ -10,15 +9,15 @@ import android.util.Log
 class MediaStack {
 
     // Repräsentiert einen Stack der die fünf zuletzt gespielten Titel verwaltet
-    private var stack = arrayOfNulls<MediaMetadata?>(5)
+    private var stack = arrayOfNulls<MusicMetadata?>(5)
     private var elements = 0
 
     /**
      * Fügt ein neues Element dem Stack hinzu, falls [element] nicht null ist
      * Falls dieser voll ist, wird das älteste Element gelöscht
-     * @param element Metadaten des letzten Musiktitels [MediaMetadata]
+     * @param element Metadaten des letzten Musiktitels [MusicMetadata]
      */
-    fun pushMedia(element: MediaMetadata?){
+    fun pushMedia(element: MusicMetadata?){
         if(element != null) {
             if (elements <= 4) {
                 stack[elements] = element
@@ -37,9 +36,9 @@ class MediaStack {
     }
 
     /**
-     * @return letzte Metadaten [MediaMetadata]
+     * @return letzte Metadaten [MusicMetadata]
      */
-    fun topMedia(): MediaMetadata?{
+    fun topMedia(): MusicMetadata?{
         return if(!isEmtpy())
             stack[elements-1]
         else
@@ -48,9 +47,9 @@ class MediaStack {
 
     /**
      * Entfernt die obersten Metadaten und gibt sie zurück
-     * @return letzte Metadaten [MediaMetadata]
+     * @return letzte Metadaten [MusicMetadata]
      */
-    fun popMedia(): MediaMetadata?{
+    fun popMedia(): MusicMetadata?{
         return if(!isEmtpy()) {
             elements--
             stack[elements]
@@ -75,7 +74,7 @@ class MediaStack {
     override fun toString(): String {
         var text = "Stack: "
         for(element in stack){
-            text += element?.getString(MediaMetadata.METADATA_KEY_TITLE) + ", "
+            text += element?.title + ", "
         }
         return text
     }

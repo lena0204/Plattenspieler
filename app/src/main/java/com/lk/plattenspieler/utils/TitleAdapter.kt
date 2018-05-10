@@ -7,12 +7,13 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.models.MusicList
 import kotlinx.android.synthetic.main.row_album_details.view.*
 
 /**
  * Created by Lena on 08.06.17.
  */
-class TitleAdapter(private var dataset: ArrayList<TitleModel>, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
+class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
 
     // Interface, um mit dem Fragment zu kommunzieren
     interface OnClickTitle{
@@ -20,10 +21,10 @@ class TitleAdapter(private var dataset: ArrayList<TitleModel>, var cl: TitleAdap
     }
 
     override fun onBindViewHolder(holder: ViewHolderTitle, position: Int) {
-        val title = dataset[position]
+        val title = dataset.getItemAt(position)
         holder.getTvID().text = title.id
         holder.getTvTitle().text = title.title
-        holder.getTvInterpret().text = title.interpret
+        holder.getTvInterpret().text = title.artist
         // passendes Icon setzen
         holder.getIvCover().setImageBitmap(title.cover)
     }
@@ -31,7 +32,7 @@ class TitleAdapter(private var dataset: ArrayList<TitleModel>, var cl: TitleAdap
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album_details, parent, false)
         return ViewHolderTitle(v)
     }
-    override fun getItemCount(): Int = dataset.size
+    override fun getItemCount(): Int = dataset.countItems()
 
     // ViewHolder Klasse
     inner class ViewHolderTitle(v: View) : RecyclerView.ViewHolder(v) {

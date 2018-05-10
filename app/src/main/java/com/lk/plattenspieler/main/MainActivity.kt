@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.media.AudioManager
-import android.media.MediaDescription
 import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
 import android.media.session.MediaController
@@ -27,19 +26,17 @@ import com.lk.plattenspieler.background.MusicService
 import com.lk.plattenspieler.database.SongContentProvider
 import com.lk.plattenspieler.database.SongDB
 import com.lk.plattenspieler.fragments.*
-import com.lk.plattenspieler.utils.MediaStack
+import com.lk.plattenspieler.models.MusicList
+import com.lk.plattenspieler.models.MusicMetadata
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.audio.mp3.MP3File
 import org.jaudiotagger.tag.FieldKey
-import org.jaudiotagger.tag.TagField
-import org.jaudiotagger.tag.id3.ID3v24FieldKey
 import org.jaudiotagger.tag.mp4.Mp4FieldKey
 import org.jaudiotagger.tag.mp4.Mp4Tag
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
 
 class MainActivity : Activity(),
         AlbumFragment.OnClick,
@@ -59,8 +56,8 @@ class MainActivity : Activity(),
     private val connectionCallback = BrowserConnectionCallback(this)
     val controllerCallback = MusicControllerCallback()
     val subscriptionCallback = MusicSubscriptionCallback()
-    private var medialist = ArrayList<MediaBrowser.MediaItem>()
-    private var playingQueue = mutableListOf<MediaSession.QueueItem>()
+    private var medialist = MusicList()
+    private var playingQueue = MusicList()
     private var design = 0      // 0 -> hell, 1 -> dunkel
     private var menu: Menu? = null
     private var shuffleOn = false
@@ -70,12 +67,12 @@ class MainActivity : Activity(),
     private lateinit var tvInterpret: TextView
     private lateinit var ibState: ImageButton
     private lateinit var updateInterface: CallbackPlaying
-    private lateinit var metadata: MediaMetadata
+    private lateinit var metadata: MusicMetadata
     private lateinit var sharedPreferences: SharedPreferences
 
     // Interface zur Kommunikation mit der Wiedergabeansicht
     interface CallbackPlaying{
-        fun updateMetadata(data: MediaMetadata, queue: String)
+        fun updateMetadata(data: MusicMetadata, queue: String)
         fun updateShuffleMode(mode: Boolean)
     }
 
@@ -93,7 +90,8 @@ class MainActivity : Activity(),
             // Bundle mit den Wiedergabedaten erstellen
             if(!pf.isVisible){
                 val args = prepareBundle()
-                if(args != null) {
+                if(args != null)
+                {
                     pf.arguments = args
                     // Fragment ersetzen
                     fragmentManager.beginTransaction()
@@ -118,16 +116,16 @@ class MainActivity : Activity(),
     private fun prepareBundle(): Bundle?{
         val args = Bundle()
         val meta = mediaController.metadata
-        if(meta != null) {
+        if(meta != null && meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) != null) {
             // TESTING_ NullPointerEx nach Wiedergabe löschen?
-            val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" +
+            /*val data = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) + "__" +
                     meta.getString(MediaMetadata.METADATA_KEY_TITLE) + "__" +
                     meta.getString(MediaMetadata.METADATA_KEY_ARTIST) + "__" +
                     meta.getString(MediaMetadata.METADATA_KEY_ALBUM) + "__" +
                     meta.getLong(MediaMetadata.METADATA_KEY_DURATION) + "__" +
                     meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI) + "__" +
                     meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS) + "__" +
-                    meta.getString(MediaMetadata.METADATA_KEY_WRITER)
+                    meta.getString(MediaMetadata.METADATA_KEY_WRITER)*/
             val queue = mediaController.queue
             var items = ""
             var i = 0
@@ -141,7 +139,7 @@ class MainActivity : Activity(),
             }
             Log.d(TAG, "PrepareBundle, shuffle ist $shuffleOn")
             args.putString("Q", items)
-            args.putString("T", data)
+            args.putParcelable("T", MusicMetadata.createFromMediaMetadata(meta))
             args.putInt("S", mediaController.playbackState.state)
             args.putBoolean("shuffle", shuffleOn)
             return args
@@ -153,10 +151,6 @@ class MainActivity : Activity(),
         val c = ComponentName(applicationContext, MusicService::class.java)
         mbrowser = MediaBrowser(this, c, connectionCallback, null)
         mbrowser.connect()
-        // Broadcast für die Musikkontrolle setzen
-        val ifilter = IntentFilter()
-        ifilter.addAction("PLAY")
-        ifilter.addAction("NEXT")
     }
     fun setupUI(){
         // Listener
@@ -245,16 +239,17 @@ class MainActivity : Activity(),
         // Stelle in der Medialiste suchen und alle ab da an die Queue anhängen
         var indexInMedialist = -1
         for(item in medialist){
-            if(item.mediaId == titleid){
+            if(item.id == titleid){
                 indexInMedialist = medialist.indexOf(item)
                 break
             }
         }
         if(indexInMedialist != -1){
             var i = indexInMedialist + 1
-            while(i < medialist.size){
+            while(i < medialist.countItems()){
 				args = Bundle()
-                args.putParcelable("S", medialist[i].description)
+                Log.d(TAG, "ClassLoader:" +  args.classLoader.javaClass.canonicalName)
+                args.putParcelable("S", medialist.getItemAt(i))
                 mc.sendCommand("add", args, null)
                 i++
             }
@@ -267,27 +262,27 @@ class MainActivity : Activity(),
         var titleid = ptitleid
         val mc = mediaController
         // Alles Items in listSongs kopieren, damit keine Operationen auf medialist stattfinden
-        val listSongs = ArrayList<MediaBrowser.MediaItem>()
+        val listSongs = MusicList()
         for(item in medialist){
-            listSongs.add(item)
+            listSongs.addItem(item)
         }
         val random = Random()
         // ERSTEN Titel zufällig auswählen und ABSPIELEN, ABER NICHT anhängen, weil sich das sonst doppelt
-        var i = random.nextInt(listSongs.size)
-        if(!listSongs[i].description.mediaId.isNullOrEmpty()){
-            titleid = listSongs[i].description.mediaId.toString()
+        var i = random.nextInt(listSongs.countItems())
+        if(!listSongs.getItemAt(i).id.isEmpty()){
+            titleid = listSongs.getItemAt(i).id
         }
         var args = Bundle()
         args.putInt("I", 1)
         mc.transportControls.playFromMediaId(titleid, args)
-        listSongs.removeAt(i)
+        listSongs.removeItemAt(i)
         // zufällige Liste erstellen und an die QUEUE hängen, ersten Titel aus der Queue abspielen
         while(!listSongs.isEmpty()){
-            i = random.nextInt(listSongs.size)
+            i = random.nextInt(listSongs.countItems())
 			args = Bundle()
-            args.putParcelable("S", listSongs[i].description)
+            args.putParcelable("S", listSongs.getItemAt(i))
             mc.sendCommand("add", args, null)
-            listSongs.removeAt(i)
+            listSongs.removeItemAt(i)
         }
         mc.sendCommand("shuffle", null, null)
         shuffleOn = true
@@ -295,8 +290,8 @@ class MainActivity : Activity(),
     }
 	override fun onSaveLyrics(lyrics: String) {
 		Log.d(TAG, "Lyrics schreiben")
-		val datapath = metadata.getString(MediaMetadata.METADATA_KEY_WRITER)
-		if(datapath != null && datapath != ""){
+		val datapath = metadata.path
+		if(datapath != ""){
 			Log.d(TAG, datapath)
 			if(datapath.contains("mp3")){
 				// Mp3 Datei
@@ -315,7 +310,7 @@ class MainActivity : Activity(),
 		}
 	}
 
-    fun onClickPlay() {
+    private fun onClickPlay() {
         val mc = mediaController
         if(mc.playbackState.state == PlaybackState.STATE_PLAYING){
             mc.transportControls.pause()
@@ -323,7 +318,7 @@ class MainActivity : Activity(),
             mc.transportControls.play()
         }
     }
-    fun onClickNext() {
+    private fun onClickNext() {
         mediaController.transportControls.skipToNext()
     }
     private fun onClickPrevious(){
@@ -335,41 +330,41 @@ class MainActivity : Activity(),
     fun showAlbums(){
         val af = AlbumFragment(this)
         val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
+        extras.putParcelable("Liste", medialist)
         af.arguments = extras
         fragmentManager.beginTransaction().replace(R.id.frame_layout, af).commit()
     }
     fun showTitles(){
         val adf = AlbumDetailsFragment(this)
         val extras = Bundle()
-        extras.putParcelableArrayList("Liste", medialist)
+        extras.putParcelable("Liste", medialist)
         Log.d(TAG, "showTitles")
         adf.arguments = extras
         fragmentManager.beginTransaction()
                 .addToBackStack(null)
                 .replace(R.id.frame_layout, adf).commit()
     }
-    fun setData(pdata: MediaMetadata?, queue: MutableList<MediaSession.QueueItem>?){
+    fun setData(pdata: MusicMetadata, queue: MusicList){
         // TODO -- ordentlich Aufräumen nachdem die Wiedergabeliste gelöscht wurde -> Sinn?
         var items = ""
         var i = 0
-        if(queue != null && queue.size > 0) {
-            while (i < queue.size && i < 30) {		// Länge der Liste auf 30 begrenzen
-                items = items + queue[i].description.title + "\n - " + queue[i].description.subtitle + "__"
+        if(queue.countItems() > 0) {
+            while (i < queue.countItems() && i < 30) {		// Länge der Liste auf 30 begrenzen
+                items = items + queue.getItemAt(i).title + "\n - " + queue.getItemAt(i).artist + "__"
                 i++
             }
 			//Log.d(TAG, "Länge Queue setData() $i")
             items = items.substring(0, items.length - 2)
         }
-		if(pdata != null && pdata.description.mediaId != null) {
+		if(pdata.id != "") {
 			updateInterface.updateMetadata(pdata, items)
 			//Log.d(TAG, "setData Metadaten: .${pdata.description.mediaId}.")
 			metadata = pdata
-			tvTitle.text = pdata.description.title
-			tvInterpret.text = pdata.description.subtitle
+			tvTitle.text = pdata.title
+			tvInterpret.text = pdata.artist
 		} else {
 			// falls keine Wiedergabe stattfindet oder die Wiedergabe zu Ende / beendet wurde
-			Log.d(TAG, "pdata = null IS" + (pdata == null) + ", mediaId = null IS " + (pdata?.description?.mediaId))
+			Log.d(TAG, "pdata = null IS" + (pdata.isEmpty()) + ", mediaId = null IS " + (pdata.id))
 			tvTitle.text = resources.getString(R.string.no_title)
 			tvInterpret.text = ""
 		}
@@ -463,44 +458,39 @@ class MainActivity : Activity(),
     // ------------------ Datenbank ------------------
     // PROBLEM_ hat Schlange nach Pausieren und dann Neustart nicht gespeichert (oder mind. nicht wiederhergestellt)
     private fun savePlayingQueue(){
-        var i = 0
 		Log.d(TAG, "savePlayingQueue(): Evtl Warteschlange abspeichern")
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird -> sonst Sicherung über die Session
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        if(playingQueue.size > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
+        if(playingQueue.countItems() > 0 && mediaController.playbackState.state != PlaybackState.STATE_PLAYING){
             // aktuelle Metadaten sichern
             var values = ContentValues()
             // IDEA_ Wiedergabestelle speichern (Position und passend wiederherstellen)
-            values.put(SongDB.COLUMN_ID, metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID))
-            values.put(SongDB.COLUMN_TITLE, metadata.getString(MediaMetadata.METADATA_KEY_TITLE))
-            values.put(SongDB.COLUMN_ARTIST, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
-            values.put(SongDB.COLUMN_ALBUM, metadata.getString(MediaMetadata.METADATA_KEY_ALBUM))
-            values.put(SongDB.COLUMN_COVER_URI, metadata.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
-            values.put(SongDB.COLUMN_DURATION, metadata.getLong(MediaMetadata.METADATA_KEY_DURATION).toString())
-            values.put(SongDB.COLUMN_NUMTRACKS, metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString())
-            values.put(SongDB.COLUMN_FILE, metadata.getString(MediaMetadata.METADATA_KEY_WRITER))
+            values.put(SongDB.COLUMN_ID, metadata.id)
+            values.put(SongDB.COLUMN_TITLE, metadata.title)
+            values.put(SongDB.COLUMN_ARTIST, metadata.artist)
+            values.put(SongDB.COLUMN_ALBUM, metadata.album)
+            values.put(SongDB.COLUMN_COVER_URI, metadata.cover_uri)
+            values.put(SongDB.COLUMN_DURATION, metadata.duration.toString())
+            values.put(SongDB.COLUMN_NUMTRACKS, metadata.songnr.toString())
+            values.put(SongDB.COLUMN_FILE, metadata.path)
 			contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
-            Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.size)
+            Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.countItems())
             //  TESTING_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
             //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
-            while(i < playingQueue.size){
+            for(item in playingQueue) {
                 values = ContentValues()
-                val media = playingQueue[i].description
-                values.put(SongDB.COLUMN_ID, media.mediaId)
-                values.put(SongDB.COLUMN_TITLE, media.title.toString())
-                values.put(SongDB.COLUMN_ARTIST, media.subtitle.toString())
-                val mediaArray = media.description.toString().split("__".toRegex())
-                values.put(SongDB.COLUMN_ALBUM, mediaArray[0])
-                values.put(SongDB.COLUMN_COVER_URI, mediaArray[1])
+                values.put(SongDB.COLUMN_ID, item.id)
+                values.put(SongDB.COLUMN_TITLE, item.title)
+                values.put(SongDB.COLUMN_ARTIST, item.artist)
+                values.put(SongDB.COLUMN_ALBUM, item.album)
+                values.put(SongDB.COLUMN_COVER_URI, item.cover_uri)
                 values.put(SongDB.COLUMN_DURATION, "")
                 values.put(SongDB.COLUMN_NUMTRACKS, "")
                 values.put(SongDB.COLUMN_FILE, "")
                 contentResolver.insert(SongContentProvider.CONTENT_URI, values)
-                i++
             }
-            Log.d(TAG, "QueueItems gespeichert $i")
             sharedPreferences.edit().putBoolean(PREF_PLAYING, true)
                     .putBoolean(PREF_SHUFFLE,shuffleOn).apply()
         }
@@ -518,35 +508,34 @@ class MainActivity : Activity(),
             if(c != null && c.count != 0) {
                 Log.d(TAG, c.count.toString() + " Zeilen bei restoring")
                 c.moveToFirst()
-                var i: Long = 0
                 // ersten Datensatz in die aktuelle Wiedergabe schreiben und an den Service weitergeben
-                val builder = MediaMetadata.Builder()
-                builder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, c.getString(c.getColumnIndex(SongDB.COLUMN_ID)))
-                        .putString(MediaMetadata.METADATA_KEY_TITLE, c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)))
-                        .putString(MediaMetadata.METADATA_KEY_ARTIST, c.getString(c.getColumnIndex(SongDB.COLUMN_ARTIST)))
-                        .putString(MediaMetadata.METADATA_KEY_ALBUM, c.getString(c.getColumnIndex(SongDB.COLUMN_ALBUM)))
-                        .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI)))
-                        .putLong(MediaMetadata.METADATA_KEY_DURATION, c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLong())
-                        .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLong())
-                mc.transportControls.playFromMediaId(builder.build().getString(MediaMetadata.METADATA_KEY_MEDIA_ID), Bundle())
+                val music = MusicMetadata(
+                        c.getString(c.getColumnIndex(SongDB.COLUMN_ID)),
+                        c.getString(c.getColumnIndex(SongDB.COLUMN_ALBUM)),
+                        c.getString(c.getColumnIndex(SongDB.COLUMN_ARTIST)),
+                        c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)),
+                        c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI)),
+                        duration =  c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLong(),
+                        songnr = c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLong()
+                )
+                mc.transportControls.playFromMediaId(music.id, Bundle())
                 c.moveToNext()
                 // Metadata zusammenstellen und an den Service weitergeben
                 while(!c.isAfterLast){
-                    val description = MediaDescription.Builder()
-                    description.setMediaId(c.getString(c.getColumnIndex(SongDB.COLUMN_ID)))
-                            .setTitle(c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)))
-                            .setSubtitle(c.getString(c.getColumnIndex(SongDB.COLUMN_ARTIST)))
-                    val des = c.getString(c.getColumnIndex(SongDB.COLUMN_ALBUM)) + "__" +
+                    val item = MusicMetadata(
+                            c.getString(c.getColumnIndex(SongDB.COLUMN_ID)),
+                            c.getString(c.getColumnIndex(SongDB.COLUMN_ALBUM)),
+                            c.getString(c.getColumnIndex(SongDB.COLUMN_ARTIST)),
+                            c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)),
                             c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI))
-                    description.setDescription(des)
-                    playingQueue.add(MediaSession.QueueItem(description.build(), i++))
+                    )
+                    playingQueue.addItem(item)
                     val args = Bundle()
-                    args.putParcelable("S", description.build())
+                    args.putParcelable("S", item)
                     mc.sendCommand("add", args, null)
                     c.moveToNext()
                 }
-                Log.d(TAG, "Länge Queue bei restoring : $i")
-                setData(builder.build(), playingQueue)
+                setData(music, playingQueue)
             } else {
                 Log.d(TAG, "Cursor ist null oder leer")
                 sharedPreferences.edit().putBoolean(PREF_PLAYING, false).apply()
@@ -600,17 +589,19 @@ class MainActivity : Activity(),
     inner class MusicSubscriptionCallback: MediaBrowser.SubscriptionCallback(){
 
         override fun onChildrenLoaded(parentId: String, children: MutableList<MediaBrowser.MediaItem>) {
-            medialist = ArrayList()
+            medialist = MusicList()
             if(parentId == mbrowser.root){
+                medialist.addFlag(MediaBrowser.MediaItem.FLAG_BROWSABLE)
                 // Basisabfrage auf die Alben
                 for(i in children){
-                    medialist.add(i)
+                    medialist.addItem(MusicMetadata.createFromMediaDescription(i.description))
                 }
                 showAlbums()
             } else if(parentId.contains("ALBUM-")){
                 // ein Album wurde abgefragt
+                medialist.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
                 for(i in children){
-                    medialist.add(i)
+                    medialist.addItem(MusicMetadata.createFromMediaDescription(i.description))
                 }
                 showTitles()
             }
@@ -621,15 +612,15 @@ class MainActivity : Activity(),
 
         override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>) {
             super.onQueueChanged(queue)
-            playingQueue = queue
+            playingQueue = MusicList.createListFromQueue(queue)
         }
 
-        override fun onMetadataChanged(metadata: MediaMetadata?) {
+        override fun onMetadataChanged(metadata: MediaMetadata) {
             super.onMetadataChanged(metadata)
             // update Bar mit aktuellen Infos
             // PROBLEM_ -- Das Interface erhält teilweise kein Update, Ausnahmefälle
             //Log.d(TAG,"setData, Aufruf für die Textleiste")
-			setData(metadata, mediaController.queue)
+			setData(MusicMetadata.createFromMediaMetadata(metadata), MusicList.createListFromQueue(mediaController.queue))
         }
         override fun onPlaybackStateChanged(state: PlaybackState) {
             super.onPlaybackStateChanged(state)
@@ -649,17 +640,6 @@ class MainActivity : Activity(),
 				shuffleOn = state.extras.getBoolean("shuffle")
 			}
             updateInterface.updateShuffleMode(shuffleOn)
-        }
-    }
-    inner class BroadcastTransportControls: BroadcastReceiver(){
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if(intent?.action == "PLAY"){
-                onClickPlay()
-            } else if(intent?.action == "NEXT"){
-                onClickNext()
-            } else {
-                Log.d(TAG, "Intentaction: " + intent?.action)
-            }
         }
     }
 }

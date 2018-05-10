@@ -35,6 +35,7 @@ class LyricsFragment: Fragment() {
 		if(lyricsText == null){
 			Log.d(TAG, "TV ist null")
 		} else if (args != null && text != null) {
+			Log.d(TAG, text.contains("\n").toString())
 			lyricsText?.text = text
 		} else {
 			Log.e(TAG, "Args oder lyrics sind null")

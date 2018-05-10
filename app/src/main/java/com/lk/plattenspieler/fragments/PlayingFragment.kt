@@ -4,7 +4,6 @@ import android.app.Fragment
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
-import android.media.MediaMetadata
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
@@ -14,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.models.MusicMetadata
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
@@ -67,8 +67,6 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 	// TODO Lyrics schreiben über Menü -- IN ARBEIT
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Buttons reichen die Nachrichten über Broadcasts weiter, damit die Interfaces sich
-        // nicht in die Quere kommen
         val accentcolor = ThemeChanger().getAccentColor(
                 PreferenceManager.getDefaultSharedPreferences(context).getInt(MainActivity.PREF_DESIGN, 0))
         ivShuffle?.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity.theme))
@@ -81,44 +79,39 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
         activity.actionBar.setTitle(R.string.action_playing)
         args = this.arguments
         created = true
-        setMetaData(args)
-        setPlaylist(args.getString("Q"))
+        writeMetadata(args.getParcelable<MusicMetadata>("T"), args.getString("Q"))
+        val shuffle = args.getBoolean("shuffle", false)
+        updateShuffleMode(shuffle)
     }
     override fun onDestroy() {
         super.onDestroy()
         created = false
     }
 
-    // wenn eine neue Instanz von PlayingFragment erstellt wird
-    private fun setMetaData(args: Bundle){
-        val data = args.getString("T")
-        if(data.isNotEmpty()) {
-            val dataArray = data.split("__".toRegex())
-            if (dataArray[1] != "null") {
-                // ID ist an Stelle 0 gespeichert
-                tv_playing_album.text = dataArray[3]
-                tv_playing_songnumber.text = dataArray[6]
-                tv_playing_songnumber.append(" " + getString(R.string.songs))
-                // ms umrechnen auf Minuten und Sekunden
-                var dur: Long = dataArray[4].toLong()
-                dur /= 1000
-                val min = (dur / 60).toInt()
-                val sec = (dur % 60).toInt()
-                var s = String.format("%02d", sec)
-				s = "$min:$s"
-                tv_playing_duration.text = s
-                // Cover anzeigen
-                val cover = Drawable.createFromPath(dataArray[5])
-				coverPath = dataArray[5]
-                ll_playing_fragment.background = cover
-				// Lyrics abfragen
-				lyricsAbfragen(dataArray[7])
+    private fun writeMetadata(data: MusicMetadata, queue: String){
+        if(!data.isEmpty()) {
+            setPlaylist(queue)
+            tv_playing_album.text = data.album
+            tv_playing_songnumber.text = data.songnr.toString()
+            tv_playing_songnumber.append(" " + getString(R.string.songs))
+            var dur = data.duration
+            dur /= 1000
+            val min = (dur / 60).toInt()
+            val sec = (dur % 60).toInt()
+            var s = String.format("%02d", sec)
+            s = "$min:$s"
+            tv_playing_duration.text = s
+            var cover = Drawable.createFromPath(data.cover_uri)
+            if (cover == null){
+                cover = resources.getDrawable(R.mipmap.ic_no_cover, activity.theme)
             }
+            coverPath = data.cover_uri
+            ll_playing_fragment.background = cover
+            // Lyrics abfragen
+            lyricsAbfragen(data.path)
         }
-        //Log.i(TAG, "Hat Key shuffle: " + args.containsKey("shuffle").toString())
-        val shuffle = args.getBoolean("shuffle", false)
-        updateShuffleMode(shuffle)
     }
+
     private fun setPlaylist(items: String){
         val itemsArray = items.split(Regex("__"))
         val stringItems: Array<String> = itemsArray.toTypedArray()
@@ -133,7 +126,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 			// Mp3 Datei
 			val mp3File = AudioFileIO.read(File(filepath)) as MP3File
 			if(mp3File.hasID3v2Tag()) {
-				var lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
+				val lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
 				if (lyrics != null && lyrics != "") {
 					ivLyrics?.alpha = 1.0f
 					this.lyrics = lyrics/*
@@ -146,7 +139,7 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 		} else if(filepath.contains("m4a")) {
 			// m4a Datei
 			val m4aTag = AudioFileIO.read(File(filepath)).tag as Mp4Tag
-			var lyrics = m4aTag.getFirst(Mp4FieldKey.LYRICS)
+			val lyrics = m4aTag.getFirst(Mp4FieldKey.LYRICS)
 			if(lyrics != null  && lyrics != ""){
 				ivLyrics?.alpha = 1.0f
 				this.lyrics = lyrics/*
@@ -159,29 +152,11 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
 	}
 
     // Updates während des Anzeigen dieses Fragments
-    override fun updateMetadata(data: MediaMetadata, queue: String) {
+    override fun updateMetadata(data: MusicMetadata, queue: String) {
         if(created) {
-            if(data.getString(MediaMetadata.METADATA_KEY_TITLE) != "null") {
-                setPlaylist(queue)
-                tv_playing_album.text = data.getString(MediaMetadata.METADATA_KEY_ALBUM)
-                tv_playing_songnumber.text = data.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS).toString()
-                tv_playing_songnumber.append(" Lieder")
-                var dur = data.getLong(MediaMetadata.METADATA_KEY_DURATION)
-                dur /= 1000
-                val min = (dur / 60).toInt()
-                val sec = dur % 60
-                var s = String.format("%02d", sec)
-				s = "$min:$s"
-                tv_playing_duration.text = s
-                val cover = Drawable.createFromPath(data.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI))
-                ll_playing_fragment.background = cover
-				coverPath = data.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
-				// Lyrics abfragen
-				lyricsAbfragen(data.getString(MediaMetadata.METADATA_KEY_WRITER))
-            }
+            writeMetadata(data, queue)
         }
     }
-
     // Button passend anzeigen, wenn Zufallswiedergabe erfolgt
     override fun updateShuffleMode(mode: Boolean) {
         if(mode){
@@ -190,5 +165,4 @@ class PlayingFragment : Fragment(), MainActivity.CallbackPlaying {
             ivShuffle?.alpha = 0.4f
         }
     }
-
 }
