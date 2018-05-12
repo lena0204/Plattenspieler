@@ -24,21 +24,11 @@ class MusicProvider(private val c: Context) {
 	fun getFirstTitle(): String{
 		// Albumdatenbankspalten
 		var titleId = ""
-		/*
-		val projection = arrayOf(MediaStore.Audio.Media.ALBUM_ID)
-		val cursorAlbum = c.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, projection, null, null, null)
-		// Titeldatenbankspalten
-		if(cursorAlbum.moveToFirst()){
-			val albumid = cursorAlbum.getString(cursorAlbum.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID))
-			val selection = android.provider.MediaStore.Audio.Media.ALBUM_ID + "='" + albumid + "'"*/
-			// Titeldatenbank abfragen
-			val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media._ID), null,null,null)
-			if(cursorTitle.moveToFirst()){
-				titleId = cursorTitle.getString(cursorTitle.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
-			}
-			cursorTitle.close()
-		//}
-		//cursorAlbum.close()
+        val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media._ID), null,null,null)
+        if(cursorTitle.moveToFirst()){
+            titleId = cursorTitle.getString(cursorTitle.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+        }
+        cursorTitle.close()
 		return titleId
 	}
 

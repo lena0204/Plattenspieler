@@ -1,8 +1,8 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Fragment
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.*
 import android.widget.TextView
@@ -26,12 +26,12 @@ class LyricsFragment: Fragment() {
 		lyricsText = v.tv_lyrics_text
 		return v
 	}
-	override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		activity.actionBar.title = resources.getString(R.string.action_lyrics)
+		activity?.actionBar?.title = resources.getString(R.string.action_lyrics)
 		val args = this.arguments
-		ll_lyrics_frame.background = Drawable.createFromPath(args.getString("C"))
-		val text = args.getString("L")
+		ll_lyrics_frame.background = Drawable.createFromPath(args?.getString("C"))
+		val text = args?.getString("L")
 		if(lyricsText == null){
 			Log.d(TAG, "TV ist null")
 		} else if (args != null && text != null) {

@@ -31,6 +31,7 @@ class MusicService: MediaBrowserService()  {
     //private val brn = BroadcastReceiverNoisy()
     private val amCallback = AudioFocusCallback()
     private val ID: Int = 88
+    // TODO Enums erstellen
     private val STATE_STOP = 1
     private val STATE_PLAY = 2
     private val STATE_PAUSE = 3
@@ -81,9 +82,9 @@ class MusicService: MediaBrowserService()  {
         // Session aufsetzen (mit Provider, Token, Callback und Flags setzen)
         musicProvider = MusicProvider(c)
         msession = MediaSession(c, TAG)
-        /*if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             msession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS)
-        }*/
+        }
         msession.setCallback(MusicSessionCallback())
         sessionToken = msession.sessionToken
         // Playback und Metadata initialisieren
@@ -98,13 +99,6 @@ class MusicService: MediaBrowserService()  {
     }
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
-		/*var state = ""
-		when(msession.controller.playbackState.state){
-			1 -> state = "stopped"
-			2 -> state = "paused"
-			3 -> state = "playing"
-		}
-        Log.d(TAG, "Playbackstate: $state")*/
         if(msession.controller.playbackState.state == PlaybackState.STATE_PAUSED) {
             handleOnStop()
         }
@@ -168,7 +162,8 @@ class MusicService: MediaBrowserService()  {
                 updatePlaybackstate(PlaybackState.STATE_PLAYING)
                 playingstate = STATE_PLAY
                 // starte im Vordergrund mit Benachrichtigung
-                this.startForeground(ID, MediaNotification(this).showNotification(PlaybackState.STATE_PLAYING).build())
+                this.startForeground(ID, MediaNotification(this)
+                        .showNotification(PlaybackState.STATE_PLAYING).build())
             }
             musicPlayer!!.setOnErrorListener { _, what, extra ->
                 Log.e(TAG, "MusicPlayerError: $what; $extra")
@@ -307,7 +302,8 @@ class MusicService: MediaBrowserService()  {
 		Log.d(TAG, "Queue fertig mit Länge ${playingQueue.countItems()}")
 		msession.setQueue(playingQueue.getQueueItemList())
 		updateMetadata()
-		nm.notify(ID, MediaNotification(this).showNotification(msession.controller.playbackState.state).build())
+		nm.notify(ID, MediaNotification(this)
+                .showNotification(msession.controller.playbackState.state).build())
         shuffleOn = true
 	}
 
@@ -343,7 +339,8 @@ class MusicService: MediaBrowserService()  {
             val position = musicPlayer!!.currentPosition.toLong()
             positionMs = position.toInt()
             playbackState.setState(PlaybackState.STATE_PLAYING, position, 1.0f)
-            nm.notify(ID, MediaNotification(this).showNotification(state).build())
+            nm.notify(ID, MediaNotification(this)
+                    .showNotification(state).build())
         } else if(state == PlaybackState.STATE_PAUSED ||
                 state == PlaybackState.STATE_SKIPPING_TO_NEXT){
             playbackState.setActions(PlaybackState.ACTION_PLAY
