@@ -1,8 +1,10 @@
 package com.lk.plattenspieler.fragments
 
+import android.app.Activity
 import android.app.Fragment
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
@@ -11,25 +13,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.models.MedialistObservable
 import com.lk.plattenspieler.models.MusicList
-import com.lk.plattenspieler.utils.ThemeChanger
-import com.lk.plattenspieler.utils.TitleAdapter
+import com.lk.plattenspieler.utils.*
 import kotlinx.android.synthetic.main.fragment_album_details.*
+import kotlinx.android.synthetic.main.fragment_album_details.view.*
+import java.util.*
 
 /**
 * Erstellt von Lena am 08.06.17.
 */
-class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
+class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
 
     private val TAG = "com.lk.pl-AlbumDetailsF"
     private lateinit var listener: OnClick
     private var data = MusicList()
-    private lateinit var fabShuffle: ImageButton
+    private var attached = false
 
-    constructor(act: AlbumDetailsFragment.OnClick): this() {
-        listener = act
-    }
     // Interface und Listener zum Durchreichen bis zu Activity
     interface OnClick{
         fun onClickTitle(titleid: String)
@@ -40,21 +40,34 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
         listener.onClickTitle(albumid)
     }
 
+    override fun onAttach(activity: Activity?) {
+        super.onAttach(activity)
+        listener = activity as OnClick
+    }
+    override fun onStop() {
+        super.onStop()
+        attached = false
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val v = inflater.inflate(R.layout.fragment_album_details, container, false)
-        fabShuffle = v.findViewById(R.id.fab_shuffle) as ImageButton
-        val design = PreferenceManager.getDefaultSharedPreferences(context).getInt(MainActivity.PREF_DESIGN, 0)
-        if(design == ThemeChanger.THEME_LIGHT || design == ThemeChanger.THEME_DARK){
-            fabShuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity.theme)
+        val design = ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(context))
+        if(design == EnumTheme.THEME_LIGHT || design == EnumTheme.THEME_DARK){
+            v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity.theme)
         } else {
-            fabShuffle.background = resources.getDrawable(R.drawable.fab_background_teal, activity.theme)
+            v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_teal, activity.theme)
         }
         return v
     }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        fabShuffle.setOnClickListener { listener.onShuffleClick(data.getItemAt(0).id) }
-        setupRecyclerView(this.arguments.getParcelable("Liste"))
+        attached = true
+        fab_shuffle.setOnClickListener {
+            listener.onShuffleClick(data.getItemAt(0).id)
+        }
+        MedialistObservable.addObserver(this)
+        setupRecyclerView(MedialistObservable.getMediaList())
     }
 
     private fun setupRecyclerView(list: MusicList){
@@ -73,10 +86,20 @@ class AlbumDetailsFragment(): Fragment(), TitleAdapter.OnClickTitle {
             }
         }
         if(album.isNotEmpty()){
-            this.activity.actionBar.title = album
+            this.activity.actionBar.title = album  // Observer ist schneller als fragment
         }
         recycler_album_details.layoutManager = LinearLayoutManager(activity)
         recycler_album_details.adapter = TitleAdapter(data, this)
+    }
+
+    override fun update(o: Observable?, arg: Any?) {
+        if(arg is MusicList){
+            if(arg.getFlag() == MediaBrowser.MediaItem.FLAG_PLAYABLE) {
+                if(attached) {
+                    setupRecyclerView(arg)
+                }
+            }
+        }
     }
 
 }

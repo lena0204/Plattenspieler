@@ -33,6 +33,15 @@ data class MusicMetadata(
 
     fun isEmpty(): Boolean = id == ""
 
+    fun getDuration(): String{
+        var dur = duration
+        dur /= 1000
+        val min = (dur / 60).toInt()
+        val sec = (dur % 60).toInt()
+        val s = String.format("%02d", sec)
+        return "$min:$s"
+    }
+
     fun getMediaMetadata(): MediaMetadata{
         return MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, id)
@@ -57,6 +66,9 @@ data class MusicMetadata(
 
     companion object {
         fun createFromMediaMetadata(meta: MediaMetadata): MusicMetadata{
+            if(meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) == null){
+                return MusicMetadata()
+            }
             return MusicMetadata(
                     meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
                     meta.getString(MediaMetadata.METADATA_KEY_ALBUM),

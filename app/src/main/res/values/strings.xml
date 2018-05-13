@@ -34,4 +34,7 @@
     <string name="dialog_title">Lyrics hinzufügen</string>
     <string name="dialog_yes">Hinzufügen</string>
     <string name="dialog_no">Abbrechen</string>
+
+    <!-- Toast -->
+    <string name="toast_apply_theme">Die App muss manuell neugestartet werden, um das Theme anzuwenden.</string>
 </resources>

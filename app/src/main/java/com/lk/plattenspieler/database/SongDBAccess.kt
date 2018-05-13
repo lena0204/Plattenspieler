@@ -52,7 +52,7 @@ object SongDBAccess{
         }
     }
 
-    fun restorePlayingQueue(contentResolver: ContentResolver, mc: MediaController): MusicList?{
+    fun restorePlayingQueue(contentResolver: ContentResolver): MusicList?{
         val playingQueue = MusicList()
         Log.d(TAG, "Restoring")
         val projection = getProjection()
@@ -70,7 +70,6 @@ object SongDBAccess{
                     duration = c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLong(),
                     songnr = c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLong()
             )
-            mc.transportControls.playFromMediaId(music.id, Bundle())
             playingQueue.addItem(music)
             c.moveToNext()
             // Metadata zusammenstellen und an den Service weitergeben
@@ -83,9 +82,6 @@ object SongDBAccess{
                         c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI))
                 )
                 playingQueue.addItem(item)
-                val args = Bundle()
-                args.putParcelable("S", item)
-                mc.sendCommand("add", args, null)
                 c.moveToNext()
             }
             c.close()

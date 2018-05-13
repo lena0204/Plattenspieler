@@ -20,7 +20,7 @@
         android:title="@string/menu_shuffle_all"
         android:showAsAction="never"/>
 
- <!--   <item
+    <!--<item
         android:id="@+id/menu_add_lyrics"
         android:title="@string/menu_add_lyrics"
         android:showAsAction="never"/>-->

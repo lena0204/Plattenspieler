@@ -52,7 +52,9 @@ class MediaStack {
     fun popMedia(): MusicMetadata?{
         return if(!isEmtpy()) {
             elements--
-            stack[elements]
+            val item = stack[elements]
+            stack[elements] = null
+            item
         } else {
             null
         }

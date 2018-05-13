@@ -32,7 +32,7 @@ class MusicList(
     fun isEmpty(): Boolean = countItems() == 0
 
     fun addFlag(flag: Int) { this.flag = flag }
-
+    fun getFlag(): Int = flag
 
     fun getQueueItemList(): MutableList<MediaSession.QueueItem>{
         val qlist = mutableListOf<MediaSession.QueueItem>()
@@ -51,13 +51,13 @@ class MusicList(
         return mlist
     }
 
-    fun getMetadataList(): MutableList<MediaMetadata>{
+/*    fun getMetadataList(): MutableList<MediaMetadata>{
         val mlist = mutableListOf<MediaMetadata>()
         for (item in list){
             mlist.add(item.getMediaMetadata())
         }
         return mlist
-    }
+    }*/
 
     companion object {
         fun createListFromQueue(list: MutableList<MediaSession.QueueItem>): MusicList{

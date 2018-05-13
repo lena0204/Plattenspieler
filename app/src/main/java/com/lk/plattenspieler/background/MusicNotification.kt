@@ -8,25 +8,20 @@ import android.os.Build
 import android.support.annotation.RequiresApi
 import android.util.Log
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.models.MusicMetadata
 
 /**
  * Erstellt von Lena am 11.05.18.
  */
-class MusicNotification(val service: MusicService): BroadcastReceiver() {
+class MusicNotification(private val service: MusicService) {
 
-    private val STATE_STOP = 1
-    private val STATE_PLAY = 2
-    private val STATE_PAUSE = 3
-    private val STATE_NEXT = 4
     private val CHANNEL_ID = "plattenspieler_playback"
     private val TAG = "MusicNotification"
-    private var playingstate = STATE_STOP
 
-    private val ACTION_MEDIA_PLAY = "com.lk.pl-ACTION_MEDIA_PLAY"
-    private val ACTION_MEDIA_PAUSE = "com.lk.pl-ACTION_MEDIA_PAUSE"
-    private val ACTION_MEDIA_NEXT = "com.lk.pl-ACTION_MEDIA_NEXT"
+    init{
+        //registerBroadcast()
+    }
 
     fun showNotification(state: Int, currentMusicMetadata: MusicMetadata, shuffleOn: Boolean): Notification.Builder{
         //Log.i(TAG, shuffleOn.toString())
@@ -50,7 +45,7 @@ class MusicNotification(val service: MusicService): BroadcastReceiver() {
         nb.setStyle(Notification.MediaStyle()
                 .setMediaSession(service.sessionToken)
                 .setShowActionsInCompactView(1,2))
-        val i = Intent(service.applicationContext, MainActivity::class.java)
+        val i = Intent(service.applicationContext, MainActivityNew::class.java)
         nb.setContentIntent(PendingIntent.getActivity(service, 0, i, PendingIntent.FLAG_UPDATE_CURRENT))
         // korrekt anzeigen, ob Shuffle aktiviert ist
         if(shuffleOn){
@@ -62,17 +57,17 @@ class MusicNotification(val service: MusicService): BroadcastReceiver() {
         var pi: PendingIntent
         if(state == PlaybackState.STATE_PLAYING){
             pi = PendingIntent.getBroadcast(service, 100,
-                    Intent(ACTION_MEDIA_PAUSE).setPackage(service.packageName), 0)
+                    Intent(MusicService.ACTION_MEDIA_PAUSE).setPackage(service.packageName), 0)
             nb.addAction(Notification.Action.Builder(R.mipmap.ic_pause, "Pause",pi).build())
         } else {
             pi = PendingIntent.getBroadcast(service, 100,
-                    Intent(ACTION_MEDIA_PLAY).setPackage(service.packageName), 0)
+                    Intent(MusicService.ACTION_MEDIA_PLAY).setPackage(service.packageName), 0)
             nb.addAction(Notification.Action.Builder(R.mipmap.ic_play, "Play", pi).build())
         }
         pi = PendingIntent.getBroadcast(service, 100,
-                Intent(ACTION_MEDIA_NEXT).setPackage(service.packageName), 0)
+                Intent(MusicService.ACTION_MEDIA_NEXT).setPackage(service.packageName), 0)
         nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next", pi).build())
-        registerBroadcast()
+        //registerBroadcast()
         return nb
     }
     @RequiresApi(Build.VERSION_CODES.O)
@@ -83,43 +78,5 @@ class MusicNotification(val service: MusicService): BroadcastReceiver() {
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         val manager = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
-    }
-    private fun registerBroadcast(){
-        val ifilter = IntentFilter()
-        ifilter.addAction(ACTION_MEDIA_PLAY)
-        ifilter.addAction(ACTION_MEDIA_PAUSE)
-        ifilter.addAction(ACTION_MEDIA_NEXT)
-        service.registerReceiver(this, ifilter)
-    }
-
-    override fun onReceive(context: Context?, intent: Intent?) {
-        if(intent != null){
-            Log.d(TAG, "onReceive: " + intent.action)
-            when(intent.action){
-                ACTION_MEDIA_PLAY -> {
-                    if(playingstate == STATE_PAUSE){
-                        service.handleOnPlay()
-                        playingstate = STATE_PLAY
-                        //Log.d(TAG, "PLAY: playingstate: " + playingstate + ", Playbackstate:" + service..controller.playbackState.state)
-                    }
-                }
-                ACTION_MEDIA_PAUSE -> {
-                    if(playingstate == STATE_PLAY){
-                        service.handleOnPause()
-                        playingstate = STATE_PAUSE
-                        //Log.d(TAG, "PAUSE: playingstate: " + playingstate + ", Playbackstate:" + msession.controller.playbackState.state)
-
-                    }
-                }
-                ACTION_MEDIA_NEXT -> {
-                    if(playingstate == STATE_PLAY || playingstate == STATE_PAUSE) {
-                        service.handleOnNext()
-                        playingstate = STATE_NEXT
-                        //Log.d(TAG, "NEXT: playingstate: " + playingstate + ", Playbackstate:" + msession.controller.playbackState.state)
-                    }
-                }
-                else -> Log.d(TAG, "Neuer Intent mit Action:${intent.action}")
-            }
-        }
     }
 }

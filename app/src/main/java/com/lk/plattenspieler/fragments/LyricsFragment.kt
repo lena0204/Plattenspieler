@@ -2,7 +2,6 @@ package com.lk.plattenspieler.fragments
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.*
 import android.widget.TextView
@@ -13,7 +12,7 @@ import kotlinx.android.synthetic.main.fragment_lyrics.view.*
 /**
  * Erstellt von Lena am 21.04.18.
  */
-class LyricsFragment: Fragment() {
+class LyricsFragment: android.app.Fragment() {
 
 	private val TAG = "LyricsFragment"
 

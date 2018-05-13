@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.widget.EditText
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.main.MainActivity
+import com.lk.plattenspieler.main.MainActivityNew
 import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
 
 /**
@@ -21,7 +21,7 @@ class LyricsAddingDialog: DialogFragment(){
 
 	override fun onAttach(context: Context?) {
 		super.onAttach(context)
-		listener = context as MainActivity
+		listener = context as MainActivityNew
 	}
 
 	// PROBLEM_ Writing access for Library is missing (min für mp3Files)
