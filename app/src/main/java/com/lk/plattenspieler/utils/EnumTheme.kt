@@ -7,5 +7,6 @@ enum class EnumTheme {
     THEME_LIGHT,
     THEME_DARK,
     THEME_LIGHT_T,
-    THEME_DARK_T
+    THEME_DARK_T,
+    THEME_LINEAGE
 }

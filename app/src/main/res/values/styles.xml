@@ -1,32 +1,36 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here.-->
-        <item name="android:colorPrimary">@color/colorPrimary</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppThemeDark" parent="android:Theme.Material">
-        <item name="android:colorPrimary">@color/colorPrimary</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="android:colorAccent">@color/colorAccent</item>
-        <item name="android:colorBackground">@color/black</item>
+    <style name="AppThemeDark" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <!--<item name="colorBackground">@color/black</item>-->
     </style>
 
-    <style name="AppThemeT" parent="android:Theme.Material.Light.DarkActionBar">
+    <style name="AppThemeLineage" parent="Theme.AppCompat.DayNight">
+        <item name="android:windowLightStatusBar">@bool/is_theme_light</item>
+    </style>
+
+    <style name="AppThemeT" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here.-->
-        <item name="android:colorPrimary">@color/colorPrimary_t</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark_t</item>
-        <item name="android:colorAccent">@color/colorAccent_t</item>
+        <item name="colorPrimary">@color/colorPrimary_t</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark_t</item>
+        <item name="colorAccent">@color/colorAccent_t</item>
     </style>
 
-    <style name="AppThemeDarkT" parent="android:Theme.Material">
-        <item name="android:colorPrimary">@color/colorPrimary_t</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark_t</item>
-        <item name="android:colorAccent">@color/colorAccent_t</item>
-        <item name="android:colorBackground">@color/black</item>
+    <style name="AppThemeDarkT" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary_t</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark_t</item>
+        <item name="colorAccent">@color/colorAccent_t</item>
+        <!--<item name="colorBackground">@color/black</item>-->
     </style>
 
 </resources>

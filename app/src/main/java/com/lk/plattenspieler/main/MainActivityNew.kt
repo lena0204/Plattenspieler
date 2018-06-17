@@ -1,7 +1,6 @@
 package com.lk.plattenspieler.main
 
 import android.Manifest
-import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -11,6 +10,7 @@ import android.media.browse.MediaBrowser
 import android.media.session.*
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -21,13 +21,14 @@ import com.lk.plattenspieler.fragments.*
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.*
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.*
 import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
-class MainActivityNew : Activity(),
+class MainActivityNew : AppCompatActivity(),
         Observer,
         AlbumFragment.OnClick,
         AlbumDetailsFragment.OnClick,
@@ -96,7 +97,7 @@ class MainActivityNew : Activity(),
                     }
                 }
                 else -> Log.e(TAG, "ML: unknown observable update from " +
-                        "${o?.javaClass?.canonicalName}: ${arg}")
+                        "${o?.javaClass?.canonicalName}: $arg")
             }
         }
         musicClient = MusicClient(this)
@@ -104,7 +105,7 @@ class MainActivityNew : Activity(),
         val pf = PlayingFragment()
         rl_playing.setOnClickListener {
             if(!pf.isVisible){
-                fragmentManager.beginTransaction()
+                supportFragmentManager.beginTransaction()
                         .addToBackStack(null)
                         .replace(R.id.frame_layout, pf, "TAG_PLAYING")
                         .commit()
@@ -177,6 +178,27 @@ class MainActivityNew : Activity(),
         PlaybackObservable.deleteObservers()
     }
 
+    private fun checkLineageSDK() : Boolean{
+        try {
+            val process = Runtime.getRuntime().exec("getprop ro.lineage.build.version.plat.sdk")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val output = StringBuilder()
+            var line = reader.readLine()
+            while (line != null) {
+                output.append(line)
+                line = reader.readLine()
+            }
+            val result = output.toString()
+            Log.d(TAG, "Lineage SDK Version: " + result.toInt())
+            if(result.toInt()==9){
+                return true
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return false
+    }
+
     // ------------------ Observer -------------------
     override fun update(observable: Observable?, arg: Any?) { }
     private fun updatePlaybackState(state: MusicPlaybackState){
@@ -198,7 +220,7 @@ class MainActivityNew : Activity(),
         //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
             Log.i(TAG, "Transaction")
-            fragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                     .replace(R.id.frame_layout, AlbumFragment())
                     .commit()
         }
@@ -206,7 +228,7 @@ class MainActivityNew : Activity(),
     private fun showTitles(){
         //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
-            fragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                     .addToBackStack(null)
                     .replace(R.id.frame_layout, AlbumDetailsFragment()).commit()
         }
@@ -235,7 +257,7 @@ class MainActivityNew : Activity(),
         // Designoptionene dynamisch je nach Design anpassen
         val optionDesign = when(design){
             EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> resources.getString(R.string.menu_teal)
-            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T -> resources.getString(R.string.menu_pink)
+            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T, EnumTheme.THEME_LINEAGE -> resources.getString(R.string.menu_pink)
         }
         val lyrics = sharedPreferences.getInt(PREF_LYRICS, 0)
         val optionLyrics = if(lyrics == 0){
@@ -245,6 +267,9 @@ class MainActivityNew : Activity(),
         }
         menu?.findItem(R.id.menu_change_design)?.title = optionDesign
         menu?.findItem(R.id.menu_show_lyrics)?.title = optionLyrics
+        if(!checkLineageSDK()){
+            menu?.findItem(R.id.menu_theme_lineage)?.isVisible = false
+        }
         return true
     }
     override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {

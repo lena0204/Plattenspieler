@@ -11,6 +11,11 @@
         android:showAsAction="never"/>
 
     <item
+        android:id="@+id/menu_theme_lineage"
+        android:title="@string/menu_theme_lineage"
+        android:showAsAction="never"/>
+
+    <item
         android:id="@+id/menu_remove_playing"
         android:title="@string/menu_remove_playing"
         android:showAsAction="never"/>

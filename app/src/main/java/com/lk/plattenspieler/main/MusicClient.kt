@@ -153,6 +153,7 @@ class MusicClient(val activity: Activity) {
             R.id.menu_dark_light -> changeLightDark()
             R.id.menu_shuffle_all -> shuffleAll()
             R.id.menu_show_lyrics -> changeLyricsState()
+            R.id.menu_theme_lineage -> applyTheme(EnumTheme.THEME_LINEAGE)
             /*R.id.menu_add_lyrics -> addLyrics()*/
         /*R.id.menu_delete_database -> {
             // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
@@ -167,7 +168,7 @@ class MusicClient(val activity: Activity) {
         design = when(design){
             EnumTheme.THEME_LIGHT -> EnumTheme.THEME_LIGHT_T
             EnumTheme.THEME_DARK -> EnumTheme.THEME_DARK_T
-            EnumTheme.THEME_LIGHT_T -> EnumTheme.THEME_LIGHT
+            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_LINEAGE -> EnumTheme.THEME_LIGHT
             EnumTheme.THEME_DARK_T -> EnumTheme.THEME_DARK
         }
         applyTheme(design)
@@ -177,7 +178,7 @@ class MusicClient(val activity: Activity) {
         Log.d(TAG, "Hell/Dunkel: $design")
         design = when(design){
             EnumTheme.THEME_LIGHT -> EnumTheme.THEME_DARK
-            EnumTheme.THEME_DARK -> EnumTheme.THEME_LIGHT
+            EnumTheme.THEME_DARK, EnumTheme.THEME_LINEAGE -> EnumTheme.THEME_LIGHT
             EnumTheme.THEME_LIGHT_T -> EnumTheme.THEME_DARK_T
             EnumTheme.THEME_DARK_T -> EnumTheme.THEME_LIGHT_T
         }

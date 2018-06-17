@@ -17,6 +17,7 @@
     <string name="menu_add_lyrics">Lyrics hinzufügen</string>
     <string name="menu_show_lyrics">Lyrics verbergen</string>
     <string name="menu_show_lyrics_no">Lyrics anzeigen</string>
+    <string name="menu_theme_lineage">Lineage-Theme</string>
     <!--<string name="menu_delete_database">Datenbank löschen</string>-->
 
 
@@ -39,4 +40,5 @@
 
     <!-- Toast -->
     <string name="toast_apply_theme">Die App muss manuell neugestartet werden, um das Theme anzuwenden.</string>
+
 </resources>

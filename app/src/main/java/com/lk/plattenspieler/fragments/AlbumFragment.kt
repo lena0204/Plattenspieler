@@ -1,11 +1,11 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
-import android.app.Fragment
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -49,7 +49,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         started = false
     }
 
-    override fun onSaveInstanceState(outState: Bundle?) {
+    override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         Log.v(TAG, "onsaveinstancestate")
     }
@@ -59,11 +59,11 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         Log.v(TAG, "oncreateview")
         return inflater.inflate(R.layout.fragment_album, container, false)
     }
-    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         started = true
         MedialistObservable.addObserver(this)
-        activity.actionBar.title = getString(R.string.app_name)
+        activity?.actionBar?.title = getString(R.string.app_name)
         setupRecyclerView(MedialistObservable.getAlbums())
     }
 

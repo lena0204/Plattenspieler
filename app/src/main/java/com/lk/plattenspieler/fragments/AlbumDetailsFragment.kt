@@ -1,17 +1,17 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
-import android.app.Fragment
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.content.res.ColorStateList
+import android.graphics.*
 import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.MedialistObservable
 import com.lk.plattenspieler.models.MusicList
@@ -53,10 +53,17 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val v = inflater.inflate(R.layout.fragment_album_details, container, false)
         val design = ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(context))
-        if(design == EnumTheme.THEME_LIGHT || design == EnumTheme.THEME_DARK){
-            v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity.theme)
-        } else {
-            v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_teal, activity.theme)
+        v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity?.theme)
+        if(design == EnumTheme.THEME_LINEAGE){
+            // bei Lineage Theme den Akzent manuell drüber legen, weil dynamische Erkennung nicht funktionierts
+            val attr = intArrayOf(android.R.attr.colorAccent)
+            val typedArray = activity?.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, attr)
+            val color = typedArray?.getColor(0, Color.BLACK)
+            typedArray?.recycle()
+            if(color != null) {
+                v.fab_shuffle.backgroundTintList = ColorStateList.valueOf(color)
+                v.fab_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+            }
         }
         return v
     }
@@ -87,7 +94,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
             }
         }
         if(album.isNotEmpty()){
-            this.activity.actionBar.title = album  // Observer ist schneller als fragment
+            this.activity?.actionBar?.title = album  // Observer ist schneller als fragment
         }
         recycler_album_details.layoutManager = LinearLayoutManager(activity)
         recycler_album_details.adapter = TitleAdapter(data, this)

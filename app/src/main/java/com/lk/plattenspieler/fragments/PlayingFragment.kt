@@ -1,11 +1,12 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Fragment
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -68,19 +69,24 @@ class PlayingFragment : Fragment(), java.util.Observer {
                 }
                 val lyricsf = LyricsFragment()
                 lyricsf.arguments = args
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.frame_layout, lyricsf, "TAG_LYRICS")
-                        .commit()
+                fragmentManager?.beginTransaction()
+                        ?.addToBackStack(null)
+                        ?.replace(R.id.frame_layout, lyricsf, "TAG_LYRICS")
+                        ?.commit()
             }
         }
         val accentcolor = ThemeChanger.getAccentColor(
-                ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity)))
-        view.iv_playing_shuffle.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
+                ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity)), activity!!)
+        if(accentcolor != 0) {
+            view.iv_playing_shuffle.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
+            view.iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
+        } else {
+            view.iv_playing_shuffle.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
+            view.iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
+        }
         view.iv_playing_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-		view.iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
         view.iv_playing_lyrics.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-        activity.actionBar.setTitle(R.string.action_playing)
+        activity?.actionBar?.setTitle(R.string.action_playing)
     }
 
     private fun writeMetadata(data: MusicMetadata){
@@ -91,7 +97,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
             tv_playing_duration.text = data.getDuration()
             var cover = Drawable.createFromPath(data.cover_uri)
             if (cover == null){
-                cover = resources.getDrawable(R.mipmap.ic_no_cover, activity.theme)
+                cover = resources.getDrawable(R.mipmap.ic_no_cover, activity?.theme)
             }
             ll_playing_fragment.background = cover
             // Lyrics abfragen
