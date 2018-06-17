@@ -16,6 +16,8 @@ import com.lk.plattenspieler.utils.*
 
 /**
  * Created by Lena on 08.06.17.
+ * Verwaltet die Callbacks (MediaBrowser und MediaSession) zum Client, Zugriff auf den MusicProvider
+ * und auf das Playback, Entgegennahme der Broadcastnachrichten
  */
 class MusicService: MediaBrowserService()  {
 

@@ -19,6 +19,7 @@ import java.util.*
 
 /**
  * Created by Lena on 08.06.17.
+ * Stellt eine Liste von Alben dar, verwaltet den Observer und den RecyclerView
  */
 class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
 

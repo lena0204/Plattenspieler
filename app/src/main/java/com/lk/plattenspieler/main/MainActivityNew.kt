@@ -23,6 +23,10 @@ import com.lk.plattenspieler.utils.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
+/**
+ * Erstellt von Lena am 12.05.18.
+ * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
+ */
 class MainActivityNew : Activity(),
         Observer,
         AlbumFragment.OnClick,
@@ -33,6 +37,7 @@ class MainActivityNew : Activity(),
         const val PREF_PLAYING = "playing"
         const val PREF_DESIGN = "design"
         const val PREF_SHUFFLE = "shuffle"
+        const val PREF_LYRICS = "lyrics"
     }
 
  	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
@@ -135,11 +140,11 @@ class MainActivityNew : Activity(),
 
     private fun checkReadPermission(): Boolean{
         val permissions = arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                Manifest.permission.READ_EXTERNAL_STORAGE
+                /*,Manifest.permission.WRITE_EXTERNAL_STORAGE*/
         )
         return if(this.checkSelfPermission(permissions[0]) != PackageManager.PERMISSION_GRANTED
-                && this.checkSelfPermission(permissions[1]) != PackageManager.PERMISSION_GRANTED){
+                /*&& this.checkSelfPermission(permissions[1]) != PackageManager.PERMISSION_GRANTED*/){
             this.requestPermissions(permissions, PERMISSION_REQUEST)
             false
         } else {
@@ -149,8 +154,7 @@ class MainActivityNew : Activity(),
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(requestCode == PERMISSION_REQUEST){
-            if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+            if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
             } else {
                 Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
@@ -228,13 +232,19 @@ class MainActivityNew : Activity(),
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
         val design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        var optionDesign = ""
         // Designoptionene dynamisch je nach Design anpassen
-        optionDesign = when(design){
+        val optionDesign = when(design){
             EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> resources.getString(R.string.menu_teal)
             EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T -> resources.getString(R.string.menu_pink)
         }
+        val lyrics = sharedPreferences.getInt(PREF_LYRICS, 0)
+        val optionLyrics = if(lyrics == 0){
+            resources.getString(R.string.menu_show_lyrics_no)
+        } else {
+            resources.getString(R.string.menu_show_lyrics)
+        }
         menu?.findItem(R.id.menu_change_design)?.title = optionDesign
+        menu?.findItem(R.id.menu_show_lyrics)?.title = optionLyrics
         return true
     }
     override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {

@@ -5,7 +5,7 @@ package com.lk.plattenspieler.utils
  */
 enum class EnumAudioFucos {
 
-    AUDIO_FOCUS ,
+    AUDIO_FOCUS,
     AUDIO_LOSS,
     AUDIO_DUCK,
     AUDIO_PAUSE_PLAYING

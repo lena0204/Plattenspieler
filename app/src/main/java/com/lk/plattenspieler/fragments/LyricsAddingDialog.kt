@@ -10,6 +10,7 @@ import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
 
 /**
  * Erstellt von Lena am 23.04.18.
+ * Stellt einen Dialog mit Textfeld für das Hinzufügen von Liedtexten bereit
  */
 class LyricsAddingDialog: DialogFragment(){
 

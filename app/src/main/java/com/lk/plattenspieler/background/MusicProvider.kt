@@ -9,6 +9,7 @@ import com.lk.plattenspieler.models.MusicMetadata
 
 /**
  * Created by Lena on 08.06.17.
+ * Stellt die Metadaten für die Musik bereit, Zugriff auf die systeminterne Datenbank
  */
 class MusicProvider(private val c: Context) {
 
@@ -104,13 +105,16 @@ class MusicProvider(private val c: Context) {
                 val albumtitle = cursorAlbums.getString(cursorAlbums.getColumnIndex(MediaStore.Audio.Albums.ALBUM))
                 val albumtracks = cursorAlbums.getString(cursorAlbums.getColumnIndex(MediaStore.Audio.Albums.NUMBER_OF_SONGS))
                 val albumartist = cursorAlbums.getString(cursorAlbums.getColumnIndex(MediaStore.Audio.Albums.ARTIST))
-                val albumart = cursorAlbums.getString(cursorAlbums.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
+                var albumart = cursorAlbums.getString(cursorAlbums.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
+                if(albumart == null){
+                    albumart = ""
+                }
                 albumid = "ALBUM-$albumid"
                 val music = MusicMetadata(
                         albumid,
                         albumtitle,
                         albumartist,
-                        cover_uri = albumart,
+                        cover_uri = albumart,   // PROBLEM_ Albumart must not be null (was ist default?) -> coverui ist ""
                         num_tracks = albumtracks.toInt()
                 )
                 list.addItem(music)

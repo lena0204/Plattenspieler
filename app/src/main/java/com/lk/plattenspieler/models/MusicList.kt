@@ -8,6 +8,7 @@ import kotlinx.android.parcel.Parcelize
 
 /**
  * Erstellt von Lena am 10.05.18.
+ * Repräsentiert eine Liste von [MusicMetadata] mit entsprechenden Aktionen und Konvertierungsmöglichkeiten
  */
 @Parcelize
 class MusicList(

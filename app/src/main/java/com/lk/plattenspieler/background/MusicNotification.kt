@@ -13,6 +13,7 @@ import com.lk.plattenspieler.models.MusicMetadata
 
 /**
  * Erstellt von Lena am 11.05.18.
+ * Erstellt eine Benachrichtigung für den Service
  */
 class MusicNotification(private val service: MusicService) {
 

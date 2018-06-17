@@ -6,6 +6,7 @@ import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
+ * Verwaltet die Erstellung von Wiedergabelisten (sowohl sortiert als auch zufällig)
  */
 object QueueCreation {
 

@@ -6,6 +6,7 @@ import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
+ * Verwaltet alle Daten, die an das Playback gekoppelt sind (Metadaten, Wiedergabeliste, Status)
  */
 object PlaybackObservable: Observable() {
 

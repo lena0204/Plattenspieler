@@ -12,6 +12,7 @@ import kotlinx.android.synthetic.main.row_album.view.*
 
 /**
  * Created by Lena on 08.06.17.
+ * Adapter für den RecyclerView, um die Albumdaten korrekt darzustellen
  */
 class AlbumAdapter(private var dataset: MusicList, val cl: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
 

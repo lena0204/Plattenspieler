@@ -10,6 +10,7 @@ import com.lk.plattenspieler.models.MusicMetadata
 
 /**
  * Erstellt von Lena am 11.05.18.
+ * Zugriff auf die appeigene Datenbank, die die aktuelle Wiedergabeliste speichert
  */
 object SongDBAccess{
 

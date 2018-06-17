@@ -7,6 +7,7 @@ import android.util.Log
 
 /**
  * Created by Lena on 19.08.17.
+ * Repräsentiert die Datenbank mit den entsprechenden Spalten
  */
 class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
 

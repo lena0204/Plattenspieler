@@ -11,6 +11,7 @@ import java.util.*
 
 /**
  * Created by Lena on 19.08.17.
+ * ContentProvider (einfügen, löschen, updaten) für die interne Datenbank
  */
 class SongContentProvider: ContentProvider() {
 

@@ -22,6 +22,7 @@ import java.util.*
 
 /**
 * Erstellt von Lena am 08.06.17.
+ * Stellt eine Liste von Titel in einem Album dar, inkl. Verwaltung von Observer und RecyclerView
 */
 class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
 

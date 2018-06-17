@@ -11,6 +11,7 @@ import kotlinx.android.synthetic.main.fragment_lyrics.view.*
 
 /**
  * Erstellt von Lena am 21.04.18.
+ * Zeigt den Liedtext vom aktuell spielenden Lied an
  */
 class LyricsFragment: android.app.Fragment() {
 
@@ -18,7 +19,7 @@ class LyricsFragment: android.app.Fragment() {
 
 	private var lyricsText : TextView? = null
 
-	// FIXME von Lyrics über zurück-Button zum PlayingFragment führt dazu, dass er Lyrics vergisst
+	// FIXME von Lyrics über zurück-Button zum PlayingFragment führt dazu, dass er Lyrics vergisst -> SaveState
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		super.onCreateView(inflater, container, savedInstanceState)
 		val v = inflater.inflate(R.layout.fragment_lyrics, container, false)

@@ -11,6 +11,7 @@ import java.io.File
 
 /**
  * Erstellt von Lena am 13.05.18.
+ * Lesender und schreibender Zugriff auf die Liedtexte eines Liedes über eine externe Bibliothek
  */
 object LyricsAccess{
 
@@ -21,6 +22,7 @@ object LyricsAccess{
         if(filepath.contains("mp3")){
             // Mp3 Datei
             val mp3File = AudioFileIO.read(File(filepath)) as MP3File
+            // PROBLEM_ Fehler bei read() auf Bliss ROM 6.0
             if(mp3File.hasID3v2Tag()) {
                 val lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
                 if (lyrics != null && lyrics != "") {

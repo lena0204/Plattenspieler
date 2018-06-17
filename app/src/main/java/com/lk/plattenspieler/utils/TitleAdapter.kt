@@ -12,6 +12,7 @@ import kotlinx.android.synthetic.main.row_album_details.view.*
 
 /**
  * Created by Lena on 08.06.17.
+ * Adapter für den RecyclerView, der die Titeldaten korrekt darstellt
  */
 class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
 

@@ -15,6 +15,7 @@ import com.lk.plattenspieler.utils.*
 
 /**
  * Erstellt von Lena am 13.05.18.
+ * Verwaltet das Playback mit allen Methoden, inkl. Audiofokus und Update der Metadaten
  */
 class MusicPlayback(private val service: MusicService, private val notification: MusicNotification) {
 
@@ -26,10 +27,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .setUsage(AudioAttributes.USAGE_MEDIA).build()
     @TargetApi(26)
-    private val audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(audioAttr)
-            .setOnAudioFocusChangeListener(amCallback)
-            .build()
+    private lateinit var audioFocusRequest: AudioFocusRequest
 
     private var nm = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private var am: AudioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -61,6 +59,10 @@ class MusicPlayback(private val service: MusicService, private val notification:
             if(musicPlayer!!.isPlaying) musicPlayer!!.stop()
         }
         val result = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(audioAttr)
+                    .setOnAudioFocusChangeListener(amCallback)
+                    .build()
             am.requestAudioFocus(audioFocusRequest)
         } else {
             am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)

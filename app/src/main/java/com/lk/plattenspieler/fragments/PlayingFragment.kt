@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.LyricsAccess
 import com.lk.plattenspieler.utils.ThemeChanger
@@ -21,6 +22,7 @@ import java.util.*
 
 /**
  * Created by Lena on 08.06.17.
+ * Zeigt Informationen zum aktuell spielenden Lied (Metadaten) und die Wiedergabeliste an
  */
 class PlayingFragment : Fragment(), java.util.Observer {
 
@@ -93,7 +95,11 @@ class PlayingFragment : Fragment(), java.util.Observer {
             }
             ll_playing_fragment.background = cover
             // Lyrics abfragen
-            lyricsAbfragen(data.path)
+            val optLyrics = PreferenceManager.getDefaultSharedPreferences(activity).getInt(MainActivityNew.PREF_LYRICS,0)
+            if(optLyrics == 1) {
+                lyricsAbfragen(data.path)
+            }
+            // TODO nicht ganz zuverlässig -> SaveState Handling
         }
     }
 

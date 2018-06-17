@@ -20,6 +20,8 @@ import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
+ * Verwaltet Aktionen vom Menü und den Zugriff inkl. Callbacks auf den MediaBrowserService (MusicService),
+ * Gibt Updates an die Observables weiter zum verteilen
  */
 class MusicClient(val activity: Activity) {
 
@@ -150,6 +152,7 @@ class MusicClient(val activity: Activity) {
             R.id.menu_remove_playing -> stopAndRemovePlaying()
             R.id.menu_dark_light -> changeLightDark()
             R.id.menu_shuffle_all -> shuffleAll()
+            R.id.menu_show_lyrics -> changeLyricsState()
             /*R.id.menu_add_lyrics -> addLyrics()*/
         /*R.id.menu_delete_database -> {
             // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
@@ -182,7 +185,6 @@ class MusicClient(val activity: Activity) {
     }
     private fun applyTheme(design: EnumTheme){
         ThemeChanger.writeThemeToPreferences(sharedPreferences, design)
-        Toast.makeText(activity, R.string.toast_apply_theme, Toast.LENGTH_LONG).show()
         saveQueue()
         activity.recreate()
     }
@@ -200,11 +202,19 @@ class MusicClient(val activity: Activity) {
         shuffleOn = true
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn))
     }
-    private fun addLyrics(){
+    private fun changeLyricsState(){
+        val pref = sharedPreferences.getInt(MainActivityNew.PREF_LYRICS,0)
+        if(pref == 0){
+            sharedPreferences.edit().putInt(MainActivityNew.PREF_LYRICS, 1).apply()
+        } else {
+            sharedPreferences.edit().putInt(MainActivityNew.PREF_LYRICS, 0).apply()
+        }
+    }
+    private fun addLyrics() {
         val dialog = LyricsAddingDialog()
         dialog.show(activity.fragmentManager, "LyricsAddingDialog")
     }
-    
+
     inner class BrowserConnectionCallback: MediaBrowser.ConnectionCallback(){
 
         override fun onConnected() {

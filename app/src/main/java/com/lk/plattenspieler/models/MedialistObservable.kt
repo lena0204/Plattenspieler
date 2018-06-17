@@ -5,6 +5,7 @@ import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
+ * Verwaltet die Liste von Alben und die Liste von Titeln
  */
 object MedialistObservable: Observable() {
 

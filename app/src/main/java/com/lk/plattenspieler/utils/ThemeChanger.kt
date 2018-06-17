@@ -9,6 +9,7 @@ import com.lk.plattenspieler.main.MainActivityNew
 
 /**
  * Created by Lena on 08.09.17.
+ * Verwaltet das Design der App (anwenden und abspeichern)
  */
 object ThemeChanger{
 
