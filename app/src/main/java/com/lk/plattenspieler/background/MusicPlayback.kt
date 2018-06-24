@@ -27,7 +27,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .setUsage(AudioAttributes.USAGE_MEDIA).build()
     @TargetApi(26)
-    private lateinit var audioFocusRequest: AudioFocusRequest
+    private var audioFocusRequest: AudioFocusRequest? = null
 
     private var nm = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private var am: AudioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -121,6 +121,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
     fun handleOnPlayFromId(pId: String){
         Log.i(TAG, "handleOnPlayFromId")
         playingQueue.removeAll()
+        mediaStack.popAll()
         shuffleOn = false
         // Standardmäßig ausschalten wenn neu abgespielt wird, falls shuffle wird das später gesetzt
         service.sendQueue(playingQueue)
@@ -190,7 +191,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
         updatePlaybackstate(PlaybackState.STATE_STOPPED)
         updateMetadata()
         // AudioFocus freigeben
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null){
             am.abandonAudioFocusRequest(audioFocusRequest)
         } else {
             am.abandonAudioFocus(amCallback)
@@ -264,6 +265,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
         }
         pb.setState(state, position, 1.0f)
         val extras = Bundle()
+        Log.v(TAG, "UpdatePlaybackstate: shuffleOn is $shuffleOn")
         extras.putBoolean("shuffle", shuffleOn)
         pb.setExtras(extras)
         service.sendPlaybackstate(pb.build())

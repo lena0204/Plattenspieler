@@ -63,7 +63,7 @@ class MediaStack {
     /**
      * @return sind Elemente vorhanden
      */
-    fun isEmtpy(): Boolean = elements == 0
+    private fun isEmtpy(): Boolean = elements == 0
 
     /**
      * Entfernt alle noch vorhandenen Metadaten

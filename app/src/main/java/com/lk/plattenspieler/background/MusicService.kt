@@ -55,6 +55,7 @@ class MusicService: MediaBrowserService()  {
         msession.setMetadata(MediaMetadata.Builder().build())
         // Queuetitel setzen
         msession.setQueueTitle(getString(R.string.queue_title))
+
         playback = MusicPlayback(this, MusicNotification(this))
     }
     override fun onUnbind(intent: Intent?): Boolean {
@@ -176,7 +177,10 @@ class MusicService: MediaBrowserService()  {
                     }
                 }
                 "addAll" -> playback.addAllSongsToPlayingQueue()
-                "shuffle" -> playback.shuffleOn = true
+                "shuffle" -> {
+                    playback.shuffleOn = true
+                    Log.v(TAG, "shuffle is on")
+                }
             }
         }
     }

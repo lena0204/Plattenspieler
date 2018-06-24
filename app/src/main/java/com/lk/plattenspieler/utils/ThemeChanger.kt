@@ -1,11 +1,7 @@
 package com.lk.plattenspieler.utils
 
 import android.app.Activity
-import android.content.Intent
 import android.content.SharedPreferences
-import android.content.res.Resources
-import android.graphics.Color
-import android.support.v4.app.FragmentActivity
 import android.util.Log
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
@@ -38,13 +34,13 @@ object ThemeChanger{
                 Log.d(TAG, "Changed to dark theme teal")
             }
             EnumTheme.THEME_LINEAGE -> {
-                activity.setTheme(R.style.AppThemeLineage)
-                Log.d(TAG, "Changed to lineage theme")
+                activity.setTheme(R.style.AppTheme)
+                Log.d(TAG, "Changed to lineage theme (to apptheme firstly)")
             }
         }
     }
 
-    fun getAccentColor(iTheme: EnumTheme, act: Activity): Int = when (iTheme) {
+    fun getAccentColor(iTheme: EnumTheme): Int = when (iTheme) {
             EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> R.color.colorAccent
             EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T -> R.color.colorAccent_t
             EnumTheme.THEME_LINEAGE -> 0
@@ -69,6 +65,13 @@ object ThemeChanger{
             3 -> EnumTheme.THEME_DARK_T
             4 -> EnumTheme.THEME_LINEAGE
             else -> EnumTheme.THEME_LIGHT
+        }
+    }
+
+    fun themeIsLight(design: EnumTheme): Boolean{
+        return when(design){
+            EnumTheme.THEME_LIGHT, EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_LINEAGE -> true
+            EnumTheme.THEME_DARK_T, EnumTheme.THEME_DARK -> false
         }
     }
 }

@@ -3,7 +3,6 @@
 
     <string name="app_name">Gramophone</string>
     <string name="action_playing">Playback</string>
-    <string name="cd_cover">Album cover</string>
     <string name="songs">Songs</string>
     <string name="toast_no_permission">No permission to read the storage,
         therefore no songs can be shown.</string>
@@ -14,11 +13,31 @@
     <string name="menu_teal">Use teal design</string>
     <string name="menu_pink">Use pink design</string>
     <string name="menu_remove_playing">Delete playlist</string>
+    <string name="menu_shuffle_all">Shuffle all titles</string>
+    <string name="menu_add_lyrics">Add lyrics</string>
+    <string name="menu_show_lyrics">Hide lyrics</string>
+    <string name="menu_show_lyrics_no">Show lyrics</string>
+    <string name="menu_theme_lineage">Lineage theme</string>
     <!--<string name="menu_delete_database">Delete database</string>-->
 
 
     <!-- Wiedergabe -->
     <string name="no_title">No playback</string>
     <string name="queue_title">Current playback</string>
+    <string name="action_lyrics">Lyrics</string>
+
+    <!-- Content Description -->
+    <string name="iv_cd_lyrics">Has lyrics</string>
+    <string name="iv_cd_shuffle">Shuffle</string>
+    <string name="iv_cd_fab_shuffle">Shuffle</string>
+    <string name="iv_cd_play">Play or pause song</string>
+    <string name="iv_cd_next">Next song</string>
+    <string name="iv_cd_previous">Previous song</string>
+    <string name="iv_cd_cover">Cover</string>
+
+    <!-- Dialog -->
+    <string name="dialog_title">Add lyrics</string>
+    <string name="dialog_yes">Add</string>
+    <string name="dialog_no">Cancel</string>
 
 </resources>

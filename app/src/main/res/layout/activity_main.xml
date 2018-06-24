@@ -4,70 +4,18 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/rl_playing"
-        android:layout_alignParentBottom="true"
+    <FrameLayout
+        android:id="@+id/fl_main_bar"
         android:layout_width="match_parent"
-        android:layout_margin="6dp"
-        android:layout_height="55dp">
-
-        <ImageButton
-            android:id="@+id/ib_main_next"
-            android:contentDescription="@string/iv_cd_next"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@mipmap/ic_next"
-            android:backgroundTint="@color/light_grey"
-            android:gravity="center_vertical"
-            android:layout_alignParentEnd="true"
-            android:layout_marginStart="0dp"/>
-
-        <ImageButton
-            android:id="@+id/ib_main_play"
-            android:contentDescription="@string/iv_cd_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@mipmap/ic_play"
-            android:gravity="center_vertical"
-            android:backgroundTint="@color/light_grey"
-            android:layout_marginStart="0dp"
-            android:layout_toStartOf="@id/ib_main_next"/>
-
-        <ImageButton
-            android:id="@+id/ib_main_previous"
-            android:contentDescription="@string/iv_cd_previous"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@mipmap/ic_previous"
-            android:gravity="center_vertical"
-            android:backgroundTint="@color/light_grey"
-            android:layout_marginStart="0dp"
-            android:layout_toStartOf="@id/ib_main_play"/>
-
-        <TextView
-            android:id="@+id/tv_main_title"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:layout_toStartOf="@id/ib_main_previous"
-            android:gravity="center_vertical"
-            android:textSize="19sp"
-            android:maxLines="1"
-            android:text="@string/no_title"/>
-        <TextView
-            android:id="@+id/tv_main_interpret"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:layout_below="@id/tv_main_title"
-            android:layout_toStartOf="@id/ib_main_previous"
-            android:maxLines="1"
-            android:textSize="17sp"/>
-
-    </RelativeLayout>
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:background="?android:attr/colorBackground"
+        android:elevation="8dp"/>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/frame_layout"
-        android:layout_above="@id/rl_playing" />
+        android:layout_above="@id/fl_main_bar"
+        android:id="@+id/fl_main_content"/>
 
 </RelativeLayout>

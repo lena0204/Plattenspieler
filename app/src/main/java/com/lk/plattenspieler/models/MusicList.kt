@@ -1,9 +1,9 @@
 package com.lk.plattenspieler.models
 
-import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
 import android.media.session.MediaSession
 import android.os.Parcelable
+import android.util.Log
 import kotlinx.android.parcel.Parcelize
 
 /**
@@ -41,6 +41,7 @@ class MusicList(
         for (item in list){
             qlist.add(MediaSession.QueueItem(item.getMediaDescription(), counter++))
         }
+        Log.v(this.javaClass.simpleName, "getQueueItemList: Läenge" + qlist.count())
         return qlist
     }
 

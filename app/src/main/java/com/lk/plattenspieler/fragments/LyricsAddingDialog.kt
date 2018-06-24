@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.widget.EditText
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
-import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
 
 /**
  * Erstellt von Lena am 23.04.18.
@@ -14,7 +13,7 @@ import kotlinx.android.synthetic.main.dialog_lyrics_adding.*
  */
 class LyricsAddingDialog: DialogFragment(){
 
-	lateinit var listener: OnSaveLyrics
+	private lateinit var listener: OnSaveLyrics
 
 	interface OnSaveLyrics{
 		fun onSaveLyrics(lyrics: String)
@@ -34,15 +33,15 @@ class LyricsAddingDialog: DialogFragment(){
 		val builder = AlertDialog.Builder(context)
 		builder.setTitle(R.string.dialog_title)
 		builder.setView(view)
-		builder.setPositiveButton(R.string.dialog_yes, { dialog, which ->
+		builder.setPositiveButton(R.string.dialog_yes) { _, _ ->
 			if(et.text != null && et.text.toString() != ""){
 				// Liedtext speichern
 				listener.onSaveLyrics(et.text.toString())
 			}
-		})
-		builder.setNegativeButton(R.string.dialog_no, {dialog, which ->
+		}
+		builder.setNegativeButton(R.string.dialog_no) {_, _ ->
 			dismiss()
-		})
+		}
 		return builder.create()
 	}
 }

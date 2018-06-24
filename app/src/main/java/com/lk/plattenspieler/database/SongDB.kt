@@ -15,19 +15,19 @@ class SongDB(context: Context): SQLiteOpenHelper(context, "songs.db", null, 1) {
     private val DATABASE_VERSION = 2
 
     companion object Spalten {
-        val TABLE_SONGS = "songs"
-        val COLUMN_ID = "_id"
-        val COLUMN_TITLE = "description"
-        val COLUMN_ALBUM = "album"
-        val COLUMN_ARTIST = "artist"
-        val COLUMN_COVER_URI = "cover_uri"
-        val COLUMN_NUMTRACKS = "num_tracks"
-        val COLUMN_DURATION = "duration"
-        val COLUMN_FILE = "file_path"
+        const val TABLE_SONGS = "songs"
+        const val COLUMN_ID = "_id"
+        const val COLUMN_TITLE = "description"
+        const val COLUMN_ALBUM = "album"
+        const val COLUMN_ARTIST = "artist"
+        const val COLUMN_COVER_URI = "cover_uri"
+        const val COLUMN_NUMTRACKS = "num_tracks"
+        const val COLUMN_DURATION = "duration"
+        const val COLUMN_FILE = "file_path"
     }
 
     // Datenbank und Tabelle erstellen
-    val DATABASE_CREATE = "create table " + TABLE_SONGS +
+    private val DATABASE_CREATE = "create table " + TABLE_SONGS +
             " (" + COLUMN_ID + " text primary key, " +
             COLUMN_TITLE + " text not null, " +
             COLUMN_ALBUM + " text not null, " +

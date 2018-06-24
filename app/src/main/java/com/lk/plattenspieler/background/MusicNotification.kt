@@ -20,10 +20,6 @@ class MusicNotification(private val service: MusicService) {
     private val CHANNEL_ID = "plattenspieler_playback"
     private val TAG = "MusicNotification"
 
-    init{
-        //registerBroadcast()
-    }
-
     fun showNotification(state: Int, currentMusicMetadata: MusicMetadata, shuffleOn: Boolean): Notification.Builder{
         //Log.i(TAG, shuffleOn.toString())
         // Channel ab Oreo erstellen

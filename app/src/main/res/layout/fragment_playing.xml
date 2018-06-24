@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/app_padding"
+    android:padding="8dp"
     android:backgroundTint="@color/darker"
     android:backgroundTintMode="src_atop">
 
@@ -12,51 +12,63 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginBottom="10dp">
+        android:padding="8dp"
+        android:layout_marginBottom="4dp"
+        android:elevation="2dp"
+        android:background="@drawable/background_card_playing">
 
+        <TextView
+            android:id="@+id/tv_playing_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="19sp"
+            android:text="@string/no_title"/>
+        <TextView
+            android:id="@+id/tv_playing_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:text="@string/no_title"/>
         <TextView
             android:id="@+id/tv_playing_album"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textColor="@color/light_grey"
-            android:paddingBottom="5dp"/>
-
-        <TextView
-            android:id="@+id/tv_playing_duration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="@color/light_grey"
-            android:gravity="end"/>
+            android:textSize="15sp"
+            android:text="@string/no_title"/>
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:paddingTop="3dp">
 
-            <ImageView
+            <!--<ImageView
                 android:contentDescription="@string/iv_cd_shuffle"
                 android:id="@+id/iv_playing_shuffle"
                 android:background="@mipmap/ic_shuffle"
-                android:backgroundTint="@color/colorAccent"
+                android:backgroundTint="?android:attr/colorAccent"
                 android:alpha="0.4"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"/>-->
             <ImageView
                 android:contentDescription="@string/iv_cd_lyrics"
                 android:id="@+id/iv_playing_lyrics"
                 android:background="@mipmap/ic_lyrics"
-                android:backgroundTint="@color/colorAccent"
+                android:backgroundTint="?android:attr/colorAccent"
                 android:alpha="0.4"
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/tv_playing_duration"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/iv_playing_shuffle"/>
+                android:textSize="16sp"
+                android:gravity="end"/>
             <TextView
                 android:id="@+id/tv_playing_songnumber"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="15sp"
-                android:textColor="@color/light_grey"
+                android:layout_below="@id/tv_playing_duration"
                 android:layout_alignParentEnd="true" />
 
         </RelativeLayout>
@@ -68,7 +80,8 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center">
+        android:gravity="center"
+        android:padding="8dp">
 
         <ListView
             android:id="@+id/lv_playing_list"

@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.MusicList
-import kotlinx.android.synthetic.main.row_album_details.view.*
+import kotlinx.android.synthetic.main.row_music_data.view.*
 
 /**
  * Created by Lena on 08.06.17.
@@ -30,7 +30,7 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
         holder.getIvCover().setImageBitmap(title.cover)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderTitle {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.row_album_details, parent, false)
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data, parent, false)
         return ViewHolderTitle(v)
     }
     override fun getItemCount(): Int = dataset.countItems()
@@ -44,10 +44,10 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
         private var ivCover: ImageView
 
         init{
-            tvId = v.tv_title_id
-            tvTitle = v.tv_title_title
-            tvInterpret = v.tv_title_interpret
-            ivCover = v.iv_title_cover
+            tvId = v.tv_music_id
+            tvTitle = v.tv_music_title
+            tvInterpret = v.tv_music_info
+            ivCover = v.iv_music_cover
             v.setOnClickListener { cl.onClick(tvId.text.toString()) }
         }
         fun getTvID(): TextView = tvId

@@ -1,38 +1,35 @@
 package com.lk.plattenspieler.main
 
 import android.Manifest
+import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
-import android.graphics.PorterDuff
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
-import android.media.session.*
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
+import android.view.*
 import android.widget.Toast
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.*
-import kotlinx.android.synthetic.main.activity_main.*
-import java.io.*
 import java.util.*
+import kotlinx.android.synthetic.main.activity_main.*
+
 
 /**
  * Erstellt von Lena am 12.05.18.
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
-class MainActivityNew : AppCompatActivity(),
+class MainActivityNew : Activity(),
         Observer,
         AlbumFragment.OnClick,
         AlbumDetailsFragment.OnClick,
-		LyricsAddingDialog.OnSaveLyrics {
+		LyricsAddingDialog.OnSaveLyrics,
+        MusicBarFragment.OnClick{
 
     companion object {
         const val PREF_PLAYING = "playing"
@@ -59,32 +56,6 @@ class MainActivityNew : AppCompatActivity(),
         design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
         ThemeChanger.onActivityCreateSetTheme(this, design)
         setContentView(R.layout.activity_main)
-        // Observer und MusicClient
-        PlaybackObservable.addObserver { o, arg ->
-            when (arg) {
-                is MusicMetadata -> {
-                    if(!arg.isEmpty()) {
-                        Log.v(TAG, "PB: Update Metadata mit Titel: " + arg.title)
-                        tv_main_title.text = arg.title
-                        tv_main_interpret.text = arg.artist
-                    } else {
-                        tv_main_title.text = resources.getString(R.string.no_title)
-                        tv_main_interpret.text = ""
-                    }
-                }
-                is MusicList -> {
-                    if(arg.getFlag() == 0){
-                        Log.v(TAG, "PB: Update queue")
-                    }
-                }
-                is MusicPlaybackState -> {
-                    Log.v(TAG, "PB: update playbackstate")
-                    updatePlaybackState(arg)
-                }
-                else -> Log.e(TAG, "PB: unknown observable update from " +
-                        "${o?.javaClass?.canonicalName}: ${arg}")
-            }
-        }
         MedialistObservable.addObserver { o, arg ->
             when (arg) {
                 is MusicList -> {
@@ -101,25 +72,22 @@ class MainActivityNew : AppCompatActivity(),
             }
         }
         musicClient = MusicClient(this)
-        // onClickListener für die Wiedergabe und Views initiallisieren
+        // Bar und onClickListener setzen
+        fl_main_bar.visibility = View.GONE  // -> Farbe wird dynamisch gesetzt
+        fragmentManager.beginTransaction()
+                .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment").commit()
         val pf = PlayingFragment()
-        rl_playing.setOnClickListener {
+        fl_main_bar.setOnClickListener {
             if(!pf.isVisible){
-                supportFragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.frame_layout, pf, "TAG_PLAYING")
-                        .commit()
-            }
-        }
-        // Listener
-        ib_main_play.setOnClickListener { musicClient?.play() }
-        ib_main_next.setOnClickListener { musicClient?.next() }
-        ib_main_previous.setOnClickListener { musicClient?.previous() }
+            fragmentManager.beginTransaction()
+                    .addToBackStack(null)
+                    .replace(R.id.fl_main_content, pf, "TAG_PLAYING")
+                    .commit()
+        } }
         // Audiotyp für die Lautstärkekontrolle auf Musik setzen
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         // Permission abfragen, braucht die Berechtigung den Speicher zu lesen
         if(checkReadPermission()) {
-            setupUI()
             musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
         }
     }
@@ -163,11 +131,12 @@ class MainActivityNew : AppCompatActivity(),
         }
     }
 
-    private fun setupUI(){
-        // Aktuelle Farben setzen
-        tv_main_title.text = resources.getString(R.string.no_title)
-        tv_main_interpret.text = ""
-        updatePlaybackState(MusicPlaybackState())  // default ->  (false, stopped)
+    fun showBar(){
+        fl_main_bar.visibility = View.VISIBLE
+    }
+
+    fun hideBar(){
+        fl_main_bar.visibility = View.GONE
     }
 
     override fun onDestroy() {
@@ -178,59 +147,26 @@ class MainActivityNew : AppCompatActivity(),
         PlaybackObservable.deleteObservers()
     }
 
-    private fun checkLineageSDK() : Boolean{
-        try {
-            val process = Runtime.getRuntime().exec("getprop ro.lineage.build.version.plat.sdk")
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = StringBuilder()
-            var line = reader.readLine()
-            while (line != null) {
-                output.append(line)
-                line = reader.readLine()
-            }
-            val result = output.toString()
-            Log.d(TAG, "Lineage SDK Version: " + result.toInt())
-            if(result.toInt()==9){
-                return true
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return false
-    }
+    private fun checkLineageSDK() : Boolean =
+            lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
 
     // ------------------ Observer -------------------
     override fun update(observable: Observable?, arg: Any?) { }
-    private fun updatePlaybackState(state: MusicPlaybackState){
-        if (state.state == PlaybackState.STATE_PLAYING) {
-            ib_main_play.background = resources.getDrawable(R.mipmap.ic_pause, theme)
-        } else {
-            ib_main_play.background = resources.getDrawable(R.mipmap.ic_play, theme)
-        }
-        if (design == EnumTheme.THEME_LIGHT || design == EnumTheme.THEME_LIGHT_T) {
-            ib_main_play.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ib_main_play.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            ib_main_next.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ib_main_next.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            ib_main_previous.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.black, theme))
-            ib_main_previous.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-        }
-    }
     private fun showAlbums(){
         //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
             Log.i(TAG, "Transaction")
-            supportFragmentManager.beginTransaction()
-                    .replace(R.id.frame_layout, AlbumFragment())
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fl_main_content, AlbumFragment())
                     .commit()
         }
     }
     private fun showTitles(){
         //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
-            supportFragmentManager.beginTransaction()
+            fragmentManager.beginTransaction()
                     .addToBackStack(null)
-                    .replace(R.id.frame_layout, AlbumDetailsFragment()).commit()
+                    .replace(R.id.fl_main_content, AlbumDetailsFragment()).commit()
         }
     }
 
@@ -238,17 +174,29 @@ class MainActivityNew : AppCompatActivity(),
     override fun onClickAlbum(albumid: String) {
         musicClient?.showAlbumTitles(albumid)
     }
+    override fun onShuffle(){
+        musicClient?.shuffleTitles()
+    }
     override fun onClickTitle(titleid: String) {
         musicClient?.playFromTitle(titleid)
     }
     override fun onShuffleClick(ptitleid: String) {
         // TESTING_ // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
-        musicClient?.shuffleTitles()
+        musicClient?.shuffleAll()
     }
     override fun onSaveLyrics(lyrics: String) {
 		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
 		//LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
 	}
+    override fun onClickPlay() {
+        musicClient?.play()
+    }
+    override fun onClickNext() {
+        musicClient?.next()
+    }
+    override fun onClickPrevious() {
+        musicClient?.previous()
+    }
 
     // ------------- Menü -------------
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {

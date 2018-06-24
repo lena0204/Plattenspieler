@@ -1,6 +1,5 @@
 package com.lk.plattenspieler.main
 
-import android.app.Activity
 import android.content.*
 import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
@@ -8,7 +7,6 @@ import android.media.session.*
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Toast
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.background.MusicService
 import com.lk.plattenspieler.database.SongContentProvider
@@ -23,7 +21,7 @@ import java.util.*
  * Verwaltet Aktionen vom Menü und den Zugriff inkl. Callbacks auf den MediaBrowserService (MusicService),
  * Gibt Updates an die Observables weiter zum verteilen
  */
-class MusicClient(val activity: Activity) {
+class MusicClient(val activity: MainActivityNew) {
 
     private val TAG = "MusicClient"
     private val connectionCallback = BrowserConnectionCallback()
@@ -77,6 +75,7 @@ class MusicClient(val activity: Activity) {
         sendQueueToController(queue)
         shuffleOn = false
         PlaybackObservable.setState(MusicPlaybackState((shuffleOn)))
+        activity.showBar()
     }
     fun shuffleTitles(){
         val medialist = MedialistObservable.getMediaList()
@@ -91,13 +90,14 @@ class MusicClient(val activity: Activity) {
         musicController.sendCommand("shuffle", null, null)
         shuffleOn = true
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn))
+        activity.showBar()
     }
     
     private fun saveQueue(){
         if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
             if(!PlaybackObservable.getQueue().isEmpty()) {
                 SongDBAccess.savePlayingQueue(activity.contentResolver,
-                        PlaybackObservable.getQueue(), PlaybackObservable.getMetadata())
+                        PlaybackObservable.getQueueAll(), PlaybackObservable.getMetadata())
             }
             sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, true).apply()
         } else {
@@ -112,16 +112,12 @@ class MusicClient(val activity: Activity) {
         val shuffleOn = sharedPreferences
                 .getBoolean(MainActivityNew.PREF_SHUFFLE,false)
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PAUSED))
-        if(shuffleOn) {
-            musicController.sendCommand("shuffle", null, null)
-        }
         if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
             if( restoringQueue){
                 val queue = SongDBAccess.restorePlayingQueue(activity.contentResolver)
                 if(queue == null){
                     Log.d(TAG, "Cursor ist null oder leer")
-                    sharedPreferences
-                            .edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
+                    sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
                 } else {
                     val music = queue.removeItemAt(0)
                     PlaybackObservable.setMetadata(music)
@@ -129,6 +125,7 @@ class MusicClient(val activity: Activity) {
                     args.putInt("I", 1)
                     musicController.transportControls.playFromMediaId(music.id, args)
                     sendQueueToController(queue)
+                    activity.showBar()
                 }
             }
         } else {
@@ -136,6 +133,10 @@ class MusicClient(val activity: Activity) {
             PlaybackObservable.setQueue(MusicList.createListFromQueue(musicController.queue))
             PlaybackObservable.setMetadata(MusicMetadata.createFromMediaMetadata(musicController.metadata))
             PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PLAYING))
+            activity.showBar()
+        }
+        if(shuffleOn) {
+            musicController.sendCommand("shuffle", null, null)
         }
     }
 
@@ -198,7 +199,7 @@ class MusicClient(val activity: Activity) {
         activity.contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
     }
-    private fun shuffleAll(){
+    fun shuffleAll(){
         musicController.sendCommand("addAll", null, null)
         shuffleOn = true
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn))
@@ -269,7 +270,7 @@ class MusicClient(val activity: Activity) {
 
         override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>) {
             super.onQueueChanged(queue)
-            Log.v(TAG, "onQueueChanged")
+            Log.v(TAG, "onQueueChanged: Länge: " + queue.count())
             PlaybackObservable.setQueue(MusicList.createListFromQueue(queue))
         }
 
@@ -291,6 +292,7 @@ class MusicClient(val activity: Activity) {
             if(state.state == PlaybackState.STATE_STOPPED){
                 PlaybackObservable.setMetadata(MusicMetadata())
                 PlaybackObservable.setQueue(MusicList())
+                activity.hideBar()
             }
         }
     }

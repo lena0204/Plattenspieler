@@ -1,23 +1,19 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
-import android.content.res.ColorStateList
-import android.graphics.*
+import android.app.Fragment
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.support.v4.app.Fragment
+import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.MedialistObservable
 import com.lk.plattenspieler.models.MusicList
-import com.lk.plattenspieler.utils.*
+import com.lk.plattenspieler.utils.TitleAdapter
 import kotlinx.android.synthetic.main.fragment_album_details.*
-import kotlinx.android.synthetic.main.fragment_album_details.view.*
 import java.util.*
 
 /**
@@ -50,23 +46,8 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
         attached = false
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val v = inflater.inflate(R.layout.fragment_album_details, container, false)
-        val design = ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(context))
-        v.fab_shuffle.background = resources.getDrawable(R.drawable.fab_background_pink, activity?.theme)
-        if(design == EnumTheme.THEME_LINEAGE){
-            // bei Lineage Theme den Akzent manuell drüber legen, weil dynamische Erkennung nicht funktionierts
-            val attr = intArrayOf(android.R.attr.colorAccent)
-            val typedArray = activity?.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, attr)
-            val color = typedArray?.getColor(0, Color.BLACK)
-            typedArray?.recycle()
-            if(color != null) {
-                v.fab_shuffle.backgroundTintList = ColorStateList.valueOf(color)
-                v.fab_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-            }
-        }
-        return v
-    }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
+        = inflater.inflate(R.layout.fragment_album_details, container, false)
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -96,16 +77,19 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
         if(album.isNotEmpty()){
             this.activity?.actionBar?.title = album  // Observer ist schneller als fragment
         }
-        recycler_album_details.layoutManager = LinearLayoutManager(activity)
-        recycler_album_details.adapter = TitleAdapter(data, this)
+        // TODO noch nicht so schön mit den Dividern
+        val lmanager = LinearLayoutManager(activity)
+        val divider = DividerItemDecoration(activity, lmanager.orientation)
+        //recycler_album_details.addItemDecoration(divider)
+        recycler_titles.layoutManager = lmanager
+        recycler_titles.layoutManager = LinearLayoutManager(activity)
+        recycler_titles.adapter = TitleAdapter(data, this)
     }
 
     override fun update(o: Observable?, arg: Any?) {
         if(arg is MusicList){
-            if(arg.getFlag() == MediaBrowser.MediaItem.FLAG_PLAYABLE) {
-                if(attached) {
-                    setupRecyclerView(arg)
-                }
+            if(arg.getFlag() == MediaBrowser.MediaItem.FLAG_PLAYABLE && attached) {
+                setupRecyclerView(arg)
             }
         }
     }

@@ -1,12 +1,9 @@
 package com.lk.plattenspieler.fragments
 
-import android.content.res.ColorStateList
-import android.graphics.Color
-import android.graphics.PorterDuff
+import android.app.Fragment
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +13,6 @@ import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.LyricsAccess
-import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
 import java.util.*
@@ -28,7 +24,6 @@ import java.util.*
 class PlayingFragment : Fragment(), java.util.Observer {
 
     // IDEA_ Sekundenticker für den Fortschritt im Lied einrichten (Seekbar)
-    // IDEA_ Previous button um zum Anfang des Liedes zu springen
     // IDEA_ -- Wischgesten um dieses Fragment aufzurufen und zu verstecken
 
     private val TAG = "com.lk.pl-PlayingFrag"
@@ -58,7 +53,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
         PlaybackObservable.addObserver(this)
         writeMetadata(PlaybackObservable.getMetadata())
         setPlaylist(PlaybackObservable.getQueue())
-        updateShuffleMode(PlaybackObservable.getState().shuffleOn)
+        //updateShuffleMode(PlaybackObservable.getState().shuffleOn)
         // onClick Listener
         view.iv_playing_lyrics.setOnClickListener {
             if (lyrics != null && lyrics != "") {
@@ -71,26 +66,17 @@ class PlayingFragment : Fragment(), java.util.Observer {
                 lyricsf.arguments = args
                 fragmentManager?.beginTransaction()
                         ?.addToBackStack(null)
-                        ?.replace(R.id.frame_layout, lyricsf, "TAG_LYRICS")
+                        ?.replace(R.id.fl_main_content, lyricsf, "TAG_LYRICS")
                         ?.commit()
             }
         }
-        val accentcolor = ThemeChanger.getAccentColor(
-                ThemeChanger.readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity)), activity!!)
-        if(accentcolor != 0) {
-            view.iv_playing_shuffle.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
-            view.iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(resources.getColor(accentcolor, activity?.theme))
-        } else {
-            view.iv_playing_shuffle.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
-            view.iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
-        }
-        view.iv_playing_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
-        view.iv_playing_lyrics.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         activity?.actionBar?.setTitle(R.string.action_playing)
     }
 
     private fun writeMetadata(data: MusicMetadata){
         if(!data.isEmpty()) {
+            tv_playing_title.text = data.title
+            tv_playing_artist.text = data.artist
             tv_playing_album.text = data.album
             tv_playing_songnumber.text = data.songnr.toString()
             tv_playing_songnumber.append(" " + getString(R.string.songs))
@@ -110,6 +96,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
     }
 
     private fun setPlaylist(queue: MusicList){
+        Log.v(TAG, "SetPlaylist")
         val liste = ArrayList<String>()
         for (item in queue) {
             liste.add(item.title + "\n - " + item.artist)
@@ -127,14 +114,6 @@ class PlayingFragment : Fragment(), java.util.Observer {
         }
 	}
 
-    private fun updateShuffleMode(mode: Boolean) {
-        if(mode){
-            iv_playing_shuffle.alpha = 1.0f
-        } else {
-            iv_playing_shuffle.alpha = 0.4f
-        }
-    }
-
     override fun update(o: Observable?, arg: Any?) {
         if(started) {
             when (arg) {
@@ -146,11 +125,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
                     Log.v(TAG, "Update queue")
                     setPlaylist(arg)
                 }
-                is MusicPlaybackState -> {
-                    Log.v(TAG, "Update playbackstate")
-                    updateShuffleMode(arg.shuffleOn)
-                }
-                else -> Log.w(TAG, "unknown observable update: ${arg.toString()}")
+                else -> Log.v(TAG, "unknown observable update: ${arg.toString()}")
             }
         }
     }

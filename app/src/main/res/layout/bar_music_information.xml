@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl_playing"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="4dp"
+    android:layout_alignParentStart="true"
+    android:weightSum="5">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="4"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_music_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:text="@string/no_title"
+            android:paddingStart="6dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="2dp"
+            android:ellipsize="end"
+            android:lines="1"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:weightSum="4"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/ib_main_shuffle"
+                style="@style/ImageButtonStyle"
+                android:src="@mipmap/ic_shuffle"
+                android:contentDescription="@string/iv_cd_shuffle"
+                android:tint="?android:attr/colorAccent"
+                android:alpha="0.3"
+                android:clickable="false"/>
+
+            <ImageButton
+                android:id="@+id/ib_main_previous"
+                style="@style/ImageButtonStyle"
+                android:contentDescription="@string/iv_cd_previous"
+                android:src="@mipmap/ic_previous" />
+
+            <ImageButton
+                android:id="@+id/ib_main_play"
+                style="@style/ImageButtonStyle"
+                android:contentDescription="@string/iv_cd_play"
+                android:src="@mipmap/ic_play" />
+
+            <ImageButton
+                android:id="@+id/ib_main_next"
+                style="@style/ImageButtonStyle"
+                android:contentDescription="@string/iv_cd_next"
+                android:src="@mipmap/ic_next" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/iv_main_cover"
+        style="@style/ImageButtonStyle"
+        android:tint="@color/transparent"
+        android:contentDescription="@string/iv_cd_cover"
+        android:src="@mipmap/ic_no_cover"
+        android:clickable="false"/>
+
+</LinearLayout>

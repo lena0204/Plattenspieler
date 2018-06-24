@@ -5,23 +5,29 @@
     android:layout_height="match_parent">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_album_details"
+        android:id="@+id/recycler_titles"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
 
     </android.support.v7.widget.RecyclerView>
 
+    <!-- IDEA_ Gleiches Layout für beide Ansichten, Shuffle von allen auf den Hauptseite -->
+
     <ImageButton
         android:id="@+id/fab_shuffle"
-        android:contentDescription="@string/iv_cd_fab_shuffle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:padding="4dp"
-        android:elevation="12dp"
         android:background="@drawable/fab_background_pink"
-        android:src="@mipmap/ic_shuffle"
-        android:layout_gravity="bottom|end"/>
+        android:contentDescription="@string/iv_cd_fab_shuffle"
+        android:cropToPadding="true"
+        android:elevation="6dp"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:src="@mipmap/ic_shuffle" />
 
 
 </FrameLayout>

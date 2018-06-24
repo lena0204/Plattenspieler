@@ -2,8 +2,6 @@ package com.lk.plattenspieler.database
 
 import android.content.ContentResolver
 import android.content.ContentValues
-import android.media.session.MediaController
-import android.os.Bundle
 import android.util.Log
 import com.lk.plattenspieler.models.MusicList
 import com.lk.plattenspieler.models.MusicMetadata
@@ -93,7 +91,7 @@ object SongDBAccess{
     }
 
     private fun getProjection(): Array<String>{
-            val p = Array(7, { _ -> "" })
+            val p = Array(7) { _ -> "" }
             p[0] = SongDB.COLUMN_ID
             p[1] = SongDB.COLUMN_TITLE
             p[2] = SongDB.COLUMN_ARTIST

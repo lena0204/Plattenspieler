@@ -18,7 +18,7 @@ class SongContentProvider: ContentProvider() {
     companion object {
         private const val AUTHORITY = "com.lk.plattenspieler.contentprovider"
         private const val BASE_PATH = "songs"
-        val CONTENT_URI = Uri.parse("content://$AUTHORITY/$BASE_PATH")
+        val CONTENT_URI: Uri = Uri.parse("content://$AUTHORITY/$BASE_PATH")
         //val CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/song"
         const val SONGS = 10
         const val SONG_ID = 20

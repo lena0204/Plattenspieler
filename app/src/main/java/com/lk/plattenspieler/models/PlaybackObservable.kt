@@ -1,6 +1,5 @@
 package com.lk.plattenspieler.models
 
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import java.util.*
 
@@ -13,24 +12,29 @@ object PlaybackObservable: Observable() {
     private var queue = MusicList()
     private var metadata = MusicMetadata()
     private var state = MusicPlaybackState()
-    private val TAG = "PlaybackObservable"
+    private const val TAG = "PlaybackObservable"
 
     fun setQueue(_queue: MusicList){
         // queue auf 30 items begrenzen
-        if(_queue.countItems() > 30) {
+        queue = _queue
+        setChanged()
+        notifyObservers(getQueue())
+    }
+    fun getQueue(): MusicList{
+        var _queue = MusicList()
+        if(queue.countItems() > 30) {
             var i = 0
             while (i < 30){
-                queue.addItem(_queue.getItemAt(i))
+                _queue.addItem(queue.getItemAt(i))
                 i++
             }
         } else {
-            queue = _queue
+            _queue = queue
         }
-        Log.v(TAG, "setqueue: Größe: " + queue.countItems())
-        setChanged()
-        notifyObservers(queue)
+        Log.v(TAG, "getqueue: Größe: " + _queue.countItems())
+        return _queue
     }
-    fun getQueue(): MusicList{
+    fun getQueueAll(): MusicList{
         Log.v(TAG, "getqueue: Größe: " + queue.countItems())
         return queue
     }

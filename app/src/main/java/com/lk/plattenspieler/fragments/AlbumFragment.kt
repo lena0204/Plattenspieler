@@ -1,11 +1,11 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
+import android.app.Fragment
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,8 +14,9 @@ import android.view.ViewGroup
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.AlbumAdapter
-import kotlinx.android.synthetic.main.fragment_album.*
 import java.util.*
+import android.support.v7.widget.DividerItemDecoration
+import kotlinx.android.synthetic.main.fragment_album_details.*
 
 /**
  * Created by Lena on 08.06.17.
@@ -31,6 +32,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
 
     interface OnClick{
         fun onClickAlbum(albumid: String)
+        fun onShuffle()
     }
 
     // Listener Methoden vom Adapter
@@ -57,7 +59,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         super.onCreateView(inflater, container, savedInstanceState)
         Log.v(TAG, "oncreateview")
-        return inflater.inflate(R.layout.fragment_album, container, false)
+        return inflater.inflate(R.layout.fragment_album_details, container, false)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,6 +67,9 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         MedialistObservable.addObserver(this)
         activity?.actionBar?.title = getString(R.string.app_name)
         setupRecyclerView(MedialistObservable.getAlbums())
+        fab_shuffle.setOnClickListener {
+            listener.onShuffle()
+        }
     }
 
     private fun setupRecyclerView(list: MusicList){
@@ -82,8 +87,11 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
                 data.addItem(item)
             }
         }
-        recycler_album.layoutManager = LinearLayoutManager(activity)
-        recycler_album.adapter = AlbumAdapter(data, this)
+        val lmanager = LinearLayoutManager(activity)
+        val divider = DividerItemDecoration(activity, lmanager.orientation)
+        //recycler_album.addItemDecoration(divider)
+        recycler_titles.layoutManager = lmanager
+        recycler_titles.adapter = AlbumAdapter(data, this)
     }
 
     override fun update(o: Observable?, arg: Any?) {

@@ -19,7 +19,8 @@
         </activity>
         <provider
             android:authorities="com.lk.plattenspieler.contentprovider"
-            android:name=".database.SongContentProvider"/>
+            android:name=".database.SongContentProvider"
+            android:exported="false"/>
         <service android:name=".background.MusicService"
             android:exported="false">
             <intent-filter>

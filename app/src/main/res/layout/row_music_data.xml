@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:layout_margin="4dp">
+
+    <ImageView
+        android:contentDescription="@string/iv_cd_cover"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:id="@+id/iv_music_cover"
+        android:layout_marginStart="2dp"
+        android:layout_alignParentStart="true"
+        android:background="@drawable/fab_background_teal"
+        android:layout_centerVertical="true"
+        android:tintMode="src_atop"/>
+
+    <TextView
+        android:id="@+id/tv_music_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorAccent"
+        android:layout_toStartOf="@id/iv_music_cover"
+        android:visibility="invisible"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginStart="4dp"
+        android:padding="8dp"
+        android:orientation="vertical"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/iv_music_cover">
+
+
+        <TextView
+            android:id="@+id/tv_music_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/no_title"/>
+
+        <TextView
+            android:id="@+id/tv_music_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:layout_marginStart="0dp"
+            android:alpha="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/no_title"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
