@@ -2,17 +2,20 @@ package com.lk.plattenspieler.fragments
 
 import android.app.Activity
 import android.app.Fragment
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.content.res.ColorStateList
+import android.graphics.*
 import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
+import android.widget.TextView
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.MedialistObservable
 import com.lk.plattenspieler.models.MusicList
+import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter
+import kotlinx.android.synthetic.main.bar_music_information.*
 import kotlinx.android.synthetic.main.fragment_album_details.*
 import java.util.*
 
@@ -57,6 +60,12 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
         }
         MedialistObservable.addObserver(this)
         setupRecyclerView(MedialistObservable.getMediaList())
+        // Farbe setzen falls lineage
+        val color = ThemeChanger.getAccentColorLinage(activity)
+        if(color != 0){
+            fab_shuffle.backgroundTintList = ColorStateList.valueOf(color)
+            fab_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+        }
     }
 
     private fun setupRecyclerView(list: MusicList){
@@ -75,7 +84,9 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
             }
         }
         if(album.isNotEmpty()){
-            this.activity?.actionBar?.title = album  // Observer ist schneller als fragment
+            if(ThemeChanger.themeIsLineage(activity))
+                (activity?.actionBar?.customView as TextView).text = album
+            activity?.actionBar?.title = album  // Observer ist schneller als fragment
         }
         // TODO noch nicht so schön mit den Dividern
         val lmanager = LinearLayoutManager(activity)

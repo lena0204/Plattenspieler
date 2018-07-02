@@ -7,8 +7,10 @@ import android.util.Log
 import android.view.*
 import android.widget.TextView
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_lyrics.*
 import kotlinx.android.synthetic.main.fragment_lyrics.view.*
+import org.w3c.dom.Text
 
 /**
  * Erstellt von Lena am 21.04.18.
@@ -29,7 +31,9 @@ class LyricsFragment: Fragment() {
 	}
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		activity?.actionBar?.title = resources.getString(R.string.action_lyrics)
+		if(ThemeChanger.themeIsLineage(activity))
+			(activity?.actionBar?.customView as TextView).text = resources.getString(R.string.action_lyrics)
+		activity?.actionBar?.title = getString(R.string.action_lyrics)
 		val args = this.arguments
 		ll_lyrics_frame.background = Drawable.createFromPath(args?.getString("C"))
 		val text = args?.getString("L")

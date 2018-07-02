@@ -2,14 +2,15 @@ package com.lk.plattenspieler.fragments
 
 import android.app.Activity
 import android.app.Fragment
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.content.res.ColorStateList
+import android.graphics.*
 import android.media.session.PlaybackState
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.models.*
+import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.bar_music_information.*
 import java.util.*
 
@@ -40,6 +41,12 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         super.onResume()
         Log.v(TAG, "onResume")
         started = true
+        // Farbe setzen falls lineage
+        val color = ThemeChanger.getAccentColorLinage(activity)
+        if(color != 0){
+            ib_main_shuffle.imageTintList = ColorStateList.valueOf(color)
+            ib_main_shuffle.imageTintMode = PorterDuff.Mode.SRC_ATOP
+        }
     }
     override fun onPause() {
         super.onPause()

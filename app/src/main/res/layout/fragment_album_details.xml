@@ -21,7 +21,7 @@
         android:layout_height="56dp"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:background="@drawable/fab_background_pink"
+        android:background="@drawable/fab_background"
         android:contentDescription="@string/iv_cd_fab_shuffle"
         android:cropToPadding="true"
         android:elevation="6dp"

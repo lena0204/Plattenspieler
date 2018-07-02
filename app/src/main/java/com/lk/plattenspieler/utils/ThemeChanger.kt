@@ -2,9 +2,13 @@ package com.lk.plattenspieler.utils
 
 import android.app.Activity
 import android.content.SharedPreferences
+import android.content.res.Resources
+import android.graphics.Color
+import android.preference.PreferenceManager
 import android.util.Log
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
+import lineageos.style.StyleInterface
 
 /**
  * Created by Lena on 08.09.17.
@@ -34,16 +38,26 @@ object ThemeChanger{
                 Log.d(TAG, "Changed to dark theme teal")
             }
             EnumTheme.THEME_LINEAGE -> {
-                activity.setTheme(R.style.AppTheme)
-                Log.d(TAG, "Changed to lineage theme (to apptheme firstly)")
+                if(StyleInterface.getInstance(activity).globalStyle == StyleInterface.STYLE_GLOBAL_DARK){
+                    activity.setTheme(R.style.AppThemeDarkL)
+                } else {
+                    activity.setTheme(R.style.AppThemeL)
+                }
+                Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
             }
         }
     }
 
-    fun getAccentColor(iTheme: EnumTheme): Int = when (iTheme) {
-            EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> R.color.colorAccent
-            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T -> R.color.colorAccent_t
-            EnumTheme.THEME_LINEAGE -> 0
+    fun getAccentColorLinage(activity: Activity): Int{
+        return if(readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
+                == EnumTheme.THEME_LINEAGE){
+            val attr = intArrayOf(android.R.attr.colorAccent)
+            val typedArray = activity.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, attr)
+            typedArray.getColor(0, Color.BLACK)
+                    .also { typedArray.recycle() }
+        } else {
+            0
+        }
     }
 
     fun writeThemeToPreferences(sp: SharedPreferences, iTheme: EnumTheme){
@@ -66,6 +80,11 @@ object ThemeChanger{
             4 -> EnumTheme.THEME_LINEAGE
             else -> EnumTheme.THEME_LIGHT
         }
+    }
+
+    fun themeIsLineage(activity: Activity): Boolean {
+        val design = readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
+        return design == EnumTheme.THEME_LINEAGE
     }
 
     fun themeIsLight(design: EnumTheme): Boolean{

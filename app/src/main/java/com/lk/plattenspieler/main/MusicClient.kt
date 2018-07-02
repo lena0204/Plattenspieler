@@ -200,9 +200,11 @@ class MusicClient(val activity: MainActivityNew) {
         sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
     }
     fun shuffleAll(){
+        Log.d(TAG, "shuffleAll")
         musicController.sendCommand("addAll", null, null)
         shuffleOn = true
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn))
+        activity.showBar()
     }
     private fun changeLyricsState(){
         val pref = sharedPreferences.getInt(MainActivityNew.PREF_LYRICS,0)

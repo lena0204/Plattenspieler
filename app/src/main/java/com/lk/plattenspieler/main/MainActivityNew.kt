@@ -1,15 +1,20 @@
 package com.lk.plattenspieler.main
 
 import android.Manifest
+import android.app.ActionBar
 import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.*
+import android.widget.TextView
 import android.widget.Toast
 
 import com.lk.plattenspieler.R
@@ -52,9 +57,7 @@ class MainActivityNew : Activity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "oncreate")
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        ThemeChanger.onActivityCreateSetTheme(this, design)
+        changeDesign()
         setContentView(R.layout.activity_main)
         MedialistObservable.addObserver { o, arg ->
             when (arg) {
@@ -147,6 +150,23 @@ class MainActivityNew : Activity(),
         PlaybackObservable.deleteObservers()
     }
 
+    private fun changeDesign(){
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
+        ThemeChanger.onActivityCreateSetTheme(this, design)
+        // Textfarbe der Actionbar ändern
+        if(design == EnumTheme.THEME_LINEAGE) {
+            val tv = View.inflate(this, R.layout.action_bar_custom, null) as TextView
+            val color = ThemeChanger.getAccentColorLinage(this)
+            if (color != 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                tv.setTextColor(ColorStateList.valueOf(color))
+                Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
+            }
+            actionBar.customView = tv
+            actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+        }
+    }
+
     private fun checkLineageSDK() : Boolean =
             lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
 
@@ -174,15 +194,12 @@ class MainActivityNew : Activity(),
     override fun onClickAlbum(albumid: String) {
         musicClient?.showAlbumTitles(albumid)
     }
-    override fun onShuffle(){
-        musicClient?.shuffleTitles()
-    }
     override fun onClickTitle(titleid: String) {
         musicClient?.playFromTitle(titleid)
     }
     override fun onShuffleClick(ptitleid: String) {
         // TESTING_ // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
-        musicClient?.shuffleAll()
+        musicClient?.shuffleTitles()
     }
     override fun onSaveLyrics(lyrics: String) {
 		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")

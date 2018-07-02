@@ -1,6 +1,8 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Fragment
+import android.content.res.ColorStateList
+import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -13,6 +15,7 @@ import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.LyricsAccess
+import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
 import java.util.*
@@ -32,6 +35,12 @@ class PlayingFragment : Fragment(), java.util.Observer {
 
     override fun onResume() {
         super.onResume()
+        // Farbe setzen falls lineage
+        val color = ThemeChanger.getAccentColorLinage(activity)
+        if(color != 0){
+            iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(color)
+            iv_playing_lyrics.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
+        }
         if(lyrics != null && lyrics != ""){
             iv_playing_lyrics.alpha = 1.0f
         }
@@ -70,7 +79,9 @@ class PlayingFragment : Fragment(), java.util.Observer {
                         ?.commit()
             }
         }
-        activity?.actionBar?.setTitle(R.string.action_playing)
+        if(ThemeChanger.themeIsLineage(activity))
+            (activity?.actionBar?.customView as TextView).text = resources.getString(R.string.action_playing)
+        activity?.actionBar?.title = getString(R.string.action_playing)
     }
 
     private fun writeMetadata(data: MusicMetadata){
