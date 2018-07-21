@@ -7,6 +7,7 @@ import android.media.session.*
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
+import android.widget.Toast
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.background.MusicService
 import com.lk.plattenspieler.database.SongContentProvider
@@ -14,6 +15,8 @@ import com.lk.plattenspieler.database.SongDBAccess
 import com.lk.plattenspieler.fragments.LyricsAddingDialog
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.android.UI
 import java.util.*
 
 /**
@@ -114,18 +117,23 @@ class MusicClient(val activity: MainActivityNew) {
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PAUSED))
         if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
             if( restoringQueue){
-                val queue = SongDBAccess.restorePlayingQueue(activity.contentResolver)
-                if(queue == null){
+                val music = SongDBAccess.restoreFirstQueueItem(activity.contentResolver)
+                if(music == null){
                     Log.d(TAG, "Cursor ist null oder leer")
                     sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
                 } else {
-                    val music = queue.removeItemAt(0)
+                    /*val music = queue.removeItemAt(0)*/
+                    //val music = queue.getItemAt(0)
                     PlaybackObservable.setMetadata(music)
                     val args = Bundle()
                     args.putInt("I", 1)
                     musicController.transportControls.playFromMediaId(music.id, args)
-                    sendQueueToController(queue)
                     activity.showBar()
+                }
+                val queue = SongDBAccess.restorePlayingQueue(activity.contentResolver)
+                if(queue != null){
+                    sendQueueToController(queue)
+                    Log.d(TAG, "Hat queue geladen")
                 }
             }
         } else {
@@ -155,7 +163,7 @@ class MusicClient(val activity: MainActivityNew) {
             R.id.menu_shuffle_all -> shuffleAll()
             R.id.menu_show_lyrics -> changeLyricsState()
             R.id.menu_theme_lineage -> applyTheme(EnumTheme.THEME_LINEAGE)
-            /*R.id.menu_add_lyrics -> addLyrics()*/
+            R.id.menu_add_lyrics -> addLyrics()
         /*R.id.menu_delete_database -> {
             // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
             val number = contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
@@ -185,10 +193,18 @@ class MusicClient(val activity: MainActivityNew) {
         }
         applyTheme(design)
     }
-    private fun applyTheme(design: EnumTheme){
+    fun applyTheme(design: EnumTheme){
         ThemeChanger.writeThemeToPreferences(sharedPreferences, design)
-        saveQueue()
-        activity.recreate()
+        if(design == EnumTheme.THEME_LINEAGE){
+            // Permission abfragen
+            if(activity.requestDesignReadPermission()){
+                saveQueue()
+                activity.recreate()
+            }
+        } else {
+            saveQueue()
+            activity.recreate()
+        }
     }
     private fun stopAndRemovePlaying(){
         // Wiedergabe stoppen, falls nötig; löscht automatisch die Queue und den Player etc
@@ -228,7 +244,11 @@ class MusicClient(val activity: MainActivityNew) {
             musicController.registerCallback(controllerCallback)
             // Daten abfragen
             mbrowser.subscribe(mbrowser.root, subscriptionCallback)
-            restoreQueue()
+            Log.v(TAG, "call restoreQueue()")
+            launch(UI) {
+                restoreQueue()
+            }
+            Log.v(TAG, "weitermachen")
         }
 
         override fun onConnectionFailed() {

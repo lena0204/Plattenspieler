@@ -29,9 +29,9 @@
         android:title="@string/menu_show_lyrics_no"
         android:showAsAction="never"/>
 
-    <!--<item
+    <item
         android:id="@+id/menu_add_lyrics"
         android:title="@string/menu_add_lyrics"
-        android:showAsAction="never"/>-->
+        android:showAsAction="never"/>
 
 </menu>

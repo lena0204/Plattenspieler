@@ -1,10 +1,13 @@
 package com.lk.plattenspieler.utils
 
 import android.util.Log
+import android.widget.Toast
 import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.audio.mp3.MP3File
 import org.jaudiotagger.tag.FieldKey
+import org.jaudiotagger.tag.Tag
 import org.jaudiotagger.tag.id3.ID3v24FieldKey
+import org.jaudiotagger.tag.id3.ID3v24Tag
 import org.jaudiotagger.tag.mp4.Mp4FieldKey
 import org.jaudiotagger.tag.mp4.Mp4Tag
 import java.io.File
@@ -52,19 +55,28 @@ object LyricsAccess{
 
 
     fun writeLyrics(lyrics: String, datapath: String){
+        // PROBLEM_ schreiben auf die SD-Karte ist nicht unbedingt ohne weiteres möglich ...
         if(datapath != ""){
             Log.i(TAG, datapath)
             if(datapath.contains("mp3")){
                 // Mp3 Datei
-                val mp3File = AudioFileIO.read(File(datapath)) as MP3File
-                if(mp3File.hasID3v2Tag()) {
-                    mp3File.iD3v2TagAsv24.setField(FieldKey.LYRICS, lyrics)
-                } else {
-                    Log.i(TAG, "Kein ID3v2 Tag vorhanden, keine Lyrics geschrieben.")
+                try {
+                    val mp3File = AudioFileIO.read(File(datapath))
+                    val tag: Tag = mp3File.tag
+                    if (!tag.isEmpty && tag is ID3v24Tag) {
+                        Log.d(TAG, "Tag ist ein ID3v24Tag")
+                        tag.setField(FieldKey.LYRICS, lyrics)
+                        mp3File.tag = tag
+                    } else {
+                        Log.i(TAG, "Kein ID3v2 Tag vorhanden, keine Lyrics geschrieben.")
+                    }
+                    AudioFileIO.write(mp3File)
+                } catch(ex: Exception){
+                    Log.d(TAG, ex.message)
                 }
-                AudioFileIO.write(mp3File)
             } else {
                 // m4a Datei
+                // TESTING_ muss getestet werden -> auch Problem mit SD-Karte
                 val m4aTag = AudioFileIO.read(File(datapath)).tag as Mp4Tag
                 m4aTag.setField(Mp4FieldKey.LYRICS, lyrics)
             }

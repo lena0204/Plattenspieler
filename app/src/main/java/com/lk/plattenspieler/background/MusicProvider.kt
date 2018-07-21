@@ -25,7 +25,8 @@ class MusicProvider(private val c: Context) {
 	fun getFirstTitle(): String{
 		// Albumdatenbankspalten
 		var titleId = ""
-        val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media._ID), null,null,null)
+        val sortorder = MediaStore.Audio.Media._ID + " LIMIT 1"
+        val cursorTitle = this.c.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media._ID), null,null,sortorder)
         if(cursorTitle.moveToFirst()){
             titleId = cursorTitle.getString(cursorTitle.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
         }
@@ -66,8 +67,6 @@ class MusicProvider(private val c: Context) {
         val list = MusicList()
         list.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
         if(cursorTitles.moveToFirst()){
-            // Liste aufstellen (Weiterleitung an den Provider)
-            cursorTitles.moveToFirst()
             do {
                 val trackid = cursorTitles.getString(cursorTitles.getColumnIndex(MediaStore.Audio.Media._ID))
                 val tracktitle = cursorTitles.getString(cursorTitles.getColumnIndex(MediaStore.Audio.Media.TITLE))
@@ -114,7 +113,7 @@ class MusicProvider(private val c: Context) {
                         albumid,
                         albumtitle,
                         albumartist,
-                        cover_uri = albumart,   // PROBLEM_ Albumart must not be null (was ist default?) -> coverui ist ""
+                        cover_uri = albumart,
                         num_tracks = albumtracks.toInt()
                 )
                 list.addItem(music)

@@ -2,7 +2,6 @@ package com.lk.plattenspieler.utils
 
 import android.app.Activity
 import android.content.SharedPreferences
-import android.content.res.Resources
 import android.graphics.Color
 import android.preference.PreferenceManager
 import android.util.Log
@@ -43,6 +42,7 @@ object ThemeChanger{
                 } else {
                     activity.setTheme(R.style.AppThemeL)
                 }
+                // IDEA_ Daynight Theme mit implementieren (evtl eigene Zeiten dafür)
                 Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
             }
         }
@@ -85,12 +85,5 @@ object ThemeChanger{
     fun themeIsLineage(activity: Activity): Boolean {
         val design = readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
         return design == EnumTheme.THEME_LINEAGE
-    }
-
-    fun themeIsLight(design: EnumTheme): Boolean{
-        return when(design){
-            EnumTheme.THEME_LIGHT, EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_LINEAGE -> true
-            EnumTheme.THEME_DARK_T, EnumTheme.THEME_DARK -> false
-        }
     }
 }

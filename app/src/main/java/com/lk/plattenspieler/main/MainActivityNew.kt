@@ -45,14 +45,18 @@ class MainActivityNew : Activity(),
 
  	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
 
+    // TODO Einstellungen einbauen, Kontextmenü verkleinern
+    // TODO Lyrics hinzufügen nur in der Wiedergabeansicht anzeigen
+
     private val TAG = "com.lk.pl-MainActNew"
     private val PERMISSION_REQUEST = 8009
     private var design = EnumTheme.THEME_LIGHT
     private var menu: Menu? = null
-    private lateinit var sharedPreferences: SharedPreferences
     private var musicClient: MusicClient? = null
     private var albumsSet = false
     private var resumed = false
+
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +80,7 @@ class MainActivityNew : Activity(),
         }
         musicClient = MusicClient(this)
         // Bar und onClickListener setzen
-        fl_main_bar.visibility = View.GONE  // -> Farbe wird dynamisch gesetzt
+        fl_main_bar.visibility = View.GONE
         fragmentManager.beginTransaction()
                 .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment").commit()
         val pf = PlayingFragment()
@@ -110,26 +114,53 @@ class MainActivityNew : Activity(),
         Log.i(TAG, "onSavedIntancestate")
     }
 
+    // Permission Handling, alle getrennt abfragen; Ergebnisse gehen an eine Methode
+    private fun checkWritePermission(): Boolean{
+        val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        return requestPermission(permissions, PERMISSION_REQUEST+1)
+    }
     private fun checkReadPermission(): Boolean{
-        val permissions = arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-                /*,Manifest.permission.WRITE_EXTERNAL_STORAGE*/
-        )
-        return if(this.checkSelfPermission(permissions[0]) != PackageManager.PERMISSION_GRANTED
-                /*&& this.checkSelfPermission(permissions[1]) != PackageManager.PERMISSION_GRANTED*/){
-            this.requestPermissions(permissions, PERMISSION_REQUEST)
+        val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        return requestPermission(permissions, PERMISSION_REQUEST)
+    }
+    fun requestDesignReadPermission(): Boolean{
+        val permissions = arrayOf(lineageos.platform.Manifest.permission.CHANGE_STYLE)
+        return requestPermission(permissions, PERMISSION_REQUEST + 2)
+    }
+
+    private fun requestPermission(perm: Array<String>, requestCode: Int): Boolean{
+        return if(this.checkSelfPermission(perm[0]) != PackageManager.PERMISSION_GRANTED){
+            this.requestPermissions(perm, requestCode)
             false
         } else {
             true
         }
     }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode == PERMISSION_REQUEST){
-            if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
-            } else {
-                Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
+        when(requestCode){
+            PERMISSION_REQUEST -> {
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
+                } else {
+                    Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
+                }
+            }
+            PERMISSION_REQUEST+1 -> {
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // weitermachen mit dialog anzeigen für lyrics
+                } else {
+                    Toast.makeText(this, R.string.toast_no_permission_write, Toast.LENGTH_LONG).show()
+                }
+            }
+            PERMISSION_REQUEST+2 -> {
+                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    musicClient?.applyTheme(EnumTheme.THEME_LINEAGE)
+                } else {
+                    Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
+                    musicClient?.applyTheme(EnumTheme.THEME_LIGHT)
+                }
             }
         }
     }
@@ -154,17 +185,21 @@ class MainActivityNew : Activity(),
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
         ThemeChanger.onActivityCreateSetTheme(this, design)
-        // Textfarbe der Actionbar ändern
         if(design == EnumTheme.THEME_LINEAGE) {
-            val tv = View.inflate(this, R.layout.action_bar_custom, null) as TextView
-            val color = ThemeChanger.getAccentColorLinage(this)
-            if (color != 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                tv.setTextColor(ColorStateList.valueOf(color))
-                Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
-            }
-            actionBar.customView = tv
-            actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            if(requestDesignReadPermission())
+                completeLineageDesign()
         }
+    }
+    private fun completeLineageDesign(){
+        // Textfarbe der Actionbar ändern
+        val tv = View.inflate(this, R.layout.action_bar_custom, null) as TextView
+        val color = ThemeChanger.getAccentColorLinage(this)
+        if (color != 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            tv.setTextColor(ColorStateList.valueOf(color))
+            Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
+        }
+        actionBar.customView = tv
+        actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
     }
 
     private fun checkLineageSDK() : Boolean =
@@ -198,12 +233,11 @@ class MainActivityNew : Activity(),
         musicClient?.playFromTitle(titleid)
     }
     override fun onShuffleClick(ptitleid: String) {
-        // TESTING_ // -- shuffle scheint manchmal nicht alle Titel des Albums abzuspielen, beobachten
         musicClient?.shuffleTitles()
     }
     override fun onSaveLyrics(lyrics: String) {
 		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-		//LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
+		LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
 	}
     override fun onClickPlay() {
         musicClient?.play()
@@ -219,7 +253,7 @@ class MainActivityNew : Activity(),
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
         val design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        // Designoptionene dynamisch je nach Design anpassen
+        // Designoptionen dynamisch je nach Design anpassen
         val optionDesign = when(design){
             EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> resources.getString(R.string.menu_teal)
             EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T, EnumTheme.THEME_LINEAGE -> resources.getString(R.string.menu_pink)

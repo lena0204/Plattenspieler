@@ -13,8 +13,6 @@
 
     </android.support.v7.widget.RecyclerView>
 
-    <!-- IDEA_ Gleiches Layout für beide Ansichten, Shuffle von allen auf den Hauptseite -->
-
     <ImageButton
         android:id="@+id/fab_shuffle"
         android:layout_width="56dp"

@@ -24,7 +24,6 @@ class LyricsAddingDialog: DialogFragment(){
 		listener = context as MainActivityNew
 	}
 
-	// PROBLEM_ Writing access for Library is missing (min für mp3Files)
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 		super.onCreateDialog(savedInstanceState)
 		val li = activity.layoutInflater

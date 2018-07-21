@@ -2,8 +2,10 @@
 
 A music app for Android 7 or higher:
 - uses local music files
-- ordered by album
-- shuffle and skipping to next possible
+- sorted by album
+- shuffle albums and all songs
+- skipping to next and previous possible
 - light and dark design available
+- show stored lyrics
 
-Still under development, with some bugs 
+Still under development

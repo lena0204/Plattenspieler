@@ -47,23 +47,23 @@ class MusicService: MediaBrowserService()  {
         }
         msession.setCallback(MusicSessionCallback())
         sessionToken = msession.sessionToken
-        // Playback und Metadata initialisieren
+        // Playback und Metadata initialisieren (leer)
         val playbackState = PlaybackState.Builder()
-                .setActions(PlaybackState.ACTION_PLAY)
-                .setActions(PlaybackState.ACTION_PLAY_PAUSE)
+                .setActions(PlaybackState.ACTION_PLAY
+                        or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)
         msession.setPlaybackState(playbackState.build())
         msession.setMetadata(MediaMetadata.Builder().build())
         // Queuetitel setzen
         msession.setQueueTitle(getString(R.string.queue_title))
-
         playback = MusicPlayback(this, MusicNotification(this))
     }
+
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
         if(msession.controller.playbackState.state == PlaybackState.STATE_PAUSED) {
-            playback.handleOnStop()
+            playback.handleOnStop()     // speichern und aufräumen
         }
-        Log.d(TAG, "Service started: " + this.serviceStarted)
+        Log.v(TAG, "Service started: " + this.serviceStarted)
         return bool
     }
 
@@ -77,8 +77,7 @@ class MusicService: MediaBrowserService()  {
 
     // -------------- Hierachie der Musiktitel --------------
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): MediaBrowserService.BrowserRoot? {
-        // nur mein eigenes Paket zulassen zum Abfragen
-        if(this.packageName == clientPackageName){
+        if(this.packageName == clientPackageName){  // nur eigenes package
             return MediaBrowserService.BrowserRoot(MusicProvider.ROOT_ID, null)
         }
         return MediaBrowserService.BrowserRoot("", null)
@@ -86,18 +85,13 @@ class MusicService: MediaBrowserService()  {
     override fun onLoadChildren(parentId: String, result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         // eigene Hierachie aufbauen mit Browsable und Playable MediaItems
         when{
-            parentId == MusicProvider.ROOT_ID -> sendRootChildren(result)
-            parentId.contains("ALBUM-") -> sendAlbumChildren(result, parentId)
+            parentId == MusicProvider.ROOT_ID -> result.sendResult(playback.sendRootChildren())
+            parentId.contains("ALBUM-") -> result.sendResult(playback.sendAlbumChildren(parentId))
 			else -> Log.e(TAG, "No known parent ID")
 		}
     }
-    private fun sendAlbumChildren(result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>, albumid: String){
-        result.sendResult(playback.sendAlbumChildren(albumid))
-    }
-    private fun sendRootChildren(result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>){
-        result.sendResult(playback.sendRootChildren())
-    }
 
+    // Für die Aktionen in der Benachrichtigung
     private fun registerBroadcast(){
         val ifilter = IntentFilter()
         ifilter.addAction(MusicService.ACTION_MEDIA_PLAY)
@@ -140,7 +134,7 @@ class MusicService: MediaBrowserService()  {
             playback.shuffleOn = false
             Log.d(TAG, "onPlayfromid")
             if(extras != null && extras.containsKey("I")){
-                playback.handleOnPrepareFromId(mediaId)
+                playback.handleOnPrepareFromId(mediaId) // prepareFromId ist erst ab API 24 möglich
             } else {
                 playback.handleOnPlayFromId(mediaId)
             }
@@ -166,7 +160,6 @@ class MusicService: MediaBrowserService()  {
         }
 
         override fun onCommand(command: String, args: Bundle?, cb: ResultReceiver?) {
-            //super.onCommand(command, args, cb)
             when(command){
                 "addQueue" -> {
                     if(args != null) {
@@ -184,6 +177,7 @@ class MusicService: MediaBrowserService()  {
             }
         }
     }
+
     inner class NotificationBroadcastReceiver: BroadcastReceiver(){
 
         override fun onReceive(context: Context?, intent: Intent?) {

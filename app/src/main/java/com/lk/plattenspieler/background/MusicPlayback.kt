@@ -12,6 +12,8 @@ import android.os.Bundle
 import android.util.Log
 import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
 
 /**
  * Erstellt von Lena am 13.05.18.
@@ -31,15 +33,17 @@ class MusicPlayback(private val service: MusicService, private val notification:
 
     private var nm = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private var am: AudioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
     private var musicProvider = MusicProvider(service.applicationContext)
     private var playingQueue = MusicList()
     private var mediaStack = MediaStack()
     private var currentMusicMetadata = MusicMetadata()
     private var currentMusicId = ""
     private var musicPlayer: MediaPlayer? = null
+
     // Statusvariablen, um verschiedene Sachen abzufragen
     private var positionMs = -1
-    private var audioFocus = EnumAudioFucos.AUDIO_LOSS
+    private var audioFucosStatus = EnumAudioFucos.AUDIO_LOSS
     var shuffleOn = false
 
     fun sendAlbumChildren(albumid: String): MutableList<MediaBrowser.MediaItem>
@@ -67,8 +71,9 @@ class MusicPlayback(private val service: MusicService, private val notification:
         } else {
             am.requestAudioFocus(amCallback, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
+
         if(currentMusicId != "" && result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
-            audioFocus = EnumAudioFucos.AUDIO_FOCUS
+            audioFucosStatus = EnumAudioFucos.AUDIO_FOCUS
             return true
         }
         return false
@@ -120,12 +125,13 @@ class MusicPlayback(private val service: MusicService, private val notification:
 
     fun handleOnPlayFromId(pId: String){
         Log.i(TAG, "handleOnPlayFromId")
+        // Aufäumen
         playingQueue.removeAll()
         mediaStack.popAll()
         shuffleOn = false
+        positionMs = -1
         // Standardmäßig ausschalten wenn neu abgespielt wird, falls shuffle wird das später gesetzt
         service.sendQueue(playingQueue)
-        positionMs = -1
         currentMusicId = pId
         handleOnPlay()
     }
@@ -137,10 +143,10 @@ class MusicPlayback(private val service: MusicService, private val notification:
         updateMetadata()
     }
     fun handleOnPause() {
-        service.playingstate = EnumPlaybackState.STATE_PAUSE
         Log.i(TAG, "handleOnPause")
-        musicPlayer!!.pause()
+        service.playingstate = EnumPlaybackState.STATE_PAUSE
         updatePlaybackstate(PlaybackState.STATE_PAUSED)
+        musicPlayer!!.pause()
         service.stopForeground(false)
     }
     fun handleOnPrevious(position: Long){
@@ -181,7 +187,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
     fun handleOnStop(){
         Log.d(TAG, "handleOnStop")
         service.playingstate = EnumPlaybackState.STATE_STOP
-        // update Metadata, state und die Playliste
+        // update / löschen Metadata, state und die Playliste
         playingQueue.removeAll()
         mediaStack.popAll()
         shuffleOn = false
@@ -196,7 +202,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
         } else {
             am.abandonAudioFocus(amCallback)
         }
-        audioFocus = EnumAudioFucos.AUDIO_LOSS
+        audioFucosStatus = EnumAudioFucos.AUDIO_LOSS
         // Player stoppen
         musicPlayer?.stop()
         musicPlayer?.reset()
@@ -219,6 +225,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
         service.sendMetadata(currentMusicMetadata)
     }
     private fun sendBroadcastForLauncher(){
+        // Stellt einen Broadcast zusammen, der an Lightning Launcher geht und die Metadaten aktualisiert
         val extras = Bundle()
         val track = Bundle()
         track.putString("title", currentMusicMetadata.title)
@@ -232,6 +239,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
     private fun updatePlaybackstate(state: Int){
         val pb = PlaybackState.Builder()
         Log.d(TAG, state.toString())
+        // position setzen
         val position = if(musicPlayer == null) {
             0L
         } else {
@@ -240,7 +248,6 @@ class MusicPlayback(private val service: MusicService, private val notification:
         positionMs = position.toInt()
         when(state){
             PlaybackState.STATE_PLAYING -> {
-                // anfangen oder weiterspielen
                 pb.setActions(PlaybackState.ACTION_PAUSE
                         or PlaybackState.ACTION_STOP
                         or PlaybackState.ACTION_SKIP_TO_NEXT
@@ -275,15 +282,18 @@ class MusicPlayback(private val service: MusicService, private val notification:
         Log.d(TAG, "addAllSongsToPlayingQueue")
         val playingID = musicProvider.getFirstTitle()
         handleOnPlayFromId(playingID)
-        // alle anderen Songs zufällig hinzufügen
-        val listSongs = musicProvider.getAllTitles(playingID)
-        playingQueue = QueueCreation.createQueueRandom(listSongs, playingID)
-        service.sendQueue(playingQueue)
-        updateMetadata()
-        nm.notify(ID, notification
-                .showNotification(PlaybackState.STATE_PLAYING, currentMusicMetadata, shuffleOn)
-                .build())
         shuffleOn = true
+        // alle anderen Songs zufällig hinzufügen; asynchron
+        launch(CommonPool) {
+            val listSongs = musicProvider.getAllTitles(playingID)
+            playingQueue = QueueCreation.createQueueRandom(listSongs, playingID)
+            service.sendQueue(playingQueue)
+            // in Async, weil updateMetadata eine Schlange braucht, um die Länge dieser zu bestimmen
+            updateMetadata()
+            nm.notify(ID, notification
+                    .showNotification(PlaybackState.STATE_PLAYING, currentMusicMetadata, shuffleOn)
+                    .build())
+        }
     }
 
     inner class AudioFocusCallback: AudioManager.OnAudioFocusChangeListener{
@@ -292,20 +302,20 @@ class MusicPlayback(private val service: MusicService, private val notification:
             when(focusChange){
                 AudioManager.AUDIOFOCUS_LOSS -> {
                     handleOnStop()
-                    audioFocus = EnumAudioFucos.AUDIO_LOSS
+                    audioFucosStatus = EnumAudioFucos.AUDIO_LOSS
                 }
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                     if(musicPlayer!!.isPlaying){
                         handleOnPause()
-                        audioFocus = EnumAudioFucos.AUDIO_PAUSE_PLAYING
+                        audioFucosStatus = EnumAudioFucos.AUDIO_PAUSE_PLAYING
                     }
                 }
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                     musicPlayer!!.setVolume(0.3f, 0.3f)
-                    audioFocus = EnumAudioFucos.AUDIO_DUCK
+                    audioFucosStatus = EnumAudioFucos.AUDIO_DUCK
                 }
                 AudioManager.AUDIOFOCUS_GAIN -> {
-                    if(audioFocus == EnumAudioFucos.AUDIO_PAUSE_PLAYING){
+                    if(audioFucosStatus == EnumAudioFucos.AUDIO_PAUSE_PLAYING){
                         handleOnPlay()
                     } else {
                         musicPlayer!!.setVolume(0.8f, 0.8f)     // generell leiser spielen

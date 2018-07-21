@@ -13,15 +13,17 @@ import com.lk.plattenspieler.models.MusicMetadata
 object SongDBAccess{
 
     private var TAG = "SongDBAccess"
+    private lateinit var contentResolver: ContentResolver
 
-    fun savePlayingQueue(contentResolver: ContentResolver, playingQueue: MusicList, metadata: MusicMetadata){
+    fun savePlayingQueue(cr: ContentResolver, playingQueue: MusicList, metadata: MusicMetadata){
         Log.d(TAG, "savePlayingQueue(): Evtl Warteschlange abspeichern")
+        contentResolver = cr
         // wenn die Wartschlange etwas enthält, muss es auch aktuelle Metadaten geben und nur wenn
         // nicht abgespielt wird -> sonst Sicherung über die Session
         contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         if(playingQueue.countItems() > 0){
-            // aktuelle Metadaten sichern
             var values = ContentValues()
+            // aktuelle Metadaten sichern
             // IDEA_ Wiedergabestelle speichern (Position und passend wiederherstellen)
             values.put(SongDB.COLUMN_ID, metadata.id)
             values.put(SongDB.COLUMN_TITLE, metadata.title)
@@ -34,8 +36,6 @@ object SongDBAccess{
             contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
             Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.countItems())
-            //  TESTING_ -- Manchmal Error: Unique constraint failed (_id ist nicht eindeutig(Primärschlüssel));
-            //  wenn er versucht eine Queue erneut einzufügen, obwohl die zur aktuellen wiedergabe gehört
             for(item in playingQueue) {
                 values = ContentValues()
                 values.put(SongDB.COLUMN_ID, item.id)
@@ -51,25 +51,44 @@ object SongDBAccess{
         }
     }
 
-    fun restorePlayingQueue(contentResolver: ContentResolver): MusicList?{
-        val playingQueue = MusicList()
-        Log.d(TAG, "Restoring")
+    fun restoreFirstQueueItem(cr: ContentResolver): MusicMetadata?{
+        contentResolver = cr
         val projection = getProjection()
-        val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
+        val orderby = SongDB.COLUMN_ID + " LIMIT 1"
+        val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, orderby)
         if(c != null && c.count != 0) {
             Log.d(TAG, c.count.toString() + " Zeilen bei restoring")
             c.moveToFirst()
             // ersten Datensatz in die aktuelle Wiedergabe schreiben und an den Service weitergeben
+            // falls die Spalten "" leer sind
+            var dur = c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLongOrNull()
+            if(dur == null)  dur = 0L
+            var songnr = c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLongOrNull()
+            if(songnr == null) songnr = 0
+
             val music = MusicMetadata(
                     c.getString(c.getColumnIndex(SongDB.COLUMN_ID)),
                     c.getString(c.getColumnIndex(SongDB.COLUMN_ALBUM)),
                     c.getString(c.getColumnIndex(SongDB.COLUMN_ARTIST)),
                     c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)),
                     c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI)),
-                    duration = c.getString(c.getColumnIndex(SongDB.COLUMN_DURATION)).toLong(),
-                    songnr = c.getString(c.getColumnIndex(SongDB.COLUMN_NUMTRACKS)).toLong()
+                    duration = dur,
+                    songnr = songnr
             )
-            playingQueue.addItem(music)
+            c.close()
+            return music
+        }
+        c.close()
+        return null
+    }
+
+    fun restorePlayingQueue(contentResolver: ContentResolver): MusicList?{
+        val playingQueue = MusicList()
+        Log.d(TAG, "Restoring")
+        val projection = getProjection()
+        val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
+        if(c != null && c.moveToFirst()) {
+            Log.d(TAG, c.count.toString() + " Zeilen bei restoring")
             c.moveToNext()
             // Metadata zusammenstellen und an den Service weitergeben
             while (!c.isAfterLast) {

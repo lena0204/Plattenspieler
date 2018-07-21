@@ -64,7 +64,6 @@ class MusicNotification(private val service: MusicService) {
         pi = PendingIntent.getBroadcast(service, 100,
                 Intent(MusicService.ACTION_MEDIA_NEXT).setPackage(service.packageName), 0)
         nb.addAction(Notification.Action.Builder(R.mipmap.ic_next, "Next", pi).build())
-        //registerBroadcast()
         return nb
     }
     @RequiresApi(Build.VERSION_CODES.O)
@@ -75,5 +74,9 @@ class MusicNotification(private val service: MusicService) {
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         val manager = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
+    }
+
+    fun cb(){
+        service.applicationContext.sendBroadcast(Intent(MusicService.ACTION_MEDIA_PLAY).setPackage(service.packageName))
     }
 }

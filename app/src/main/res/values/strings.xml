@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Plattenspieler</string>
     <string name="action_playing">Wiedergabe</string>
-    <string name="action_lyrics">Lyrics</string>
+    <string name="action_lyrics">Liedtext</string>
     <string name="songs">Lieder</string>
 
     <!-- Menü -->
@@ -11,9 +11,9 @@
     <string name="menu_pink">Pinkes Design anwenden</string>
     <string name="menu_remove_playing">Wiedergabe löschen</string>
     <string name="menu_shuffle_all">Alle zufällig wiedergeben</string>
-    <string name="menu_add_lyrics">Lyrics hinzufügen</string>
-    <string name="menu_show_lyrics">Lyrics verbergen</string>
-    <string name="menu_show_lyrics_no">Lyrics anzeigen</string>
+    <string name="menu_add_lyrics">Liedtext hinzufügen</string>
+    <string name="menu_show_lyrics">Liedtext verbergen</string>
+    <string name="menu_show_lyrics_no">Liedtext anzeigen</string>
     <string name="menu_theme_lineage">Lineage-Theme</string>
     <!--<string name="menu_delete_database">Datenbank löschen</string>-->
 
@@ -32,11 +32,15 @@
     <string name="iv_cd_cover">Albumcover</string>
 
     <!-- Dialog -->
-    <string name="dialog_title">Lyrics hinzufügen</string>
+    <string name="dialog_title">Liedtext hinzufügen</string>
     <string name="dialog_yes">Hinzufügen</string>
     <string name="dialog_no">Abbrechen</string>
 
     <!-- Toast -->
     <string name="toast_no_permission">Keine Berechtigung, den Speicher zu lesen, deshalb kann keine
         Musik angezeigt werden.</string>
+    <string name="toast_no_permission_write">Keine Berechtigung, in den Speicher zu schreiben, deshalb können keine
+        neue Liedtexte hinzugefügt werden.</string>
+    <string name="toast_no_permission_design">Keine Berechtigung, das Design des Systems auszulesen.
+        Design wird auf Standard zurückgesetzt.</string>
 </resources>

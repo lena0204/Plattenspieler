@@ -62,7 +62,6 @@ class PlayingFragment : Fragment(), java.util.Observer {
         PlaybackObservable.addObserver(this)
         writeMetadata(PlaybackObservable.getMetadata())
         setPlaylist(PlaybackObservable.getQueue())
-        //updateShuffleMode(PlaybackObservable.getState().shuffleOn)
         // onClick Listener
         view.iv_playing_lyrics.setOnClickListener {
             if (lyrics != null && lyrics != "") {

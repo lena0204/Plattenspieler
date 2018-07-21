@@ -52,21 +52,15 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         started = false
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        Log.v(TAG, "onsaveinstancestate")
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         super.onCreateView(inflater, container, savedInstanceState)
-        Log.v(TAG, "oncreateview")
         return inflater.inflate(R.layout.fragment_album, container, false)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         started = true
         MedialistObservable.addObserver(this)
-        if(ThemeChanger.themeIsLineage(activity))
+        if(ThemeChanger.themeIsLineage(activity) && activity?.actionBar?.customView != null)
             (activity?.actionBar?.customView as TextView).text = resources.getString(R.string.app_name)
         activity?.actionBar?.title = getString(R.string.app_name)
         setupRecyclerView(MedialistObservable.getAlbums())
@@ -77,6 +71,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         for (item in list) {
             if (!item.isEmpty()) {
                 item.id = item.id.replace("ALBUM-", "")
+                // Cover umwandeln
                 var albumart: Bitmap?
                 albumart = BitmapFactory.decodeFile(item.cover_uri)
                 if (albumart == null) {

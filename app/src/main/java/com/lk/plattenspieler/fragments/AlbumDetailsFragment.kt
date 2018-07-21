@@ -74,6 +74,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
         for(item in list){
             if(!item.isEmpty()){
                 album = item.album
+                // Cover umwandeln
                 var titlecover: Bitmap?
 				titlecover = BitmapFactory.decodeFile(item.cover_uri)
 				if(titlecover == null){
@@ -84,7 +85,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
             }
         }
         if(album.isNotEmpty()){
-            if(ThemeChanger.themeIsLineage(activity))
+            if(ThemeChanger.themeIsLineage(activity) && activity?.actionBar?.customView != null)
                 (activity?.actionBar?.customView as TextView).text = album
             activity?.actionBar?.title = album  // Observer ist schneller als fragment
         }
