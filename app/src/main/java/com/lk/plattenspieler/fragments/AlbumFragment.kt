@@ -13,11 +13,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.models.*
 import java.util.*
 import android.support.v7.widget.DividerItemDecoration
 import android.widget.TextView
-import com.lk.plattenspieler.utils.*
+import com.lk.music_service_library.models.MedialistObservable
+import com.lk.music_service_library.models.MusicList
+import com.lk.plattenspieler.utils.AlbumAdapter
+import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_album.*
 
 /**

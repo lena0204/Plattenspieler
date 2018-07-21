@@ -16,10 +16,10 @@ import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
+import com.lk.music_service_library.models.*
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
-import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.*
 import java.util.*
 import kotlinx.android.synthetic.main.activity_main.*

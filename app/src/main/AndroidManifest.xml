@@ -17,13 +17,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="com.lk.plattenspieler.ACTION_LAUNCH_PL"/>
             </intent-filter>
         </activity>
         <provider
             android:authorities="com.lk.plattenspieler.contentprovider"
-            android:name=".database.SongContentProvider"
+            android:name="com.lk.music_service_library.database.SongContentProvider"
             android:exported="false"/>
-        <service android:name=".background.MusicService"
+        <service android:name="com.lk.music_service_library.background.MusicService"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService"/>

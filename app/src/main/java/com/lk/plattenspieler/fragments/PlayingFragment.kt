@@ -11,9 +11,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.lk.music_service_library.models.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
-import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.LyricsAccess
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*

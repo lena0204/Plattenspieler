@@ -7,14 +7,14 @@ import android.media.session.*
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Toast
+import com.lk.music_service_library.background.MusicService
+import com.lk.music_service_library.database.*
+import com.lk.music_service_library.models.*
+import com.lk.music_service_library.utils.QueueCreation
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.background.MusicService
-import com.lk.plattenspieler.database.SongContentProvider
-import com.lk.plattenspieler.database.SongDBAccess
 import com.lk.plattenspieler.fragments.LyricsAddingDialog
-import com.lk.plattenspieler.models.*
-import com.lk.plattenspieler.utils.*
+import com.lk.plattenspieler.utils.EnumTheme
+import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.android.UI
 import java.util.*
@@ -115,7 +115,9 @@ class MusicClient(val activity: MainActivityNew) {
         val shuffleOn = sharedPreferences
                 .getBoolean(MainActivityNew.PREF_SHUFFLE,false)
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PAUSED))
-        if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
+        val state = musicController.playbackState.state
+        if(state != PlaybackState.STATE_PLAYING &&
+                state != PlaybackState.STATE_PAUSED){
             if( restoringQueue){
                 val music = SongDBAccess.restoreFirstQueueItem(activity.contentResolver)
                 if(music == null){
@@ -140,7 +142,10 @@ class MusicClient(val activity: MainActivityNew) {
             // Session spielt Musik ab, Daten holen und weiterleiten
             PlaybackObservable.setQueue(MusicList.createListFromQueue(musicController.queue))
             PlaybackObservable.setMetadata(MusicMetadata.createFromMediaMetadata(musicController.metadata))
-            PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PLAYING))
+            if(state == PlaybackState.STATE_PLAYING)
+                PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PLAYING))
+            else
+                PlaybackObservable.setState(MusicPlaybackState(shuffleOn, PlaybackState.STATE_PAUSED))
             activity.showBar()
         }
         if(shuffleOn) {

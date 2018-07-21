@@ -10,9 +10,9 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import android.widget.TextView
+import com.lk.music_service_library.models.MedialistObservable
+import com.lk.music_service_library.models.MusicList
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.models.MedialistObservable
-import com.lk.plattenspieler.models.MusicList
 import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter
 import kotlinx.android.synthetic.main.bar_music_information.*

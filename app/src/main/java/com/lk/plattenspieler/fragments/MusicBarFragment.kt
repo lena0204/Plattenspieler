@@ -8,8 +8,8 @@ import android.media.session.PlaybackState
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import com.lk.music_service_library.models.*
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.models.*
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.bar_music_information.*
 import java.util.*

@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.lk.music_service_library.models.MusicList
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.models.MusicList
 import kotlinx.android.synthetic.main.row_music_data.view.*
 
 /**
