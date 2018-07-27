@@ -43,4 +43,26 @@
         neue Liedtexte hinzugefügt werden.</string>
     <string name="toast_no_permission_design">Keine Berechtigung, das Design des Systems auszulesen.
         Design wird auf Standard zurückgesetzt.</string>
+
+    <!-- Einstellungen -->
+    <string name="menu_settings">Einstellungen</string>
+
+    <string name="pref_themecolor_title">Designfarbe</string>
+    <string name="pref_themecolor_on">Grünes Design wird verwendet</string>
+    <string name="pref_themecolor_off">Pinkes Design wird verwendet</string>
+
+    <string name="pref_themelight_title">Helles / dunkles Design</string>
+    <string name="pref_themelight_on">Dunkles Design wird verwendet</string>
+    <string name="pref_themelight_off">Helles Design wird verwendet</string>
+
+    <string name="pref_themelos_title">Systemdesign (Lineage OS)</string>
+    <string name="pref_themelos_on">Systemdesign (Lineage OS) wird verwendet</string>
+    <string name="pref_themelos_off">Appdesign wird verwendet</string>
+
+    <string name="pref_lyricsshow_title">Liedtexte anzeigen</string>
+    <string name="pref_lyricsshow_on">Liedtexte werden angezeigt, falls vorhanden</string>
+    <string name="pref_lyricsshow_off">Liedtexte werden verborgen</string>
+
+    <string name="about_app">Über diese App: \nVersion: 3.0 \nEntwickelt von: xxx</string>
+
 </resources>

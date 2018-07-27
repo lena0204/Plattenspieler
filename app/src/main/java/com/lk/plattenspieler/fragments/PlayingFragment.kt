@@ -97,8 +97,8 @@ class PlayingFragment : Fragment(), java.util.Observer {
             }
             ll_playing_fragment.background = cover
             // Lyrics abfragen
-            val optLyrics = PreferenceManager.getDefaultSharedPreferences(activity).getInt(MainActivityNew.PREF_LYRICS,0)
-            if(optLyrics == 1) {
+            val optLyrics = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("PREF_LYRICSSHOW",true)
+            if(optLyrics) {
                 lyricsAbfragen(data.path)
             }
             // TODO nicht ganz zuverlässig -> SaveState Handling
@@ -111,7 +111,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
         for (item in queue) {
             liste.add(item.title + "\n - " + item.artist)
         }
-        lv_playing_list.adapter = ArrayAdapter(context, R.layout.row_playlist_tv, liste.toTypedArray())
+        lv_playing_list.adapter = ArrayAdapter(activity.applicationContext, R.layout.row_playlist_tv, liste.toTypedArray())
     }
 
 	private fun lyricsAbfragen(filepath: String){

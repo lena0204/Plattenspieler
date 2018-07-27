@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <SwitchPreference
+        android:key="PREF_THEMECOLOR"
+        android:title="@string/pref_themecolor_title"
+        android:summaryOn="@string/pref_themecolor_on"
+        android:summaryOff="@string/pref_themecolor_off"
+        android:defaultValue="false"/>
+
+    <SwitchPreference
+        android:key="PREF_THEMELIGHT"
+        android:title="@string/pref_themelight_title"
+        android:summaryOn="@string/pref_themelight_on"
+        android:summaryOff="@string/pref_themelight_off"
+        android:defaultValue="false"/>
+    <SwitchPreference
+        android:key="PREF_THEMELOS"
+        android:title="@string/pref_themelos_title"
+        android:summaryOn="@string/pref_themelos_on"
+        android:summaryOff="@string/pref_themelos_off"
+        android:defaultValue="false"/>
+    <SwitchPreference
+        android:key="PREF_LYRICSSHOW"
+        android:title="@string/pref_lyricsshow_title"
+        android:summaryOn="@string/pref_lyricsshow_on"
+        android:summaryOff="@string/pref_lyricsshow_off"
+        android:defaultValue="true"/>
+
+    <Preference
+        android:key="PREF_ABOUT"
+        android:summary="@string/about_app"/>
+
+</PreferenceScreen>

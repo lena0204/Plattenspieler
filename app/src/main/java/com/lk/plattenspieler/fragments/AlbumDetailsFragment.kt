@@ -89,11 +89,6 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
                 (activity?.actionBar?.customView as TextView).text = album
             activity?.actionBar?.title = album  // Observer ist schneller als fragment
         }
-        // TODO noch nicht so schön mit den Dividern
-        val lmanager = LinearLayoutManager(activity)
-        val divider = DividerItemDecoration(activity, lmanager.orientation)
-        //recycler_album_details.addItemDecoration(divider)
-        recycler_titles.layoutManager = lmanager
         recycler_titles.layoutManager = LinearLayoutManager(activity)
         recycler_titles.adapter = TitleAdapter(data, this)
     }

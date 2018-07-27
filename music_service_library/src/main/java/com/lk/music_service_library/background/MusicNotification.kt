@@ -43,8 +43,6 @@ class MusicNotification(private val service: MusicService) {
         nb.setStyle(Notification.MediaStyle()
                 .setMediaSession(service.sessionToken)
                 .setShowActionsInCompactView(1,2))
-
-        // TODO anderer Intent (über eine Action gehen)
         nb.setContentIntent(PendingIntent.getActivity(service.applicationContext, 10,
                 Intent(ACTION), PendingIntent.FLAG_UPDATE_CURRENT))
         // korrekt anzeigen, ob Shuffle aktiviert ist

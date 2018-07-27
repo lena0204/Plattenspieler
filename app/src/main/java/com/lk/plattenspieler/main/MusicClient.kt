@@ -4,6 +4,7 @@ import android.content.*
 import android.media.MediaMetadata
 import android.media.browse.MediaBrowser
 import android.media.session.*
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
@@ -162,12 +163,8 @@ class MusicClient(val activity: MainActivityNew) {
     
     fun menu(itemId: Int){
         when (itemId){
-            R.id.menu_change_design -> changeDesign()
             R.id.menu_remove_playing -> stopAndRemovePlaying()
-            R.id.menu_dark_light -> changeLightDark()
             R.id.menu_shuffle_all -> shuffleAll()
-            R.id.menu_show_lyrics -> changeLyricsState()
-            R.id.menu_theme_lineage -> applyTheme(EnumTheme.THEME_LINEAGE)
             R.id.menu_add_lyrics -> addLyrics()
         /*R.id.menu_delete_database -> {
             // DEBUGGING: Alte Dateien löschen und die aktuelle Wiedergabe in die Datenbank schreiben
@@ -176,33 +173,14 @@ class MusicClient(val activity: MainActivityNew) {
         }*/
         }
     }
-    private fun changeDesign(){
-        var design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        Log.d(TAG, "Farbe: $design")
-        design = when(design){
-            EnumTheme.THEME_LIGHT -> EnumTheme.THEME_LIGHT_T
-            EnumTheme.THEME_DARK -> EnumTheme.THEME_DARK_T
-            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_LINEAGE -> EnumTheme.THEME_LIGHT
-            EnumTheme.THEME_DARK_T -> EnumTheme.THEME_DARK
-        }
-        applyTheme(design)
-    }
-    private fun changeLightDark(){
-        var design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        Log.d(TAG, "Hell/Dunkel: $design")
-        design = when(design){
-            EnumTheme.THEME_LIGHT -> EnumTheme.THEME_DARK
-            EnumTheme.THEME_DARK, EnumTheme.THEME_LINEAGE -> EnumTheme.THEME_LIGHT
-            EnumTheme.THEME_LIGHT_T -> EnumTheme.THEME_DARK_T
-            EnumTheme.THEME_DARK_T -> EnumTheme.THEME_LIGHT_T
-        }
-        applyTheme(design)
-    }
     fun applyTheme(design: EnumTheme){
         ThemeChanger.writeThemeToPreferences(sharedPreferences, design)
         if(design == EnumTheme.THEME_LINEAGE){
             // Permission abfragen
-            if(activity.requestDesignReadPermission()){
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.M && activity.requestDesignReadPermission()){
+                saveQueue()
+                activity.recreate()
+            } else {
                 saveQueue()
                 activity.recreate()
             }
@@ -220,20 +198,12 @@ class MusicClient(val activity: MainActivityNew) {
         activity.contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
         sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, false).apply()
     }
-    fun shuffleAll(){
+    private fun shuffleAll(){
         Log.d(TAG, "shuffleAll")
         musicController.sendCommand("addAll", null, null)
         shuffleOn = true
         PlaybackObservable.setState(MusicPlaybackState(shuffleOn))
         activity.showBar()
-    }
-    private fun changeLyricsState(){
-        val pref = sharedPreferences.getInt(MainActivityNew.PREF_LYRICS,0)
-        if(pref == 0){
-            sharedPreferences.edit().putInt(MainActivityNew.PREF_LYRICS, 1).apply()
-        } else {
-            sharedPreferences.edit().putInt(MainActivityNew.PREF_LYRICS, 0).apply()
-        }
     }
     private fun addLyrics() {
         val dialog = LyricsAddingDialog()

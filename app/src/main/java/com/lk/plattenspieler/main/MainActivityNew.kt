@@ -12,6 +12,7 @@ import android.media.browse.MediaBrowser
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.*
 import android.widget.TextView
@@ -23,7 +24,6 @@ import com.lk.plattenspieler.fragments.*
 import com.lk.plattenspieler.utils.*
 import java.util.*
 import kotlinx.android.synthetic.main.activity_main.*
-
 
 /**
  * Erstellt von Lena am 12.05.18.
@@ -44,8 +44,6 @@ class MainActivityNew : Activity(),
     }
 
  	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
-
-    // TODO Einstellungen einbauen, Kontextmenü verkleinern
     // TODO Lyrics hinzufügen nur in der Wiedergabeansicht anzeigen
 
     private val TAG = "com.lk.pl-MainActNew"
@@ -94,7 +92,9 @@ class MainActivityNew : Activity(),
         // Audiotyp für die Lautstärkekontrolle auf Musik setzen
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         // Permission abfragen, braucht die Berechtigung den Speicher zu lesen
-        if(checkReadPermission()) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkReadPermission()) {
+            musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
+        } else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
         }
     }
@@ -114,20 +114,31 @@ class MainActivityNew : Activity(),
         Log.i(TAG, "onSavedIntancestate")
     }
 
-    // Permission Handling, alle getrennt abfragen; Ergebnisse gehen an eine Methode
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.v(TAG, "onDestroy")
+        musicClient?.clear()
+        musicClient = null
+        PlaybackObservable.deleteObservers()
+    }
+
+    // ----------------- Permission Handling -----------------
+    @RequiresApi(23)
     private fun checkWritePermission(): Boolean{
         val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         return requestPermission(permissions, PERMISSION_REQUEST+1)
     }
+    @RequiresApi(23)
     private fun checkReadPermission(): Boolean{
         val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         return requestPermission(permissions, PERMISSION_REQUEST)
     }
+    @RequiresApi(23)
     fun requestDesignReadPermission(): Boolean{
         val permissions = arrayOf(lineageos.platform.Manifest.permission.CHANGE_STYLE)
         return requestPermission(permissions, PERMISSION_REQUEST + 2)
     }
-
+    @RequiresApi(23)
     private fun requestPermission(perm: Array<String>, requestCode: Int): Boolean{
         return if(this.checkSelfPermission(perm[0]) != PackageManager.PERMISSION_GRANTED){
             this.requestPermissions(perm, requestCode)
@@ -165,20 +176,12 @@ class MainActivityNew : Activity(),
         }
     }
 
+    // ------------------ Layout und Design ------------------
     fun showBar(){
         fl_main_bar.visibility = View.VISIBLE
     }
-
     fun hideBar(){
         fl_main_bar.visibility = View.GONE
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.v(TAG, "onDestroy")
-        musicClient?.clear()
-        musicClient = null
-        PlaybackObservable.deleteObservers()
     }
 
     private fun changeDesign(){
@@ -186,7 +189,9 @@ class MainActivityNew : Activity(),
         design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
         ThemeChanger.onActivityCreateSetTheme(this, design)
         if(design == EnumTheme.THEME_LINEAGE) {
-            if(requestDesignReadPermission())
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.M && requestDesignReadPermission())
+                completeLineageDesign()
+            else
                 completeLineageDesign()
         }
     }
@@ -250,25 +255,13 @@ class MainActivityNew : Activity(),
     }
 
     // ------------- Menü -------------
+    fun setDesignFromPref(design: EnumTheme){
+        musicClient?.applyTheme(design)
+    }
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
-        val design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        // Designoptionen dynamisch je nach Design anpassen
-        val optionDesign = when(design){
-            EnumTheme.THEME_LIGHT, EnumTheme.THEME_DARK -> resources.getString(R.string.menu_teal)
-            EnumTheme.THEME_LIGHT_T, EnumTheme.THEME_DARK_T, EnumTheme.THEME_LINEAGE -> resources.getString(R.string.menu_pink)
-        }
-        val lyrics = sharedPreferences.getInt(PREF_LYRICS, 0)
-        val optionLyrics = if(lyrics == 0){
-            resources.getString(R.string.menu_show_lyrics_no)
-        } else {
-            resources.getString(R.string.menu_show_lyrics)
-        }
-        menu?.findItem(R.id.menu_change_design)?.title = optionDesign
-        menu?.findItem(R.id.menu_show_lyrics)?.title = optionLyrics
-        if(!checkLineageSDK()){
-            menu?.findItem(R.id.menu_theme_lineage)?.isVisible = false
-        }
+        // TODO Lyrics hinzufügen nur anzeigen wenn PlayingFragment sichtbar ist
+        //menu?.findItem(R.id.menu_add_lyrics)?.isVisible = false
         return true
     }
     override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {
@@ -276,7 +269,23 @@ class MainActivityNew : Activity(),
         return true
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        musicClient?.menu(item.itemId)
+        if(item.itemId == R.id.menu_settings){
+            // pref anzeigen und los mitgeben
+            val pf = PrefFragment()
+            val args = Bundle()
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O && !checkLineageSDK()){
+                args.putBoolean("LOS", true)
+            } else {
+                args.putBoolean("LOS", false)
+            }
+            pf.arguments = args
+            fragmentManager.beginTransaction()
+                    .addToBackStack(null)
+                    .replace(R.id.fl_main_content, pf, "PrefFragment")
+                    .commit()
+        } else {
+            musicClient?.menu(item.itemId)
+        }
         return super.onOptionsItemSelected(item)
     }
 }

@@ -7,7 +7,7 @@ android {
     buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "com.lk.plattenspieler"
-        minSdkVersion 23
+        minSdkVersion 22
         targetSdkVersion 27
         versionCode 6
         versionName "3.0"
