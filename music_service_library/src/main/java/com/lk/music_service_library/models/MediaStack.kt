@@ -8,69 +8,49 @@ import android.util.Log
  */
 class MediaStack {
 
-    // Repräsentiert einen Stack der die fünf zuletzt gespielten Titel verwaltet
     private var stack = arrayOfNulls<MusicMetadata?>(5)
-    private var elements = 0
+    private var elementsCounter = 0
 
-    /**
-     * Fügt ein neues Element dem Stack hinzu, falls [element] nicht null ist
-     * Falls dieser voll ist, wird das älteste Element gelöscht
-     * @param element Metadaten des letzten Musiktitels [MusicMetadata]
-     */
-    fun pushMedia(element: MusicMetadata?){
-        if(element != null) {
-            if (elements <= 4) {
-                stack[elements] = element
-                elements++
-            } else {
-                // Erstes löschen und alle anderen nach vorne schieben
-                var i = 1
-                while (i < 5) {
-                    stack[i - 1] = stack[i]
-                    i++
-                }
-                stack[i-1] = element
-            }
+    fun pushMedia(element: MusicMetadata) {
+        if (elementsCounter <= 4) {
+            stack[elementsCounter] = element
+            elementsCounter++
+        } else {
+            removeFirstAndPush(element)
         }
         Log.d("MediaStack", toString())
     }
 
-    /**
-     * @return letzte Metadaten [MusicMetadata]
-     */
-    fun topMedia(): MusicMetadata?{
+    private fun removeFirstAndPush(element: MusicMetadata){
+        for(i in 1..4){
+            stack[i - 1] = stack[i]
+        }
+        stack[stack.size - 1] = element
+    }
+
+    fun topMedia(): MusicMetadata? {
         return if(!isEmtpy())
-            stack[elements-1]
+            stack[elementsCounter-1]
         else
             null
     }
 
-    /**
-     * Entfernt die obersten Metadaten und gibt sie zurück
-     * @return letzte Metadaten [MusicMetadata]
-     */
     fun popMedia(): MusicMetadata?{
         return if(!isEmtpy()) {
-            elements--
-            val item = stack[elements]
-            stack[elements] = null
+            elementsCounter--
+            val item = stack[elementsCounter]
+            stack[elementsCounter] = null
             item
         } else {
             null
         }
     }
 
-    /**
-     * @return sind Elemente vorhanden
-     */
-    private fun isEmtpy(): Boolean = elements == 0
+    private fun isEmtpy(): Boolean = elementsCounter == 0
 
-    /**
-     * Entfernt alle noch vorhandenen Metadaten
-     */
     fun popAll(){
         stack = arrayOfNulls(5)
-        elements = 0
+        elementsCounter = 0
     }
 
     override fun toString(): String {

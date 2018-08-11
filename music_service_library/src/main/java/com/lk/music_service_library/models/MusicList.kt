@@ -23,16 +23,21 @@ class MusicList(
     fun countItems(): Int = list.size
 
     fun addItem(element: MusicMetadata) = list.add(element)
+
     fun addFirstItem(element: MusicMetadata) = list.add(0, element)
 
     fun removeItem(element: MusicMetadata) = list.remove(element)
+
     fun removeItemAt(i: Int) = list.removeAt(i)
+
     fun removeAll() = list.clear()
 
     fun getItemAt(i: Int): MusicMetadata = list[i]
+
     fun isEmpty(): Boolean = countItems() == 0
 
     fun addFlag(flag: Int) { this.flag = flag }
+
     fun getFlag(): Int = flag
 
     fun getQueueItemList(): MutableList<MediaSession.QueueItem>{
@@ -53,15 +58,8 @@ class MusicList(
         return mlist
     }
 
-/*    fun getMetadataList(): MutableList<MediaMetadata>{
-        val mlist = mutableListOf<MediaMetadata>()
-        for (item in list){
-            mlist.add(item.getMediaMetadata())
-        }
-        return mlist
-    }*/
-
     companion object {
+
         fun createListFromQueue(list: MutableList<MediaSession.QueueItem>): MusicList{
             val mlist = MusicList()
             for(item in list){
@@ -69,20 +67,5 @@ class MusicList(
             }
             return mlist
         }
-
-        /*fun createListFromDescription(list: MutableList<MediaDescription>): MusicList{
-            val mlist = MusicList()
-            for(item in list){
-                mlist.addItem(MusicMetadata.createFromMediaDescription(item))
-            }
-            return mlist
-        }
-        fun createListFromMetadata(list: MutableList<MediaMetadata>): MusicList{
-            val mlist = MusicList()
-            for(item in list){
-                mlist.addItem(MusicMetadata.createFromMediaMetadata(item))
-            }
-            return mlist
-        }*/
     }
 }

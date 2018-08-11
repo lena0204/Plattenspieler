@@ -9,58 +9,62 @@ import java.util.*
  */
 object PlaybackObservable: Observable() {
 
-    private var queue = MusicList()
-    private var metadata = MusicMetadata()
-    private var state = MusicPlaybackState()
+    private var currentQueue = MusicList()
+    private var currentMetadata = MusicMetadata()
+    private var currentState = MusicPlaybackState()
     private const val TAG = "PlaybackObservable"
 
     fun setQueue(_queue: MusicList){
-        // queue auf 30 items begrenzen
-        queue = _queue
+        currentQueue = _queue
         setChanged()
-        notifyObservers(getQueue())
+        notifyObservers(getQueueLimitedTo30())
     }
-    fun getQueue(): MusicList{
-        var _queue = MusicList()
-        if(queue.countItems() > 30) {
-            var i = 0
-            while (i < 30){
-                _queue.addItem(queue.getItemAt(i))
-                i++
+
+    fun getQueueLimitedTo30(): MusicList{
+        var shorterQueue = MusicList()
+        if(currentQueue.countItems() > 30) {
+            for(i in 0..30){
+                shorterQueue.addItem(currentQueue.getItemAt(i))
             }
         } else {
-            _queue = queue
+            shorterQueue = currentQueue
         }
-        Log.v(TAG, "getqueue: Größe: " + _queue.countItems())
-        return _queue
+        Log.v(TAG, "getqueue: Größe: " + shorterQueue.countItems())
+        return shorterQueue
     }
+
     fun getQueueAll(): MusicList{
-        Log.v(TAG, "getqueue: Größe: " + queue.countItems())
-        return queue
+        Log.v(TAG, "getqueue: Größe: " + currentQueue.countItems())
+        return currentQueue
     }
 
-    fun setMetadata(_meta: MusicMetadata){
-        metadata = _meta
-        Log.v(TAG, "setmeta: Titel: " + metadata.title)
+    fun setMetadata(meta: MusicMetadata){
+        currentMetadata = meta
+        Log.v(TAG, "setmeta: Titel: " + currentMetadata.title)
         setChanged()
-        notifyObservers(metadata)
+        notifyObservers(currentMetadata)
     }
+
     fun getMetadata(): MusicMetadata{
-        Log.v(TAG, "getmeta: Titel: " + metadata.title)
-        return metadata
+        Log.v(TAG, "getmeta: Titel: " + currentMetadata.title)
+        return currentMetadata
     }
 
-    fun setState(_state: MusicPlaybackState){
-        state = _state
-        Log.v(TAG, "setstate: state (2 -> pause, 3 -> play, 10 -> next, 9 -> previous, 1 -> stop): " + state.state)
-        Log.v(TAG, "setstate: shuffle on " + state.shuffleOn)
+    fun setState(state: MusicPlaybackState){
+        currentState = state
+        logState()
         setChanged()
-        notifyObservers(state)
+        notifyObservers(currentState)
     }
     fun getState(): MusicPlaybackState{
-        Log.v(TAG, "getstate: state (2 -> pause, 3 -> play, 10 -> next, 9 -> previous, 1 -> stop): " + state.state)
-        Log.v(TAG, "getstate: shuffle on " + state.shuffleOn)
-        return state
+        logState()
+        return currentState
+    }
+
+    private fun logState(){
+        Log.v(TAG, "setstate: currentState (2 -> pause, 3 -> play, " +
+                "10 -> next, 9 -> previous, 1 -> stop): " + currentState.state)
+        Log.v(TAG, "setstate: shuffle on " + currentState.shuffleOn)
     }
 
 }

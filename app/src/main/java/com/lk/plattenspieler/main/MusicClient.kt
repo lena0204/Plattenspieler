@@ -99,7 +99,7 @@ class MusicClient(val activity: MainActivityNew) {
     
     private fun saveQueue(){
         if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
-            if(!PlaybackObservable.getQueue().isEmpty()) {
+            if(!PlaybackObservable.getQueueLimitedTo30().isEmpty()) {
                 SongDBAccess.savePlayingQueue(activity.contentResolver,
                         PlaybackObservable.getQueueAll(), PlaybackObservable.getMetadata())
             }

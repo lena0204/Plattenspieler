@@ -34,7 +34,7 @@ data class MusicMetadata(
 
     fun isEmpty(): Boolean = id == ""
 
-    fun getDuration(): String{
+    fun getDurationAsFormattedText(): String{
         var dur = duration
         dur /= 1000
         val min = (dur / 60).toInt()

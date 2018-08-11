@@ -9,19 +9,29 @@ import java.util.*
  */
 object QueueCreation {
 
-    fun createQueueFromTitle(titleid: String, medialist: MusicList): MusicList{
-        var indexInMedialist = -1
-        for(item in medialist){
+    private var currentMedialist = MusicList()
+
+    fun createQueueFromTitle(titleid: String, medialist: MusicList): MusicList {
+        currentMedialist = medialist
+        val indexInMedialist = searchTitleInMedialist(titleid)
+        return addFollowingTitlesToQueue(indexInMedialist)
+    }
+
+    private fun searchTitleInMedialist(titleid: String): Int {
+        for(item in currentMedialist){
             if(item.id == titleid){
-                indexInMedialist = medialist.indexOf(item)
-                break
+                return currentMedialist.indexOf(item)
             }
         }
+        return -1
+    }
+
+    private fun addFollowingTitlesToQueue(titleindex: Int): MusicList {
         val queue = MusicList()
-        if(indexInMedialist != -1){
-            var i = indexInMedialist + 1
-            while(i < medialist.countItems()){
-                queue.addItem(medialist.getItemAt(i))
+        if(titleindex != -1){
+            var i = titleindex + 1
+            while(i < currentMedialist.countItems()){
+                queue.addItem(currentMedialist.getItemAt(i))
                 i++
             }
         }
@@ -29,18 +39,27 @@ object QueueCreation {
     }
 
     fun createQueueRandom(medialist: MusicList, titleid: String): MusicList {
-        val listSongs = MusicList()
-        val queue = MusicList()
+        copyMediaList(medialist)
+        return shuffleMediaListToQueue(titleid)
+
+    }
+
+    private fun copyMediaList(medialist: MusicList){
+        currentMedialist = MusicList()
         for(item in medialist){
-            listSongs.addItem(item)
+            currentMedialist.addItem(item)
         }
+    }
+
+    private fun shuffleMediaListToQueue(titleid: String): MusicList {
         val random = Random()
-        var i: Int
-        // zufällige Liste erstellen und an die QUEUE hängen, ersten Titel aus der Queue abspielen
-        while(!listSongs.isEmpty()){
-            i = random.nextInt(listSongs.countItems())
-            val element = listSongs.removeItemAt(i)
-            if(element.id != titleid) queue.addItem(element)
+        val queue = MusicList()
+        var randomValue: Int
+        while(!currentMedialist.isEmpty()){
+            randomValue = random.nextInt(currentMedialist.countItems())
+            val element = currentMedialist.removeItemAt(randomValue)
+            if(element.id != titleid)
+                queue.addItem(element)
         }
         return queue
     }

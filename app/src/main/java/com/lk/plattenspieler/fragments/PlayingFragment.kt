@@ -60,7 +60,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
         // observe Metadata
         PlaybackObservable.addObserver(this)
         writeMetadata(PlaybackObservable.getMetadata())
-        setPlaylist(PlaybackObservable.getQueue())
+        setPlaylist(PlaybackObservable.getQueueLimitedTo30())
         // onClick Listener
         view.iv_playing_lyrics.setOnClickListener {
             if (lyrics != null && lyrics != "") {
@@ -89,7 +89,7 @@ class PlayingFragment : Fragment(), java.util.Observer {
             tv_playing_album.text = data.album
             tv_playing_songnumber.text = data.nr_of_songs_left.toString()
             tv_playing_songnumber.append(" " + getString(R.string.songs))
-            tv_playing_duration.text = data.getDuration()
+            tv_playing_duration.text = data.getDurationAsFormattedText()
             // TODO cover wird noch nicht gut eingesetzt weil je nachdem Bitmap oder Drawable erforderlich ist
             var cover = Drawable.createFromPath(data.cover_uri)
             if (cover == null){
