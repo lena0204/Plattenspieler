@@ -4,12 +4,15 @@ import android.annotation.TargetApi
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.*
 import android.media.browse.MediaBrowser
 import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import com.lk.music_service_library.R
 import com.lk.music_service_library.models.*
 import com.lk.music_service_library.utils.*
 import kotlinx.coroutines.experimental.CommonPool
@@ -96,7 +99,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
                 // starte im Vordergrund mit Benachrichtigung
                 service.startForeground(ID, notification
                         .showNotification(PlaybackState.STATE_PLAYING, currentMusicMetadata, shuffleOn)
-                        ?.build())
+                        .build())
             }
             musicPlayer!!.setOnErrorListener { _, what, extra ->
                 Log.e(TAG, "MusicPlayerError: $what; $extra")
@@ -220,6 +223,13 @@ class MusicPlayback(private val service: MusicService, private val notification:
         currentMusicMetadata = musicProvider.getMediaMetadata(currentMusicId, number)
         if(currentMusicMetadata.isEmpty()){
             Log.e(TAG, "Metadaten sind null")
+        } else {
+            var albumart: Bitmap?
+            albumart = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
+            if (albumart == null) {
+                albumart = BitmapFactory.decodeResource(service.resources, R.mipmap.ic_no_cover)
+            }
+            currentMusicMetadata.cover = albumart
         }
         sendBroadcastForLauncher()
         service.sendMetadata(currentMusicMetadata)
@@ -253,7 +263,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
                         or PlaybackState.ACTION_SKIP_TO_NEXT
                         or PlaybackState.ACTION_SKIP_TO_PREVIOUS)
                 nm.notify(ID, notification
-                        .showNotification(state, currentMusicMetadata, shuffleOn)?.build())
+                        .showNotification(state, currentMusicMetadata, shuffleOn).build())
             }
             PlaybackState.STATE_PAUSED -> {
                 pb.setActions(PlaybackState.ACTION_PLAY
@@ -262,7 +272,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
                         or PlaybackState.ACTION_SKIP_TO_PREVIOUS
                         or PlaybackState.ACTION_STOP)
                 nm.notify(ID, notification
-                        .showNotification(state, currentMusicMetadata, shuffleOn)?.build())
+                        .showNotification(state, currentMusicMetadata, shuffleOn).build())
             }
             PlaybackState.STATE_STOPPED -> {
                 pb.setActions(PlaybackState.ACTION_PLAY
@@ -292,7 +302,7 @@ class MusicPlayback(private val service: MusicService, private val notification:
             updateMetadata()
             nm.notify(ID, notification
                     .showNotification(PlaybackState.STATE_PLAYING, currentMusicMetadata, shuffleOn)
-                    ?.build())
+                    .build())
         }
     }
 

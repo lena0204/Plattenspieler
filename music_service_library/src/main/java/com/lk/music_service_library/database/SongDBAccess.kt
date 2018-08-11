@@ -31,7 +31,7 @@ object SongDBAccess{
             values.put(SongDB.COLUMN_ALBUM, metadata.album)
             values.put(SongDB.COLUMN_COVER_URI, metadata.cover_uri)
             values.put(SongDB.COLUMN_DURATION, metadata.duration.toString())
-            values.put(SongDB.COLUMN_NUMTRACKS, metadata.songnr.toString())
+            values.put(SongDB.COLUMN_NUMTRACKS, metadata.nr_of_songs_left.toString())
             values.put(SongDB.COLUMN_FILE, metadata.path)
             contentResolver.insert(SongContentProvider.CONTENT_URI, values)
             // Warteschlange sichern
@@ -73,7 +73,7 @@ object SongDBAccess{
                     c.getString(c.getColumnIndex(SongDB.COLUMN_TITLE)),
                     c.getString(c.getColumnIndex(SongDB.COLUMN_COVER_URI)),
                     duration = dur,
-                    songnr = songnr
+                    nr_of_songs_left = songnr
             )
             c.close()
             return music

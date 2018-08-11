@@ -44,7 +44,6 @@ class MainActivityNew : Activity(),
     }
 
  	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
-    // TODO Lyrics hinzufügen nur in der Wiedergabeansicht anzeigen
 
     private val TAG = "com.lk.pl-MainActNew"
     private val PERMISSION_REQUEST = 8009

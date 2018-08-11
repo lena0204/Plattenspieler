@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -80,7 +79,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
                     albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
                 }
                 item.cover = albumart
-                item.alltracks = item.num_tracks.toString() + " " + resources.getString(R.string.songs)
+                item.alltracks = item.num_tracks_album.toString() + " " + resources.getString(R.string.songs)
                 data.addItem(item)
             }
         }

@@ -13,7 +13,6 @@ import android.view.ViewGroup
 import android.widget.*
 import com.lk.music_service_library.models.*
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.utils.LyricsAccess
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
@@ -88,9 +87,10 @@ class PlayingFragment : Fragment(), java.util.Observer {
             tv_playing_title.text = data.title
             tv_playing_artist.text = data.artist
             tv_playing_album.text = data.album
-            tv_playing_songnumber.text = data.songnr.toString()
+            tv_playing_songnumber.text = data.nr_of_songs_left.toString()
             tv_playing_songnumber.append(" " + getString(R.string.songs))
             tv_playing_duration.text = data.getDuration()
+            // TODO cover wird noch nicht gut eingesetzt weil je nachdem Bitmap oder Drawable erforderlich ist
             var cover = Drawable.createFromPath(data.cover_uri)
             if (cover == null){
                 cover = resources.getDrawable(R.mipmap.ic_no_cover, activity?.theme)

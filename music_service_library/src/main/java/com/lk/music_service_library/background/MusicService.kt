@@ -8,6 +8,8 @@ import android.os.ResultReceiver
 import android.service.media.MediaBrowserService
 import android.util.Log
 import android.content.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.*
 import android.os.Build
 import com.lk.music_service_library.R
@@ -103,6 +105,14 @@ class MusicService: MediaBrowserService()  {
 
     // ----------- Methoden, die MusicPlayback aufruft----------
     fun sendMetadata(data: MusicMetadata){
+        // Bitmap muss in den Metadaten enthalten sein
+        // WICHTIG_ Cover auf dem Lockscreen erfordert, dass ein Bitmap in den Metadaten vorhanden ist!!
+        var albumart: Bitmap?
+        albumart = BitmapFactory.decodeFile(data.cover_uri)
+        if (albumart == null) {
+            albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
+        }
+        data.cover = albumart
         msession.setMetadata(data.getMediaMetadata())
     }
     fun sendPlaybackstate(state: PlaybackState){

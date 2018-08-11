@@ -20,12 +20,13 @@ data class MusicMetadata(
         var cover_uri: String = "",
         var path: String = "",
         var duration: Long = 0,
-        var songnr: Long = 0,
-        var num_tracks: Int = 0
+        var nr_of_songs_left: Long = 0,
+        var num_tracks_album: Int = 0,
+        var cover: Bitmap? = null
 ) : Parcelable {
 
-    @IgnoredOnParcel
-    lateinit var cover: Bitmap
+    //@IgnoredOnParcel
+    //var cover: Bitmap? = null
     @IgnoredOnParcel
     lateinit var alltracks: String
 
@@ -43,7 +44,7 @@ data class MusicMetadata(
     }
 
     fun getMediaMetadata(): MediaMetadata{
-        return MediaMetadata.Builder()
+        val b = MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, id)
                 .putString(MediaMetadata.METADATA_KEY_ALBUM, album)
                 .putString(MediaMetadata.METADATA_KEY_TITLE, title)
@@ -51,8 +52,11 @@ data class MusicMetadata(
                 .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, cover_uri)
                 .putString(MediaMetadata.METADATA_KEY_WRITER, path)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
-                .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songnr)
-                .build()
+                .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, nr_of_songs_left)
+        if(cover != null){
+            b.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, cover)
+        }
+        return b.build()
     }
 
     fun getMediaDescription(): MediaDescription{
@@ -60,7 +64,7 @@ data class MusicMetadata(
         des.setMediaId(id)
         des.setTitle(album)
         des.setSubtitle(artist)
-        des.setDescription(cover_uri + "__" + num_tracks + "__" + title)
+        des.setDescription(cover_uri + "__" + num_tracks_album + "__" + title)
         return des.build()
     }
 
@@ -70,14 +74,15 @@ data class MusicMetadata(
                 return MusicMetadata()
             }
             return MusicMetadata(
-                    meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
-                    meta.getString(MediaMetadata.METADATA_KEY_ALBUM),
-                    meta.getString(MediaMetadata.METADATA_KEY_ARTIST),
-                    meta.getString(MediaMetadata.METADATA_KEY_TITLE),
-                    meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
-                    meta.getString(MediaMetadata.METADATA_KEY_WRITER),
-                    meta.getLong(MediaMetadata.METADATA_KEY_DURATION),
-                    meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS))
+                    id = meta.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
+                    album = meta.getString(MediaMetadata.METADATA_KEY_ALBUM),
+                    artist = meta.getString(MediaMetadata.METADATA_KEY_ARTIST),
+                    title = meta.getString(MediaMetadata.METADATA_KEY_TITLE),
+                    cover_uri = meta.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
+                    path = meta.getString(MediaMetadata.METADATA_KEY_WRITER),
+                    duration = meta.getLong(MediaMetadata.METADATA_KEY_DURATION),
+                    nr_of_songs_left = meta.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS),
+                    cover = meta.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART))
         }
 
         fun createFromMediaDescription(item: MediaDescription): MusicMetadata {
@@ -88,7 +93,7 @@ data class MusicMetadata(
                     item.subtitle.toString(),
                     title = array[2],
                     cover_uri = array[0],
-                    num_tracks = array[1].toInt()
+                    num_tracks_album = array[1].toInt()
             )
         }
     }

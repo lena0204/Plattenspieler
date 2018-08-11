@@ -32,7 +32,7 @@ class MusicNotification(private val service: MusicService) {
         // Inhalt setzen
         nb.setContentTitle(currentMusicMetadata.title)
         nb.setContentText(currentMusicMetadata.artist)
-        nb.setSubText(currentMusicMetadata.songnr.toString() + " Lieder noch")
+        nb.setSubText(currentMusicMetadata.nr_of_songs_left.toString() + " Lieder noch")
         nb.setSmallIcon(R.drawable.notification_stat_playing)
         val albumart = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
         if (albumart != null){

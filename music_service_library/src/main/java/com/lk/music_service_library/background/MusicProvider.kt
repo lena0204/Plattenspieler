@@ -114,7 +114,7 @@ class MusicProvider(private val c: Context) {
                         albumtitle,
                         albumartist,
                         cover_uri = albumart,
-                        num_tracks = albumtracks.toInt()
+                        num_tracks_album = albumtracks.toInt()
                 )
                 list.addItem(music)
             } while (cursorAlbums.moveToNext())
@@ -169,14 +169,14 @@ class MusicProvider(private val c: Context) {
             val albumid = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
             val cover = getCoverForAlbum(albumid)
             music = MusicMetadata(
-                    mediaId,
-                    cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                    cover,
-                    cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                    cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                    songnumber.toLong())
+                    id = mediaId,
+                    album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
+                    artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
+                    title = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                    cover_uri = cover,
+                    path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                    duration = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                    nr_of_songs_left = songnumber.toLong())
         }
         cursor.close()
         return music

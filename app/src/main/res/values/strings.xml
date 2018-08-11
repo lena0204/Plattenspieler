@@ -63,6 +63,6 @@
     <string name="pref_lyricsshow_on">Liedtexte werden angezeigt, falls vorhanden</string>
     <string name="pref_lyricsshow_off">Liedtexte werden verborgen</string>
 
-    <string name="about_app">Über diese App: \nVersion: 3.0 \nEntwickelt von: xxx</string>
+    <string name="about_app">Über diese App: \nVersion: 3.1 \nEntwickelt von: xxx</string>
 
 </resources>
