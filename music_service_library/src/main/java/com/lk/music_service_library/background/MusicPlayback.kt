@@ -55,6 +55,10 @@ class MusicPlayback(
         playbackData.setQueue(queue)
     }
 
+    fun setShuffleOn(){
+        playbackData.shuffleOn = true
+    }
+
     fun handleOnPlayFromId(pId: String){
         Log.i(TAG, "handleOnPlayFromId")
         playbackData.resetPlaybackParameters()

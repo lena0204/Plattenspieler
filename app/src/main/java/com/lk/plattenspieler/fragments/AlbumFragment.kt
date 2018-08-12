@@ -15,7 +15,7 @@ import com.lk.plattenspieler.R
 import java.util.*
 import android.support.v7.widget.DividerItemDecoration
 import android.widget.TextView
-import com.lk.music_service_library.models.MedialistObservable
+import com.lk.music_service_library.observables.MedialistsObservable
 import com.lk.music_service_library.models.MusicList
 import com.lk.plattenspieler.utils.AlbumAdapter
 import com.lk.plattenspieler.utils.ThemeChanger
@@ -60,11 +60,11 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         started = true
-        MedialistObservable.addObserver(this)
+        MedialistsObservable.addObserver(this)
         if(ThemeChanger.themeIsLineage(activity) && activity?.actionBar?.customView != null)
             (activity?.actionBar?.customView as TextView).text = resources.getString(R.string.app_name)
         activity?.actionBar?.title = getString(R.string.app_name)
-        setupRecyclerView(MedialistObservable.getAlbums())
+        setupRecyclerView(MedialistsObservable.getAlbumList())
     }
 
     private fun setupRecyclerView(list: MusicList){

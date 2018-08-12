@@ -1,6 +1,7 @@
-package com.lk.music_service_library.models
+package com.lk.music_service_library.observables
 
 import android.util.Log
+import com.lk.music_service_library.models.*
 import java.util.*
 
 /**
@@ -20,7 +21,7 @@ object PlaybackObservable: Observable() {
         notifyObservers(getQueueLimitedTo30())
     }
 
-    fun getQueueLimitedTo30(): MusicList{
+    fun getQueueLimitedTo30(): MusicList {
         var shorterQueue = MusicList()
         if(currentQueue.countItems() > 30) {
             for(i in 0..30){
@@ -33,7 +34,7 @@ object PlaybackObservable: Observable() {
         return shorterQueue
     }
 
-    fun getQueueAll(): MusicList{
+    fun getQueue(): MusicList {
         Log.v(TAG, "getqueue: Größe: " + currentQueue.countItems())
         return currentQueue
     }
@@ -45,7 +46,7 @@ object PlaybackObservable: Observable() {
         notifyObservers(currentMetadata)
     }
 
-    fun getMetadata(): MusicMetadata{
+    fun getMetadata(): MusicMetadata {
         Log.v(TAG, "getmeta: Titel: " + currentMetadata.title)
         return currentMetadata
     }
@@ -56,7 +57,7 @@ object PlaybackObservable: Observable() {
         setChanged()
         notifyObservers(currentState)
     }
-    fun getState(): MusicPlaybackState{
+    fun getState(): MusicPlaybackState {
         logState()
         return currentState
     }

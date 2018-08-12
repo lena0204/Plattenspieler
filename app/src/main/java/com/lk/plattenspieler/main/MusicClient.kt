@@ -11,6 +11,7 @@ import android.util.Log
 import com.lk.music_service_library.background.MusicService
 import com.lk.music_service_library.database.*
 import com.lk.music_service_library.models.*
+import com.lk.music_service_library.observables.*
 import com.lk.music_service_library.utils.QueueCreation
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.LyricsAddingDialog
@@ -75,14 +76,14 @@ class MusicClient(val activity: MainActivityNew) {
         Log.v(TAG, "playFromTitle:$titleid.")
         musicController.transportControls.playFromMediaId(titleid, null)
         // Queue erstellen und weiterleiten
-        val queue = QueueCreation.createQueueFromTitle(titleid, MedialistObservable.getMediaList())
+        val queue = QueueCreation.createQueueFromTitle(titleid, MedialistsObservable.getTitleList())
         sendQueueToController(queue)
         shuffleOn = false
         PlaybackObservable.setState(MusicPlaybackState((shuffleOn)))
         activity.showBar()
     }
     fun shuffleTitles(){
-        val medialist = MedialistObservable.getMediaList()
+        val medialist = MedialistsObservable.getTitleList()
         // ersten zufälligen heraussuchen
         val i = Random().nextInt(medialist.countItems())
         val titleid = medialist.getItemAt(i).id
@@ -101,7 +102,7 @@ class MusicClient(val activity: MainActivityNew) {
         if(musicController.playbackState.state != PlaybackState.STATE_PLAYING){
             if(!PlaybackObservable.getQueueLimitedTo30().isEmpty()) {
                 SongDBAccess.savePlayingQueue(activity.contentResolver,
-                        PlaybackObservable.getQueueAll(), PlaybackObservable.getMetadata())
+                        PlaybackObservable.getQueue(), PlaybackObservable.getMetadata())
             }
             sharedPreferences.edit().putBoolean(MainActivityNew.PREF_PLAYING, true).apply()
         } else {
@@ -249,14 +250,14 @@ class MusicClient(val activity: MainActivityNew) {
                 for(i in children){
                     medialist.addItem(MusicMetadata.createFromMediaDescription(i.description))
                 }
-                MedialistObservable.setAlbums(medialist)
+                MedialistsObservable.setAlbumList(medialist)
             } else if(parentId.contains("ALBUM-")){
                 // ein Album wurde abgefragt
                 medialist.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
                 for(i in children){
                     medialist.addItem(MusicMetadata.createFromMediaDescription(i.description))
                 }
-                MedialistObservable.setMediaList(medialist)
+                MedialistsObservable.setTitleList(medialist)
             }
             mbrowser.unsubscribe(parentId)
         }

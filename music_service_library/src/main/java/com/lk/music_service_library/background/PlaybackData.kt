@@ -76,6 +76,7 @@ class PlaybackData (
     }
 
     fun prepareForPlaying(id: String){
+        shuffleOn = false
         positionMs = -1
         currentMusicId = id
         updateMetadata()
@@ -88,11 +89,11 @@ class PlaybackData (
     }
 
     fun prepareAfterCompletion(){
-        mediaStack.pushMedia(currentMusicMetadata)
         prepareNextQueueItem()
     }
 
     private fun prepareNextQueueItem(){
+        mediaStack.pushMedia(currentMusicMetadata)
         Log.d(TAG, "Größe: " + playingQueue.countItems())
         val queueItem = playingQueue.getItemAt(0)
         playingQueue.removeItemAt(0)
@@ -102,9 +103,7 @@ class PlaybackData (
     }
 
     fun setNext(){
-        // von der Schlange holen und Werte zurücksetzen
-        Log.i(TAG, "onNext(), Größe: " + playingQueue.countItems())
-        mediaStack.pushMedia(currentMusicMetadata)
+        Log.i(TAG, "onNext()" + playingQueue.countItems())
         prepareNextQueueItem()
     }
 
@@ -142,9 +141,6 @@ class PlaybackData (
     }
 
 
-
-
-
     fun updateMetadata(){
         val remainingSongs = getRemainingSongNumber()
         currentMusicMetadata = musicProvider.getMediaMetadata(currentMusicId, remainingSongs)
@@ -165,7 +161,7 @@ class PlaybackData (
         if(currentMusicMetadata.isEmpty()){
             Log.e(TAG, "Metadaten sind leer")
         } else {
-            currentMusicMetadata.cover = service.decodeAlbumcover(currentMusicMetadata.cover_uri)
+            currentMusicMetadata.cover = MusicMetadata.decodeAlbumcover(currentMusicMetadata.cover_uri, service.resources)
         }
     }
 

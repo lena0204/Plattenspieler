@@ -1,9 +1,12 @@
 package com.lk.music_service_library.models
 
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaDescription
 import android.media.MediaMetadata
 import android.os.Parcelable
+import com.lk.music_service_library.R
 import kotlinx.android.parcel.IgnoredOnParcel
 import kotlinx.android.parcel.Parcelize
 
@@ -95,6 +98,15 @@ data class MusicMetadata(
                     cover_uri = array[0],
                     num_tracks_album = array[1].toInt()
             )
+        }
+
+        fun decodeAlbumcover(path: String, resources: Resources): Bitmap{
+            var albumart: Bitmap?
+            albumart = BitmapFactory.decodeFile(path)
+            if (albumart == null) {
+                albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
+            }
+            return albumart
         }
     }
 

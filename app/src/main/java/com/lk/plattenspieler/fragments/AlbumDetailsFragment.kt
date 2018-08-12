@@ -6,16 +6,14 @@ import android.content.res.ColorStateList
 import android.graphics.*
 import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import android.widget.TextView
-import com.lk.music_service_library.models.MedialistObservable
+import com.lk.music_service_library.observables.MedialistsObservable
 import com.lk.music_service_library.models.MusicList
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter
-import kotlinx.android.synthetic.main.bar_music_information.*
 import kotlinx.android.synthetic.main.fragment_album_details.*
 import java.util.*
 
@@ -58,8 +56,8 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
         fab_shuffle.setOnClickListener {
             listener.onShuffleClick(data.getItemAt(0).id)
         }
-        MedialistObservable.addObserver(this)
-        setupRecyclerView(MedialistObservable.getMediaList())
+        MedialistsObservable.addObserver(this)
+        setupRecyclerView(MedialistsObservable.getTitleList())
         // Farbe setzen falls lineage
         val color = ThemeChanger.getAccentColorLinage(activity)
         if(color != 0){

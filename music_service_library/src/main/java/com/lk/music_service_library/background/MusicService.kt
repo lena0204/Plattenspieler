@@ -74,6 +74,7 @@ class MusicService: MediaBrowserService()  {
         msession.setQueueTitle(getString(R.string.queue_title))
     }
 
+
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): MediaBrowserService.BrowserRoot? {
         if(this.packageName == clientPackageName){
             return MediaBrowserService.BrowserRoot(MusicProvider.ROOT_ID, null)
@@ -89,6 +90,7 @@ class MusicService: MediaBrowserService()  {
 		}
     }
 
+
     fun startServiceIfNecessary(){
         if(!serviceStarted){
             this.startService(android.content.Intent(applicationContext,
@@ -98,19 +100,11 @@ class MusicService: MediaBrowserService()  {
         if(!msession.isActive) { msession.isActive = true }
     }
 
+
     fun setMetadataToSession(data: MusicMetadata){
         // WICHTIG_ Cover auf dem Lockscreen erfordert, dass ein Bitmap in den Metadaten vorhanden ist!!
-        data.cover = decodeAlbumcover(data.cover_uri)
+        data.cover = MusicMetadata.decodeAlbumcover(data.cover_uri, resources)
         msession.setMetadata(data.getMediaMetadata())
-    }
-
-    fun decodeAlbumcover(path: String): Bitmap{
-        var albumart: Bitmap?
-        albumart = BitmapFactory.decodeFile(path)
-        if (albumart == null) {
-            albumart = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
-        }
-        return albumart
     }
 
     fun setPlaybackStateToSession(state: PlaybackState){
@@ -152,15 +146,16 @@ class MusicService: MediaBrowserService()  {
         }
 
         override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
-            playback.shuffleOn = false
             Log.d(TAG, "onPlayfromid")
-            if(extras != null && extras.containsKey("I")){
+            if(shallPrepare(extras)){
                 // Callback onPrepareFromId ist erst ab API 24 möglich
                 playback.handleOnPrepareFromId(mediaId)
             } else {
                 playback.handleOnPlayFromId(mediaId)
             }
         }
+
+        private fun shallPrepare(extras: Bundle?): Boolean = extras != null && extras.containsKey("I")
 
         override fun onPause() {
             playback.handleOnPause()
@@ -175,17 +170,11 @@ class MusicService: MediaBrowserService()  {
             playback.handleOnPrevious(msession.controller.playbackState.position)
         }
 
-        override fun onMediaButtonEvent(mediaButtonIntent: Intent?): Boolean{
-            Log.i(TAG, "onMediaButtonEvent" + mediaButtonIntent?.action
-					+ ";" + mediaButtonIntent?.data + ";" + mediaButtonIntent?.`package`)
-            return super.onMediaButtonEvent(mediaButtonIntent)
-        }
-
         override fun onCommand(command: String, args: Bundle?, resultReceiver: ResultReceiver?) {
             when(command){
                 "addQueue" -> addQueueToService(args)
                 "addAll" -> playback.addAllSongsToPlayingQueue()
-                "shuffle" -> playback.shuffleOn = true
+                "shuffle" -> playback.setShuffleOn()
             }
         }
 

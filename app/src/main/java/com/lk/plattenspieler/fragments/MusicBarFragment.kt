@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import com.lk.music_service_library.models.*
+import com.lk.music_service_library.observables.MusicPlaybackState
+import com.lk.music_service_library.observables.PlaybackObservable
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.bar_music_information.*

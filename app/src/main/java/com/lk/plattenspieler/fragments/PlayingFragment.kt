@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.lk.music_service_library.models.*
+import com.lk.music_service_library.observables.PlaybackObservable
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.LyricsAccess
 import com.lk.plattenspieler.utils.ThemeChanger

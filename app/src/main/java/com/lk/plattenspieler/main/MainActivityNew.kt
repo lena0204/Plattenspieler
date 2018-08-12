@@ -18,6 +18,8 @@ import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import com.lk.music_service_library.models.*
+import com.lk.music_service_library.observables.MedialistsObservable
+import com.lk.music_service_library.observables.PlaybackObservable
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
@@ -60,7 +62,7 @@ class MainActivityNew : Activity(),
         Log.d(TAG, "oncreate")
         changeDesign()
         setContentView(R.layout.activity_main)
-        MedialistObservable.addObserver { o, arg ->
+        MedialistsObservable.addObserver { o, arg ->
             when (arg) {
                 is MusicList -> {
                     Log.v(TAG, "Update medialist")

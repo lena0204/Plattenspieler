@@ -1,4 +1,4 @@
-package com.lk.music_service_library.models
+package com.lk.music_service_library.observables
 
 import android.media.session.PlaybackState
 
