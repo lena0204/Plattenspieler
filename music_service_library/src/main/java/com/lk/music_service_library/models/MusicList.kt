@@ -3,7 +3,6 @@ package com.lk.music_service_library.models
 import android.media.browse.MediaBrowser
 import android.media.session.MediaSession
 import android.os.Parcelable
-import android.util.Log
 import kotlinx.android.parcel.Parcelize
 
 /**
@@ -18,15 +17,13 @@ class MusicList(
 
     override fun iterator(): Iterator<MusicMetadata> = list.iterator()
 
-    constructor(): this(mutableListOf() )
+    constructor(): this(mutableListOf())
 
     fun countItems(): Int = list.size
 
     fun addItem(element: MusicMetadata) = list.add(element)
 
     fun addFirstItem(element: MusicMetadata) = list.add(0, element)
-
-    fun removeItem(element: MusicMetadata) = list.remove(element)
 
     fun removeItemAt(i: Int) = list.removeAt(i)
 
@@ -46,7 +43,6 @@ class MusicList(
         for (item in list){
             qlist.add(MediaSession.QueueItem(item.getMediaDescription(), counter++))
         }
-        Log.v(this.javaClass.simpleName, "getQueueItemList: Läenge" + qlist.count())
         return qlist
     }
 
@@ -56,16 +52,5 @@ class MusicList(
             mlist.add(MediaBrowser.MediaItem(item.getMediaDescription(), flag))
         }
         return mlist
-    }
-
-    companion object {
-
-        fun createListFromQueue(list: MutableList<MediaSession.QueueItem>): MusicList{
-            val mlist = MusicList()
-            for(item in list){
-                mlist.addItem(MusicMetadata.createFromMediaDescription(item.description))
-            }
-            return mlist
-        }
     }
 }

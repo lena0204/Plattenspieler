@@ -16,7 +16,6 @@ import kotlinx.android.synthetic.main.row_music_data.view.*
  */
 class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
 
-    // Interface, um mit dem Fragment zu kommunzieren
     interface OnClickTitle{
         fun onClick(albumid: String)
     }
@@ -26,16 +25,16 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
         holder.getTvID().text = title.id
         holder.getTvTitle().text = title.title
         holder.getTvInterpret().text = title.artist
-        // passendes Icon setzen
         holder.getIvCover().setImageBitmap(title.cover)
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderTitle {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data, parent, false)
         return ViewHolderTitle(v)
     }
+
     override fun getItemCount(): Int = dataset.countItems()
 
-    // ViewHolder Klasse
     inner class ViewHolderTitle(v: View) : RecyclerView.ViewHolder(v) {
 
         private var tvId: TextView

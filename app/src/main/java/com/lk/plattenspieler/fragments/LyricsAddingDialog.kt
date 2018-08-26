@@ -29,12 +29,11 @@ class LyricsAddingDialog: DialogFragment(){
 		val li = activity.layoutInflater
 		val view = li.inflate(R.layout.dialog_lyrics_adding, null)
 		val et = view.findViewById(R.id.et_lyrics_add) as EditText
-		val builder = AlertDialog.Builder(context)
+		val builder = AlertDialog.Builder(activity.applicationContext)
 		builder.setTitle(R.string.dialog_title)
 		builder.setView(view)
 		builder.setPositiveButton(R.string.dialog_yes) { _, _ ->
-			if(et.text != null && et.text.toString() != ""){
-				// Liedtext speichern
+			if(!et.text.isNullOrEmpty()){
 				listener.onSaveLyrics(et.text.toString())
 			}
 		}

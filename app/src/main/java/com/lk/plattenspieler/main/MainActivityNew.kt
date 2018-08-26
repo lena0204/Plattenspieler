@@ -1,12 +1,10 @@
 package com.lk.plattenspieler.main
 
-import android.Manifest
 import android.app.ActionBar
 import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
 import android.os.Build
@@ -18,8 +16,7 @@ import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import com.lk.music_service_library.models.*
-import com.lk.music_service_library.observables.MedialistsObservable
-import com.lk.music_service_library.observables.PlaybackObservable
+import com.lk.music_service_library.observables.*
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
@@ -43,12 +40,12 @@ class MainActivityNew : Activity(),
         const val PREF_DESIGN = "design"
         const val PREF_SHUFFLE = "shuffle"
         const val PREF_LYRICS = "lyrics"
+
+        fun isVersionGreaterThan(versionCode: Int): Boolean
+            = Build.VERSION.SDK_INT > versionCode
     }
 
- 	// IDEA_ -- Log in eine Datei schreiben für bessere Fehlersuche
-
     private val TAG = "com.lk.pl-MainActNew"
-    private val PERMISSION_REQUEST = 8009
     private var design = EnumTheme.THEME_LIGHT
     private var menu: Menu? = null
     private var musicClient: MusicClient? = null
@@ -56,174 +53,164 @@ class MainActivityNew : Activity(),
     private var resumed = false
 
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var permissionRequester: PermissionRequester
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "oncreate")
+        permissionRequester = PermissionRequester(this)
         changeDesign()
         setContentView(R.layout.activity_main)
-        MedialistsObservable.addObserver { o, arg ->
-            when (arg) {
-                is MusicList -> {
-                    Log.v(TAG, "Update medialist")
-                    if (arg.getFlag() == MediaBrowser.MediaItem.FLAG_BROWSABLE) {
-                        albumsSet = true
-                        showAlbums()
-                    } else {
-                        showTitles()
-                    }
-                }
-                else -> Log.e(TAG, "ML: unknown observable update from " +
-                        "${o?.javaClass?.canonicalName}: $arg")
+        setupForMusicHandling()
+        finishSetupIfPermissionGranted()
+    }
+
+    private fun changeDesign(){
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
+        ThemeChanger.setThemeAfterCreatingActivity(this, design)
+        if(canMakeAdaptionsToLineageDesign(design)) {
+            changeActionbarTitleColor()
+        }
+    }
+
+    private fun canMakeAdaptionsToLineageDesign(design: EnumTheme): Boolean
+            = (design == EnumTheme.THEME_LINEAGE
+            && isVersionGreaterThan(Build.VERSION_CODES.M)
+            && permissionRequester.requestDesignReadPermission())
+
+    private fun changeActionbarTitleColor(){
+        val tv = View.inflate(this, R.layout.action_bar_custom, null) as TextView
+        val color = ThemeChanger.getAccentColorLinage(this)
+        if (color != 0) {
+            tv.setTextColor(ColorStateList.valueOf(color))
+            // braucht API 26, Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
+        }
+        actionBar.customView = tv
+        actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+    }
+
+    private fun setupForMusicHandling(){
+        MedialistsObservable.addObserver(this)
+        PlaybackDataObservable.addObserver(this)
+        musicClient = MusicClient(this)
+        this.volumeControlStream = AudioManager.STREAM_MUSIC
+        setupMusicBar()
+    }
+
+    private fun setupMusicBar(){
+        hideBar()
+        fragmentManager.beginTransaction()
+                .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
+                .commit()
+        val pf = PlayingFragment()
+        fl_main_bar.setOnClickListener { view ->
+            if(!pf.isVisible){
+                fragmentManager.beginTransaction()
+                        .addToBackStack(null)
+                        .replace(R.id.fl_main_content, pf, "TAG_PLAYING")
+                        .commit()
             }
         }
-        musicClient = MusicClient(this)
-        // Bar und onClickListener setzen
+    }
+
+    fun showBar(){
+        fl_main_bar.visibility = View.VISIBLE
+    }
+
+    fun hideBar(){
         fl_main_bar.visibility = View.GONE
-        fragmentManager.beginTransaction()
-                .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment").commit()
-        val pf = PlayingFragment()
-        fl_main_bar.setOnClickListener {
-            if(!pf.isVisible){
-            fragmentManager.beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.fl_main_content, pf, "TAG_PLAYING")
-                    .commit()
-        } }
-        // Audiotyp für die Lautstärkekontrolle auf Musik setzen
-        this.volumeControlStream = AudioManager.STREAM_MUSIC
-        // Permission abfragen, braucht die Berechtigung den Speicher zu lesen
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkReadPermission()) {
-            musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
+    }
+
+    private fun finishSetupIfPermissionGranted(){
+        val hasQueueSaved = sharedPreferences.getBoolean(PREF_PLAYING, false)
+        if(isVersionGreaterThan(Build.VERSION_CODES.M) && permissionRequester.checkReadPermission()) {
+            musicClient?.completeSetup(hasQueueSaved)
         } else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
+            musicClient?.completeSetup(hasQueueSaved)
         }
     }
 
     override fun onResume() {
         super.onResume()
         resumed = true
-        if(albumsSet){
+        if(albumsSet)
             showAlbums()
-        }
-        Log.i(TAG, "onResume")
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
         resumed = false
-        Log.i(TAG, "onSavedIntancestate")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.v(TAG, "onDestroy")
+        Log.i(TAG, "onDestroy")
         musicClient?.clear()
         musicClient = null
-        PlaybackObservable.deleteObservers()
+        PlaybackDataObservable.deleteObserver(this)
     }
 
-    // ----------------- Permission Handling -----------------
+    // Permissions
     @RequiresApi(23)
-    private fun checkWritePermission(): Boolean{
-        val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        return requestPermission(permissions, PERMISSION_REQUEST+1)
-    }
-    @RequiresApi(23)
-    private fun checkReadPermission(): Boolean{
-        val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        return requestPermission(permissions, PERMISSION_REQUEST)
-    }
-    @RequiresApi(23)
-    fun requestDesignReadPermission(): Boolean{
-        val permissions = arrayOf(lineageos.platform.Manifest.permission.CHANGE_STYLE)
-        return requestPermission(permissions, PERMISSION_REQUEST + 2)
-    }
-    @RequiresApi(23)
-    private fun requestPermission(perm: Array<String>, requestCode: Int): Boolean{
-        return if(this.checkSelfPermission(perm[0]) != PackageManager.PERMISSION_GRANTED){
-            this.requestPermissions(perm, requestCode)
-            false
-        } else {
-            true
-        }
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when(requestCode){
-            PERMISSION_REQUEST -> {
-                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            PermissionRequester.PERMISSION_REQUEST_READ -> {
+                if(isPermissionGranted(grantResults))
                     musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
-                } else {
-                    Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
-                }
+                else
+                    showToast(R.string.toast_no_permission)
             }
-            PERMISSION_REQUEST+1 -> {
-                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    // weitermachen mit dialog anzeigen für lyrics
-                } else {
-                    Toast.makeText(this, R.string.toast_no_permission_write, Toast.LENGTH_LONG).show()
-                }
+            PermissionRequester.PERMISSION_REQUEST_WRITE -> {
+                if(isPermissionGranted(grantResults))
+                    // TODO weitermachen mit dialog anzeigen für lyrics
+                else
+                    showToast(R.string.toast_no_permission_write)
             }
-            PERMISSION_REQUEST+2 -> {
-                if(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            PermissionRequester.PERMISSION_REQUEST_DESIGN -> {
+                if(isPermissionGranted(grantResults)){
                     musicClient?.applyTheme(EnumTheme.THEME_LINEAGE)
                 } else {
-                    Toast.makeText(this, R.string.toast_no_permission, Toast.LENGTH_LONG).show()
+                    showToast(R.string.toast_no_permission_design)
                     musicClient?.applyTheme(EnumTheme.THEME_LIGHT)
                 }
             }
         }
     }
 
-    // ------------------ Layout und Design ------------------
-    fun showBar(){
-        fl_main_bar.visibility = View.VISIBLE
-    }
-    fun hideBar(){
-        fl_main_bar.visibility = View.GONE
+    private fun isPermissionGranted(grantResults: IntArray): Boolean
+            = (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+
+    private fun showToast(stringResource: Int){
+        Toast.makeText(this, stringResource, Toast.LENGTH_LONG).show()
     }
 
-    private fun changeDesign(){
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        design = ThemeChanger.readThemeFromPreferences(sharedPreferences)
-        ThemeChanger.onActivityCreateSetTheme(this, design)
-        if(design == EnumTheme.THEME_LINEAGE) {
-            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.M && requestDesignReadPermission())
-                completeLineageDesign()
-            else
-                completeLineageDesign()
+    // Observable
+    override fun update(observable: Observable?, arg: Any?) {
+        when (arg) {
+            is MusicList -> {
+                if (arg.getFlag() == MediaBrowser.MediaItem.FLAG_BROWSABLE) {
+                    albumsSet = true
+                    showAlbums()
+                } else {
+                    showTitles()
+                }
+            }
+            equals(PlaybackActions.ACTION_STOP) -> hideBar()
+            /*else -> Log.e(TAG, "ML: unknown observable update from " +
+                    "${observable?.javaClass?.canonicalName}: $arg")*/
         }
     }
-    private fun completeLineageDesign(){
-        // Textfarbe der Actionbar ändern
-        val tv = View.inflate(this, R.layout.action_bar_custom, null) as TextView
-        val color = ThemeChanger.getAccentColorLinage(this)
-        if (color != 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            tv.setTextColor(ColorStateList.valueOf(color))
-            Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
-        }
-        actionBar.customView = tv
-        actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
-    }
 
-    private fun checkLineageSDK() : Boolean =
-            lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
-
-    // ------------------ Observer -------------------
-    override fun update(observable: Observable?, arg: Any?) { }
     private fun showAlbums(){
-        //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
-            Log.i(TAG, "Transaction")
             fragmentManager.beginTransaction()
                     .replace(R.id.fl_main_content, AlbumFragment())
                     .commit()
         }
     }
+
     private fun showTitles(){
-        //Log.i(TAG, "savestate: " + fragmentManager.isStateSaved)
         if(resumed) {
             fragmentManager.beginTransaction()
                     .addToBackStack(null)
@@ -231,7 +218,7 @@ class MainActivityNew : Activity(),
         }
     }
 
-    // ---------------- Listener und zugehörige Methoden ----------
+    // TODO anderes Handling für die Listener (Observable?)
     override fun onClickAlbum(albumid: String) {
         musicClient?.showAlbumTitles(albumid)
     }
@@ -243,7 +230,7 @@ class MainActivityNew : Activity(),
     }
     override fun onSaveLyrics(lyrics: String) {
 		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-		LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
+		LyricsAccess.writeLyrics(lyrics, PlaybackDataObservable.metadata.path)
 	}
     override fun onClickPlay() {
         musicClient?.play()
@@ -255,31 +242,27 @@ class MainActivityNew : Activity(),
         musicClient?.previous()
     }
 
-    // ------------- Menü -------------
     fun setDesignFromPref(design: EnumTheme){
         musicClient?.applyTheme(design)
     }
+
+    // ------------- Menü -------------
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
         // TODO Lyrics hinzufügen nur anzeigen wenn PlayingFragment sichtbar ist
         //menu?.findItem(R.id.menu_add_lyrics)?.isVisible = false
         return true
     }
+
     override fun onCreateOptionsMenu(pmenu: Menu?): Boolean {
         menuInflater.inflate(R.menu.options_menu_main, pmenu)
         return true
     }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == R.id.menu_settings){
-            // pref anzeigen und los mitgeben
             val pf = PrefFragment()
-            val args = Bundle()
-            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O && !checkLineageSDK()){
-                args.putBoolean("LOS", true)
-            } else {
-                args.putBoolean("LOS", false)
-            }
-            pf.arguments = args
+            pf.arguments = prepareBundleForPrefFragment()
             fragmentManager.beginTransaction()
                     .addToBackStack(null)
                     .replace(R.id.fl_main_content, pf, "PrefFragment")
@@ -289,4 +272,17 @@ class MainActivityNew : Activity(),
         }
         return super.onOptionsItemSelected(item)
     }
+
+    private fun prepareBundleForPrefFragment(): Bundle{
+        val args = Bundle()
+        if(isVersionGreaterThan(Build.VERSION_CODES.O) && checkLineageSDK()){
+            args.putBoolean("LOS", true)
+        } else {
+            args.putBoolean("LOS", false)
+        }
+        return args
+    }
+
+    private fun checkLineageSDK() : Boolean =
+            lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
 }

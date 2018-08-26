@@ -3,6 +3,7 @@ package com.lk.plattenspieler.utils
 import android.app.Activity
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.Log
 import com.lk.plattenspieler.R
@@ -13,55 +14,72 @@ import lineageos.style.StyleInterface
  * Created by Lena on 08.09.17.
  * Verwaltet das Design der App (anwenden und abspeichern)
  */
-object ThemeChanger{
+object ThemeChanger {
 
     private const val TAG = "com.lk.pl-ThemeChanger"
+    private const val BLACK_STYLE = 4
+    // interne Codierung der ROM, da von Lineage nicht offiziell unterstützt
 
-    // Theme ändern beim Start der Activity nach den Vorgaben und Textfarben passend setzen
-    fun onActivityCreateSetTheme(activity: Activity, iTheme: EnumTheme) {
+    fun setThemeAfterCreatingActivity(activity: Activity, iTheme: EnumTheme) {
         when (iTheme) {
-            EnumTheme.THEME_LIGHT -> {
-                activity.setTheme(R.style.AppTheme)
-                Log.d(TAG, "Changed to light theme")
-            }
-            EnumTheme.THEME_DARK -> {
-                activity.setTheme(R.style.AppThemeDark)
-                Log.d(TAG, "Changed to dark theme")
-            }
-            EnumTheme.THEME_LIGHT_T -> {
-                activity.setTheme(R.style.AppThemeT)
-                Log.d(TAG, "Changed to light theme teal")
-            }
-            EnumTheme.THEME_DARK_T -> {
-                activity.setTheme(R.style.AppThemeDarkT)
-                Log.d(TAG, "Changed to dark theme teal")
-            }
-            EnumTheme.THEME_LINEAGE -> {
-                if(StyleInterface.getInstance(activity).globalStyle == StyleInterface.STYLE_GLOBAL_DARK){
-                    activity.setTheme(R.style.AppThemeDarkL)
-                } else {
-                    activity.setTheme(R.style.AppThemeL)
-                }
-                // IDEA_ Daynight Theme mit implementieren (evtl eigene Zeiten dafür)
-                Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
-            }
+            EnumTheme.THEME_LIGHT -> setLightPink(activity)
+            EnumTheme.THEME_DARK -> setDarkPink(activity)
+            EnumTheme.THEME_LIGHT_T -> setLightTeal(activity)
+            EnumTheme.THEME_DARK_T -> setDarkTeal(activity)
+            EnumTheme.THEME_LINEAGE -> setLineageTheme(activity)
         }
     }
 
-    fun getAccentColorLinage(activity: Activity): Int{
-        return if(readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
-                == EnumTheme.THEME_LINEAGE){
-            val attr = intArrayOf(android.R.attr.colorAccent)
-            val typedArray = activity.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, attr)
-            typedArray.getColor(0, Color.BLACK)
-                    .also { typedArray.recycle() }
+    private fun setLightPink(activity: Activity){
+        activity.setTheme(R.style.AppTheme)
+        Log.d(TAG, "Changed to light theme")
+    }
+
+    private fun setDarkPink(activity: Activity){
+        activity.setTheme(R.style.AppThemeDark)
+        Log.d(TAG, "Changed to dark theme")
+    }
+
+    private fun setLightTeal(activity: Activity){
+        activity.setTheme(R.style.AppThemeT)
+        Log.d(TAG, "Changed to light theme teal")
+    }
+
+    private fun setDarkTeal(activity: Activity){
+        activity.setTheme(R.style.AppThemeDarkT)
+        Log.d(TAG, "Changed to dark theme teal")
+    }
+
+    private fun setLineageTheme(activity: Activity){
+        val si = StyleInterface.getInstance(activity)
+        Log.d(TAG, "Globalstyle: " + si.globalStyle)
+        val style = si.globalStyle
+        when(style){
+            StyleInterface.STYLE_GLOBAL_DARK -> activity.setTheme(R.style.AppThemeDarkL)
+            BLACK_STYLE -> activity.setTheme(R.style.AppThemeBlackL)
+            else -> R.style.AppThemeL
+        }
+        // IDEA_ Daynight Theme mit implementieren (evtl eigene Zeiten dafür)
+        Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
+    }
+
+    fun getAccentColorLinage(activity: Activity): Int {
+        return if(themeIsLineage(activity)){
+            obtainColorAccentAttribute(activity)
         } else {
             0
         }
     }
 
+    private fun obtainColorAccentAttribute(activity: Activity): Int{
+        val colorAttribute = intArrayOf(android.R.attr.colorAccent)
+        val typedArray = activity.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, colorAttribute)
+        return typedArray.getColor(0, Color.BLACK)
+                .also { typedArray.recycle() }
+    }
+
     fun writeThemeToPreferences(sp: SharedPreferences, iTheme: EnumTheme){
-        val theme: Int = when(iTheme){
+        val theme = when(iTheme){
             EnumTheme.THEME_DARK -> 1
             EnumTheme.THEME_LIGHT_T -> 2
             EnumTheme.THEME_DARK_T -> 3
@@ -71,7 +89,10 @@ object ThemeChanger{
         sp.edit().putInt(MainActivityNew.PREF_DESIGN, theme).apply()
     }
 
-    fun readThemeFromPreferences(sp: SharedPreferences): EnumTheme{
+    private fun readThemeFromPreferences(activity: Activity): EnumTheme =
+            readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
+
+    fun readThemeFromPreferences(sp: SharedPreferences): EnumTheme {
         val iTheme = sp.getInt(MainActivityNew.PREF_DESIGN, 0)
         return when (iTheme){
             1 -> EnumTheme.THEME_DARK
@@ -83,7 +104,7 @@ object ThemeChanger{
     }
 
     fun themeIsLineage(activity: Activity): Boolean {
-        val design = readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
+        val design = readThemeFromPreferences(activity)
         return design == EnumTheme.THEME_LINEAGE
     }
 }

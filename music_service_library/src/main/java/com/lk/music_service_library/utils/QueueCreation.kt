@@ -38,7 +38,7 @@ object QueueCreation {
         return queue
     }
 
-    fun createQueueRandom(medialist: MusicList, titleid: String): MusicList {
+    fun createRandomQueue(medialist: MusicList, titleid: String): MusicList {
         copyMediaList(medialist)
         return shuffleMediaListToQueue(titleid)
 

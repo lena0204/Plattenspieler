@@ -16,30 +16,26 @@ import kotlinx.android.synthetic.main.row_music_data.view.*
  */
 class AlbumAdapter(private var dataset: MusicList, val cl: Click) : RecyclerView.Adapter<AlbumAdapter.ViewHolder>(){
 
-    val TAG = "AlbumAdapter"
-
-    // Interface, um mit dem Fragment zu kommunzieren
     interface Click{
         fun onClick(albumid: String)
     }
 
-    // ViewHolder Methoden
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val album = dataset.getItemAt(position)
         holder.getTvID().text = album.id
         holder.getTvAlbum().text = album.album
-        val interpret = album.artist + " | " + album.alltracks
-        holder.getTvArtist().text = interpret
-        // passendes Icon setzen
+        holder.getTvArtist().text = "${album.artist} | ${album.alltracks}"
         holder.getIvCover().setImageBitmap(album.cover)
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data, parent, false)
         return ViewHolder(v)
     }
+
     override fun getItemCount(): Int = dataset.countItems()
 
-    // ViewHolder Klasse
+
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
 
         private var tvId: TextView

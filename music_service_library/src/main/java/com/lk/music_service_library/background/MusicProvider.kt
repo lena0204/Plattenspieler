@@ -39,14 +39,13 @@ class MusicProvider(private val context: Context) {
     private val TAG = "com.lk.pl-MusicProvider"
 
 	fun getFirstTitleForShuffle(): String{
-		var titleId = ""
         val sortorder = MediaStore.Audio.Media._ID + " LIMIT 1"
-        val currentTitleCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        currentTitleCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 arrayOf(MediaStore.Audio.Media._ID), null,null,sortorder)
-        if(currentTitleCursor.moveToFirst()){
-            titleId = currentTitleCursor.getString(
-                    currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
-        }
+        val titleId = if(currentTitleCursor.moveToFirst())
+            currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+        else
+            ""
         currentTitleCursor.close()
 		return titleId
 	}
@@ -54,7 +53,7 @@ class MusicProvider(private val context: Context) {
     fun getAllTitles(playingTitleId: String): MusicList {
 		currentMusicList = MusicList()
 		val albumDatabaseColumns = arrayOf(MediaStore.Audio.Albums._ID)
-		val currentAlbumCursor = context.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumDatabaseColumns,
+        currentAlbumCursor = context.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumDatabaseColumns,
                 null, null, null)
         if(currentAlbumCursor.moveToFirst()){
             addAllTitlesToList(playingTitleId)
@@ -109,7 +108,7 @@ class MusicProvider(private val context: Context) {
 
     fun getAlbums(): MusicList{
         val orderby = MediaStore.Audio.Albums.ALBUM + " ASC"
-        val currentAlbumCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+        currentAlbumCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                 albumDatabaseColumns,null,null,orderby)
         currentMusicList = MusicList()
         currentMusicList.addFlag(MediaBrowser.MediaItem.FLAG_BROWSABLE)
@@ -155,47 +154,29 @@ class MusicProvider(private val context: Context) {
         return cover
     }
 
-    fun getFilePathFromMediaId(mediaId: String?): String{
-        var selection: String? = null
-        if(mediaId != null){
-            selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
-        }
-        var result = "ERROR"
-        val columns = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA)
-        val cursor = context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                columns, selection, null, null)
-        if(cursor != null){
-            cursor.moveToFirst()
-            result = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
-        }
-        cursor.close()
-        return result
-    }
-
-    fun getMediaMetadata(mediaId: String, songnumber: String): MusicMetadata {
+    fun getMediaMetadata(mediaId: String): MusicMetadata {
         var music = MusicMetadata()
         val selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
         currentTitleCursor = context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 metadataColumns, selection, null, null)
         if(currentTitleCursor.moveToFirst()){
-            music = writeMetadata(mediaId, songnumber)
+            music = writeMetadata(mediaId)
         }
         currentTitleCursor.close()
         return music
     }
 
-    private fun writeMetadata(mediaId: String, songnumber: String): MusicMetadata{
+    private fun writeMetadata(mediaId: String): MusicMetadata{
         val albumid = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
-        val cover = getCoverPathForAlbum(albumid)
+        val cover_uri = getCoverPathForAlbum(albumid)
         return MusicMetadata(
                 id = mediaId,
                 album = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
                 artist = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
                 title = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                cover_uri = cover,
+                cover_uri = cover_uri,
                 path = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                duration = currentTitleCursor.getLong(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                nr_of_songs_left = songnumber.toLong())
+                duration = currentTitleCursor.getLong(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
     }
 
 }

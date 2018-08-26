@@ -1,3 +1,4 @@
+/*
 package com.lk.music_service_library.background
 
 import android.app.NotificationManager
@@ -7,16 +8,20 @@ import android.media.session.PlaybackState
 import android.os.Bundle
 import android.util.Log
 import com.lk.music_service_library.models.*
+import com.lk.music_service_library.observables.PlaybackDataObservable
 import com.lk.music_service_library.utils.QueueCreation
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
+import java.util.*
 
+*/
 /**
  * Erstellt von Lena am 11.08.18.
- */
+ *//*
+
 class PlaybackData (
         private val service: MusicService,
-        private val notification: MusicNotification) {
+        private val notification: MusicNotification): Observer {
 
     private val TAG = "PlaybackData"
 
@@ -32,6 +37,14 @@ class PlaybackData (
     var shuffleOn = false
     var currentMusicMetadata = MusicMetadata()
     var currentMusicId = ""
+
+    init{
+        PlaybackDataObservable.addObserver(this)
+    }
+
+    override fun update(observable: Observable?, arg: Any?) {
+
+    }
 
     fun getAlbumsFromProvider() = musicProvider.getAlbums().getMediaItemList()
 
@@ -163,9 +176,10 @@ class PlaybackData (
         } else {
             currentMusicMetadata.cover = MusicMetadata.decodeAlbumcover(currentMusicMetadata.cover_uri, service.resources)
         }
-    }
+    }service
 
-    // IDEA_ Broadcast sticky?
+    // Broadcast sticky?
+    //  To
     private fun sendBroadcastForLightningLauncher(){
         val extras = Bundle()
         val track = Bundle()
@@ -244,4 +258,4 @@ class PlaybackData (
         updateMetadata()
     }
 
-}
+}*/

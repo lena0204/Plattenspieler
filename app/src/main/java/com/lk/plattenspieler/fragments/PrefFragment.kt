@@ -31,10 +31,52 @@ class PrefFragment: PreferenceFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mActivity = activity as MainActivityNew
-        val sp = PreferenceManager.getDefaultSharedPreferences(mActivity)
         losSupport = arguments.getBoolean("LOS", false)
-        setEnabled(sp)
+        Log.d(TAG, "losSupport: $losSupport")
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity)
+        enableValidPreferences(sharedPreferences)
         prefListener = getPrefListener()
+    }
+
+    private fun enableValidPreferences(sp: SharedPreferences){
+        when {
+            losSupport && isLosThemeEnabled(sp) -> setStandardThemeEnabled(false)
+            losSupport && !isLosThemeEnabled(sp) -> setStandardThemeEnabled(true)
+            !losSupport -> findPreference(PREF_LOS).isEnabled = false
+        }
+    }
+
+    private fun isLosThemeEnabled(sp: SharedPreferences): Boolean = sp.getBoolean(PREF_LOS, false)
+
+    private fun setStandardThemeEnabled(enabled: Boolean){
+        findPreference(PREF_COLOR).isEnabled = enabled
+        findPreference(PREF_DARK).isEnabled = enabled
+    }
+
+    private fun getPrefListener(): SharedPreferences.OnSharedPreferenceChangeListener =
+            SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+                when(key){
+                    PREF_COLOR, PREF_DARK, PREF_LOS -> {
+                        changeTheme(sharedPreferences)
+                        enableValidPreferences(sharedPreferences)
+                    }
+                }
+            }
+
+    private fun changeTheme(sharedPreferences: SharedPreferences){
+        val theme = if(isLosThemeEnabled(sharedPreferences)){
+             EnumTheme.THEME_LINEAGE
+        } else {
+            val teal = sharedPreferences.getBoolean(PREF_COLOR, false)
+            val dark = sharedPreferences.getBoolean(PREF_DARK, false)
+            when {
+                !teal && dark -> EnumTheme.THEME_DARK
+                teal && !dark -> EnumTheme.THEME_LIGHT_T
+                teal && dark -> EnumTheme.THEME_DARK_T
+                else -> EnumTheme.THEME_LIGHT
+            }
+        }
+        mActivity.setDesignFromPref(theme)
     }
 
     override fun onResume() {
@@ -45,48 +87,5 @@ class PrefFragment: PreferenceFragment() {
     override fun onPause() {
         super.onPause()
         this.preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
-    }
-
-    private fun getPrefListener(): SharedPreferences.OnSharedPreferenceChangeListener =
-            SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-                when(key){
-                    PREF_COLOR, PREF_DARK, PREF_LOS -> {
-                        val los = sharedPreferences.getBoolean(PREF_LOS, false)
-                        var theme = EnumTheme.THEME_LIGHT
-                        if(los){
-                            // Theme changer aufrufen
-                            theme = EnumTheme.THEME_LINEAGE
-                        } else {
-                            val teal = sharedPreferences.getBoolean(PREF_COLOR, false)
-                            val dark = sharedPreferences.getBoolean(PREF_DARK, false)
-                            if(dark){
-                                theme = if(teal)
-                                    EnumTheme.THEME_DARK_T
-                                else
-                                    EnumTheme.THEME_DARK
-                            } else {
-                                if(teal)
-                                    theme = EnumTheme.THEME_LIGHT_T
-                            }
-                        }
-                        mActivity.setDesignFromPref(theme)
-                        setEnabled(sharedPreferences)
-                    }
-                }
-            }
-
-    private fun setEnabled(sp: SharedPreferences){
-        if(losSupport) {
-            val los = sp.getBoolean(PREF_LOS, false)
-            if (los) {
-                findPreference(PREF_COLOR).isEnabled = false
-                findPreference(PREF_DARK).isEnabled = false
-            } else {
-                findPreference(PREF_COLOR).isEnabled = true
-                findPreference(PREF_DARK).isEnabled = true
-            }
-        } else {
-            findPreference(PREF_LOS).isEnabled = false
-        }
     }
 }

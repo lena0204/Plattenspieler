@@ -28,8 +28,6 @@ data class MusicMetadata(
         var cover: Bitmap? = null
 ) : Parcelable {
 
-    //@IgnoredOnParcel
-    //var cover: Bitmap? = null
     @IgnoredOnParcel
     lateinit var alltracks: String
 

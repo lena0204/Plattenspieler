@@ -31,21 +31,24 @@ class LyricsFragment: Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		if(ThemeChanger.themeIsLineage(activity))
-			(activity?.actionBar?.customView as TextView).text = resources.getString(R.string.action_lyrics)
-		activity?.actionBar?.title = getString(R.string.action_lyrics)
+		setTitleInActionbar()
 		val args = this.arguments
 		ll_lyrics_frame.background = Drawable.createFromPath(args?.getString("C"))
 		val text = args?.getString("L")
+		setLyricsText(text)
+	}
 
-		if(lyricsText == null){
-			Log.d(TAG, "TV ist null")
-		} else if (args != null && text != null) {
-			Log.d(TAG, text.contains("\n").toString())
-			lyricsText?.text = text
-		} else {
-			Log.e(TAG, "Args oder lyrics sind null")
+	private fun setTitleInActionbar(){
+		if(ThemeChanger.themeIsLineage(activity))
+			(activity?.actionBar?.customView as TextView).text = resources.getString(R.string.action_lyrics)
+		activity?.actionBar?.title = getString(R.string.action_lyrics)
+	}
+
+	private fun setLyricsText(text: String?){
+		when {
+			lyricsText == null -> Log.d(TAG, "TV ist null")
+			text != null -> lyricsText?.text = text
+			else -> Log.e(TAG, "Args oder lyrics sind null")
 		}
-
 	}
 }

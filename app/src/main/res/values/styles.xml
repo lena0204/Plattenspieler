@@ -40,6 +40,11 @@
         <item name="android:textColor">@color/light_grey</item>
         <item name="android:colorAccent">@color/light_grey</item>
     </style>
+    <style name="AppThemeBlackL" parent="android:Theme.Material">
+        <item name="android:textColor">@color/light_grey</item>
+        <item name="android:colorAccent">@color/light_grey</item>
+        <item name="android:colorBackground">@color/black</item>
+    </style>
 
     <style name="ImageButtonStyle">
         <item name="android:layout_width">0dp</item>

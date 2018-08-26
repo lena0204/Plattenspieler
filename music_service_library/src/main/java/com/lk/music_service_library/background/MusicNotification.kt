@@ -16,7 +16,7 @@ import com.lk.music_service_library.models.MusicMetadata
 
 class MusicNotification(private val service: MusicService) {
 
-    private val CHANNEL_ID = "plattenspieler_playback"
+    private val CHANNELID = "plattenspieler_playback"
     private val TAG = "MusicNotification"
     private val ACTION = "com.lk.plattenspieler.ACTION_LAUNCH_PL"
 
@@ -34,7 +34,7 @@ class MusicNotification(private val service: MusicService) {
     private fun initializeBuilder(){
         notificationBuilder = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
-            Notification.Builder(service, CHANNEL_ID)
+            Notification.Builder(service, CHANNELID)
         } else {
             Notification.Builder(service)
         }
@@ -42,7 +42,7 @@ class MusicNotification(private val service: MusicService) {
 
     private fun createChannel() {
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "Music playback", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNELID, "Music playback", NotificationManager.IMPORTANCE_LOW)
             channel.description = "Music playback controls"
             channel.setShowBadge(false)
             channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
@@ -79,8 +79,8 @@ class MusicNotification(private val service: MusicService) {
 
     private fun setClickActions(state: Int){
         setContentIntent()
-        setNextAction()
         setPlayAction(state)
+        setNextAction()
     }
 
     private fun setContentIntent(){

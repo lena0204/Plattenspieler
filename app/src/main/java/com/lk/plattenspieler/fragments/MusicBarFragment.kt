@@ -9,8 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import com.lk.music_service_library.models.*
-import com.lk.music_service_library.observables.MusicPlaybackState
-import com.lk.music_service_library.observables.PlaybackObservable
+import com.lk.music_service_library.observables.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.bar_music_information.*
@@ -39,22 +38,6 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         listener = activity as OnClick
     }
 
-    override fun onResume() {
-        super.onResume()
-        Log.v(TAG, "onResume")
-        started = true
-        // Farbe setzen falls lineage
-        val color = ThemeChanger.getAccentColorLinage(activity)
-        if(color != 0){
-            ib_main_shuffle.imageTintList = ColorStateList.valueOf(color)
-            ib_main_shuffle.imageTintMode = PorterDuff.Mode.SRC_ATOP
-        }
-    }
-    override fun onPause() {
-        super.onPause()
-        started = false
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         return inflater.inflate(R.layout.bar_music_information, container, false)
@@ -62,11 +45,11 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        // observe Metadata
-        PlaybackObservable.addObserver(this)
-        writeMetadata(PlaybackObservable.getMetadata())
-        updatePlayback(PlaybackObservable.getState())
-        // onClick Listener
+        setupOnClickListener()
+        setupData()
+    }
+
+    private fun setupOnClickListener(){
         ib_main_play.setOnClickListener {
             listener.onClickPlay()
         }
@@ -78,32 +61,29 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         }
     }
 
+    private fun setupData(){
+        PlaybackDataObservable.addObserver(this)
+        writeMetadata(PlaybackDataObservable.metadata)
+        updatePlayback(PlaybackDataObservable.getState())
+    }
+
     private fun writeMetadata(data: MusicMetadata){
         if(!data.isEmpty()) {
-            var cover: Bitmap?
-            cover = BitmapFactory.decodeFile(data.cover_uri)
-            if (cover == null) {
-                cover = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
-            }
-            iv_main_cover.setImageBitmap(cover)
+            iv_main_cover.setImageBitmap(data.cover)
             tv_music_title.text = data.title
             // TODO nicht ganz zuverlässig -> SaveState Handling
         }
     }
-    private fun writeEmpty(){
-        tv_music_title?.text = ""
-        iv_main_cover?.background = null
-        ib_main_shuffle?.alpha = 0.5f
-    }
 
-    private fun updatePlayback(mps: MusicPlaybackState){
-        updateShuffleMode(mps.shuffleOn)
-        if(mps.state == PlaybackState.STATE_PLAYING){
+    private fun updatePlayback(playbackState: PlaybackState){
+        updateShuffleMode(PlaybackDataObservable.shuffleOn)
+        if(playbackState.state == PlaybackState.STATE_PLAYING){
             ib_main_play.setImageBitmap(BitmapFactory.decodeResource(resources, R.mipmap.ic_pause))
         } else {
             ib_main_play.setImageBitmap(BitmapFactory.decodeResource(resources, R.mipmap.ic_play))
         }
     }
+
     private fun updateShuffleMode(mode: Boolean) {
         if(mode){
             ib_main_shuffle?.alpha = 0.8f
@@ -112,24 +92,53 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        Log.v(TAG, "onResume")
+        started = true
+        setAccentColorIfLineageTheme()
+    }
+
+    private fun setAccentColorIfLineageTheme(){
+        val color = ThemeChanger.getAccentColorLinage(activity)
+        if(color != 0){
+            ib_main_shuffle.imageTintList = ColorStateList.valueOf(color)
+            ib_main_shuffle.imageTintMode = PorterDuff.Mode.SRC_ATOP
+        }
+    }
+
     override fun update(o: Observable?, arg: Any?) {
         Log.v(TAG, "update observable")
-        if(started) {
+        if(started && arg is PlaybackActions) {
             when (arg) {
-                is MusicMetadata -> {
-                    Log.v(TAG, "Update Metadata")
-                    if(!arg.isEmpty()) {
-                        writeMetadata(arg)
+                PlaybackActions.ACTION_UPDATE_METADATA -> {
+                    val metadata = PlaybackDataObservable.metadata
+                    if(!metadata.isEmpty()) {
+                        writeMetadata(metadata)
                     } else {
                         writeEmpty()
                     }
                 }
-                is MusicPlaybackState -> {
-                    Log.v(TAG, "Update playbackstate")
-                    updatePlayback(arg)
+                PlaybackActions.ACTION_UPDATE_PLAYBACKSTATE -> {
+                    updatePlayback(PlaybackDataObservable.getState())
                 }
-                else -> Log.w(TAG, "unknown observable update: ${arg.toString()}")
             }
         }
+    }
+
+    private fun writeEmpty(){
+        tv_music_title?.text = ""
+        iv_main_cover?.background = null
+        ib_main_shuffle?.alpha = 0.5f
+    }
+
+    override fun onPause() {
+        super.onPause()
+        started = false
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        PlaybackDataObservable.deleteObserver(this)
     }
 }
