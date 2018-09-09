@@ -5,12 +5,13 @@ import android.util.Log
 import com.lk.music_service_library.models.*
 import com.lk.music_service_library.observables.PlaybackActions.*
 import com.lk.music_service_library.utils.PlaybackDataUpdater
+import java.util.*
 
 /**
  * Erstellt von Lena am 12.05.18.
  * Verwaltet alle Daten, die an das Playback gekoppelt sind (Metadaten, Wiedergabeliste, Status)
  */
-object PlaybackDataObservable: ObserverAwareObservable() {
+object PlaybackDataObservable: Observable() {
 
     private const val TAG = "PlaybackDataObservable"
 

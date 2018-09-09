@@ -87,15 +87,18 @@ data class MusicMetadata(
         }
 
         fun createFromMediaDescription(item: MediaDescription): MusicMetadata {
-            val array = item.description.split("__")
-            return MusicMetadata(
-                    item.mediaId,
-                    item.title.toString(),
-                    item.subtitle.toString(),
-                    title = array[2],
-                    cover_uri = array[0],
-                    num_tracks_album = array[1].toInt()
-            )
+            if(item.description != null) {
+                val array = item.description.split("__")
+                return MusicMetadata(
+                        item.mediaId,
+                        item.title.toString(),
+                        item.subtitle.toString(),
+                        title = array[2],
+                        cover_uri = array[0],
+                        num_tracks_album = array[1].toInt()
+                )
+            }
+            return MusicMetadata()
         }
 
         fun decodeAlbumcover(path: String, resources: Resources): Bitmap{

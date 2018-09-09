@@ -1,17 +1,17 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
-import android.app.Fragment
 import android.content.res.ColorStateList
 import android.graphics.*
 import android.media.browse.MediaBrowser
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
 import android.view.*
 import android.widget.TextView
-import com.lk.music_service_library.observables.MedialistsObservable
-import com.lk.music_service_library.models.MusicList
-import com.lk.music_service_library.models.MusicMetadata
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.lk.plattenspieler.observables.MedialistsObservable
+import com.lk.musicservicelibrary.models.MusicList
+import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.ThemeChanger
 import com.lk.plattenspieler.utils.TitleAdapter

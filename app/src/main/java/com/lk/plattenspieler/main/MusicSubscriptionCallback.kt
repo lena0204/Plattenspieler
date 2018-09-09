@@ -1,9 +1,9 @@
 package com.lk.plattenspieler.main
 
 import android.media.browse.MediaBrowser
-import com.lk.music_service_library.models.MusicList
-import com.lk.music_service_library.models.MusicMetadata
-import com.lk.music_service_library.observables.MedialistsObservable
+import com.lk.plattenspieler.observables.MedialistsObservable
+import com.lk.musicservicelibrary.models.MusicList
+import com.lk.musicservicelibrary.models.MusicMetadata
 
 /**
  * Erstellt von Lena am 18.08.18.

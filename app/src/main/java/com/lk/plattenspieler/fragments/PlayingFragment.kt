@@ -1,6 +1,5 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Fragment
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
@@ -10,10 +9,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import com.lk.music_service_library.models.*
-import com.lk.music_service_library.observables.PlaybackActions
-import com.lk.music_service_library.observables.PlaybackDataObservable
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import com.lk.musicservicelibrary.models.MusicList
+import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.observables.PlaybackObservable
 import com.lk.plattenspieler.utils.LyricsAccess
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
@@ -41,9 +42,9 @@ class PlayingFragment : Fragment(), java.util.Observer {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setActionbarTitle()
-        PlaybackDataObservable.addObserver(this)
-        writeMetadata(PlaybackDataObservable.metadata)
-        setPlaylist(PlaybackDataObservable.getQueueLimitedTo30())
+        PlaybackObservable.addObserver(this)
+        writeMetadata(PlaybackObservable.getMetadata())
+        setPlaylist(PlaybackObservable.getQueueLimited30())
         view.iv_playing_lyrics.setOnClickListener { onClickLyrics(it)}
     }
 
@@ -68,8 +69,8 @@ class PlayingFragment : Fragment(), java.util.Observer {
     private fun createBundleForLyricsFragment(): Bundle {
         val args = Bundle()
         args.putString("L", lyrics)
-        if(!PlaybackDataObservable.metadata.isEmpty()) {
-            args.putString("C", PlaybackDataObservable.metadata.cover_uri)
+        if(!PlaybackObservable.getMetadata().isEmpty()) {
+            args.putString("C", PlaybackObservable.getMetadata().cover_uri)
         }
         return args
     }
@@ -107,12 +108,15 @@ class PlayingFragment : Fragment(), java.util.Observer {
         }
     }
 
-    private fun setPlaylist(queue: MusicList){
+    private fun setPlaylist(queue: MusicList) {
         val liste = ArrayList<String>()
         for (item in queue) {
             liste.add(item.title + "\n - " + item.artist)
         }
-        lv_playing_list.adapter = ArrayAdapter(activity.applicationContext, R.layout.row_playlist_tv, liste.toTypedArray())
+        if (activity != null) {
+            val act = activity as FragmentActivity
+            lv_playing_list.adapter = ArrayAdapter(act.applicationContext, R.layout.row_playlist_tv, liste.toTypedArray())
+        }
     }
 
     override fun onResume() {
@@ -133,12 +137,10 @@ class PlayingFragment : Fragment(), java.util.Observer {
     }
 
     override fun update(o: Observable?, arg: Any?) {
-        if(started && arg != null && arg is PlaybackActions) {
+        if(started) {
             when (arg) {
-                PlaybackActions.ACTION_UPDATE_METADATA ->
-                    writeMetadata(PlaybackDataObservable.metadata)
-                PlaybackActions.ACTION_UPDATE_QUEUE ->
-                    setPlaylist(PlaybackDataObservable.getQueueLimitedTo30())
+                is MusicMetadata -> writeMetadata(arg)
+                is MusicList -> setPlaylist(PlaybackObservable.getQueueLimited30())
             }
         }
     }
@@ -150,6 +152,6 @@ class PlayingFragment : Fragment(), java.util.Observer {
 
     override fun onDestroy() {
         super.onDestroy()
-        PlaybackDataObservable.deleteObserver(this)
+        PlaybackObservable.deleteObserver(this)
     }
 }

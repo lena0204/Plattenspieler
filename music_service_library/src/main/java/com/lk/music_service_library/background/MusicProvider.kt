@@ -19,8 +19,6 @@ class MusicProvider(private val context: Context) {
     }
 
     private var currentMusicList = MusicList()
-    private lateinit var currentAlbumCursor: Cursor
-    private lateinit var currentTitleCursor: Cursor
 
     private val albumartColumns = arrayOf(MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART)
     private val albumDatabaseColumns = arrayOf(
@@ -40,61 +38,61 @@ class MusicProvider(private val context: Context) {
 
 	fun getFirstTitleForShuffle(): String{
         val sortorder = MediaStore.Audio.Media._ID + " LIMIT 1"
-        currentTitleCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        val titleCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 arrayOf(MediaStore.Audio.Media._ID), null,null,sortorder)
-        val titleId = if(currentTitleCursor.moveToFirst())
-            currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+        val titleId = if (titleCursor != null && titleCursor.moveToFirst())
+            titleCursor.getString(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
         else
             ""
-        currentTitleCursor.close()
+        titleCursor?.close()
 		return titleId
 	}
 
     fun getAllTitles(playingTitleId: String): MusicList {
 		currentMusicList = MusicList()
 		val albumDatabaseColumns = arrayOf(MediaStore.Audio.Albums._ID)
-        currentAlbumCursor = context.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumDatabaseColumns,
+        val albumCursor = context.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumDatabaseColumns,
                 null, null, null)
-        if(currentAlbumCursor.moveToFirst()){
-            addAllTitlesToList(playingTitleId)
+        if(albumCursor != null && albumCursor.moveToFirst()){
+            addAllTitlesToList(albumCursor, playingTitleId)
 		}
-		currentAlbumCursor.close()
+		albumCursor?.close()
 		Log.d(TAG, "Anzahl QueueItems: ${currentMusicList.countItems()}")
 		return currentMusicList
     }
 
-    private fun addAllTitlesToList(playingTitleId: String){
+    private fun addAllTitlesToList(albumCursor: Cursor, playingTitleId: String){
         do {
-            val albumid = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID))
+            val albumid = albumCursor.getString(albumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID))
             val titelliste = getTitlesForAlbumID(albumid)
             for(item in titelliste){
                 if(item.id != playingTitleId){
                     currentMusicList.addItem(item)
                 }
             }
-        } while(currentAlbumCursor.moveToNext())
+        } while(albumCursor.moveToNext())
     }
 
     fun getTitlesForAlbumID(albumid: String): MusicList{
         val albumID = albumid.replace("ALBUM-", "")
         val selection = android.provider.MediaStore.Audio.Media.ALBUM_ID + "='" + albumID + "'"
-        currentTitleCursor = context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        val titleCursor = context.contentResolver.query(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,selection,null,null)
-        currentMusicList = MusicList()
-        currentMusicList.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
-        if(currentTitleCursor.moveToFirst()){
-            writeTitlesToList(albumid)
+        if(titleCursor != null && titleCursor.moveToFirst()){
+            currentMusicList = MusicList()
+            currentMusicList.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
+            writeTitlesToList(titleCursor, albumid)
         }
-        currentTitleCursor.close()
+        titleCursor?.close()
         return currentMusicList
     }
 
-    private fun writeTitlesToList(albumid: String){
+    private fun writeTitlesToList(titleCursor: Cursor, albumid: String){
         do {
-            val trackid = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media._ID))
-            val tracktitle = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))
-            val interpret = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST))
-            val album = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM))
+            val trackid = titleCursor.getString(titleCursor.getColumnIndex(MediaStore.Audio.Media._ID))
+            val tracktitle = titleCursor.getString(titleCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))
+            val interpret = titleCursor.getString(titleCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST))
+            val album = titleCursor.getString(titleCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM))
             val music = MusicMetadata(
                     trackid,
                     album,
@@ -103,29 +101,29 @@ class MusicProvider(private val context: Context) {
                     cover_uri = getCoverPathForAlbum(albumid)
             )
             currentMusicList.addItem(music)
-        } while(currentTitleCursor.moveToNext())
+        } while(titleCursor.moveToNext())
     }
 
     fun getAlbums(): MusicList{
         val orderby = MediaStore.Audio.Albums.ALBUM + " ASC"
-        currentAlbumCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+        val albumCursor = this.context.contentResolver.query(android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                 albumDatabaseColumns,null,null,orderby)
         currentMusicList = MusicList()
         currentMusicList.addFlag(MediaBrowser.MediaItem.FLAG_BROWSABLE)
-        if(currentAlbumCursor.moveToFirst()) {
-            writeAlbumsToList()
+        if(albumCursor != null && albumCursor.moveToFirst()) {
+            writeAlbumsToList(albumCursor)
         }
-        currentAlbumCursor.close()
+        albumCursor?.close()
         return currentMusicList
     }
 
-    private fun writeAlbumsToList(){
+    private fun writeAlbumsToList(albumCursor: Cursor){
         do {
-            var albumid = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndex(MediaStore.Audio.Media._ID))
-            val albumtitle = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM))
-            val albumtracks = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndex(MediaStore.Audio.Albums.NUMBER_OF_SONGS))
-            val albumartist = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndex(MediaStore.Audio.Albums.ARTIST))
-            var albumart = currentAlbumCursor.getString(currentAlbumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
+            var albumid = albumCursor.getString(albumCursor.getColumnIndex(MediaStore.Audio.Media._ID))
+            val albumtitle = albumCursor.getString(albumCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM))
+            val albumtracks = albumCursor.getString(albumCursor.getColumnIndex(MediaStore.Audio.Albums.NUMBER_OF_SONGS))
+            val albumartist = albumCursor.getString(albumCursor.getColumnIndex(MediaStore.Audio.Albums.ARTIST))
+            var albumart = albumCursor.getString(albumCursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
             if(albumart == null){
                 albumart = ""
             }
@@ -138,7 +136,7 @@ class MusicProvider(private val context: Context) {
                     num_tracks_album = albumtracks.toInt()
             )
             currentMusicList.addItem(music)
-        } while (currentAlbumCursor.moveToNext())
+        } while (albumCursor.moveToNext())
     }
 
     private fun getCoverPathForAlbum(albumid: String): String{
@@ -146,37 +144,37 @@ class MusicProvider(private val context: Context) {
         val selection = MediaStore.Audio.Albums._ID + "='" + albumid + "'"
         val cursorAlbum = context.contentResolver.query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                 albumartColumns, selection, null, null)
-        if(cursorAlbum.count == 1){
+        if(cursorAlbum != null && cursorAlbum.count == 1){
             cursorAlbum.moveToFirst()
             cover = cursorAlbum.getString(cursorAlbum.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM_ART))
         }
-        cursorAlbum.close()
+        cursorAlbum?.close()
         return cover
     }
 
     fun getMediaMetadata(mediaId: String): MusicMetadata {
         var music = MusicMetadata()
         val selection = MediaStore.Audio.Media._ID + "='" + mediaId + "'"
-        currentTitleCursor = context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        val titleCursor = context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 metadataColumns, selection, null, null)
-        if(currentTitleCursor.moveToFirst()){
-            music = writeMetadata(mediaId)
+        if(titleCursor  != null && titleCursor.moveToFirst()){
+            music = writeMetadata(titleCursor, mediaId)
         }
-        currentTitleCursor.close()
+        titleCursor?.close()
         return music
     }
 
-    private fun writeMetadata(mediaId: String): MusicMetadata{
-        val albumid = currentTitleCursor.getString(currentTitleCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
-        val cover_uri = getCoverPathForAlbum(albumid)
+    private fun writeMetadata(titleCursor: Cursor, mediaId: String): MusicMetadata{
+        val albumid = titleCursor.getString(titleCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
+        val coverUri = getCoverPathForAlbum(albumid)
         return MusicMetadata(
                 id = mediaId,
-                album = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
-                artist = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
-                title = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                cover_uri = cover_uri,
-                path = currentTitleCursor.getString(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                duration = currentTitleCursor.getLong(currentTitleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
+                album = titleCursor.getString(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
+                artist = titleCursor.getString(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
+                title = titleCursor.getString(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                cover_uri = coverUri,
+                path = titleCursor.getString(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                duration = titleCursor.getLong(titleCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)))
     }
 
 }

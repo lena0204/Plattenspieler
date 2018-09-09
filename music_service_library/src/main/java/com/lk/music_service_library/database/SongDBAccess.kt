@@ -78,7 +78,7 @@ object SongDBAccess{
             c.close()
             return music
         }
-        c.close()
+        c?.close()
         return null
     }
 
@@ -105,7 +105,7 @@ object SongDBAccess{
             c.close()
             return playingQueue
         }
-        c.close()
+        c?.close()
         return null
     }
 

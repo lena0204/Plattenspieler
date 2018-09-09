@@ -1,9 +1,8 @@
 package com.lk.plattenspieler.utils
 
-import android.app.Activity
+import androidx.fragment.app.FragmentActivity
 import android.content.SharedPreferences
 import android.graphics.Color
-import android.graphics.Paint
 import android.preference.PreferenceManager
 import android.util.Log
 import com.lk.plattenspieler.R
@@ -20,7 +19,7 @@ object ThemeChanger {
     private const val BLACK_STYLE = 4
     // interne Codierung der ROM, da von Lineage nicht offiziell unterstützt
 
-    fun setThemeAfterCreatingActivity(activity: Activity, iTheme: EnumTheme) {
+    fun setThemeAfterCreatingActivity(activity: FragmentActivity, iTheme: EnumTheme) {
         when (iTheme) {
             EnumTheme.THEME_LIGHT -> setLightPink(activity)
             EnumTheme.THEME_DARK -> setDarkPink(activity)
@@ -30,27 +29,27 @@ object ThemeChanger {
         }
     }
 
-    private fun setLightPink(activity: Activity){
+    private fun setLightPink(activity: FragmentActivity){
         activity.setTheme(R.style.AppTheme)
         Log.d(TAG, "Changed to light theme")
     }
 
-    private fun setDarkPink(activity: Activity){
+    private fun setDarkPink(activity: FragmentActivity){
         activity.setTheme(R.style.AppThemeDark)
         Log.d(TAG, "Changed to dark theme")
     }
 
-    private fun setLightTeal(activity: Activity){
+    private fun setLightTeal(activity: FragmentActivity){
         activity.setTheme(R.style.AppThemeT)
         Log.d(TAG, "Changed to light theme teal")
     }
 
-    private fun setDarkTeal(activity: Activity){
+    private fun setDarkTeal(activity: FragmentActivity){
         activity.setTheme(R.style.AppThemeDarkT)
         Log.d(TAG, "Changed to dark theme teal")
     }
 
-    private fun setLineageTheme(activity: Activity){
+    private fun setLineageTheme(activity: FragmentActivity){
         val si = StyleInterface.getInstance(activity)
         Log.d(TAG, "Globalstyle: " + si.globalStyle)
         val style = si.globalStyle
@@ -63,7 +62,7 @@ object ThemeChanger {
         Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
     }
 
-    fun getAccentColorLinage(activity: Activity): Int {
+    fun getAccentColorLinage(activity: FragmentActivity?): Int {
         return if(themeIsLineage(activity)){
             obtainColorAccentAttribute(activity)
         } else {
@@ -71,11 +70,13 @@ object ThemeChanger {
         }
     }
 
-    private fun obtainColorAccentAttribute(activity: Activity): Int{
+    private fun obtainColorAccentAttribute(activity: FragmentActivity?): Int{
         val colorAttribute = intArrayOf(android.R.attr.colorAccent)
-        val typedArray = activity.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, colorAttribute)
-        return typedArray.getColor(0, Color.BLACK)
-                .also { typedArray.recycle() }
+        val typedArray = activity?.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, colorAttribute)
+        if(typedArray != null){
+            return typedArray.getColor(0, Color.BLACK).also { typedArray.recycle() }
+        }
+        return 0
     }
 
     fun writeThemeToPreferences(sp: SharedPreferences, iTheme: EnumTheme){
@@ -89,7 +90,7 @@ object ThemeChanger {
         sp.edit().putInt(MainActivityNew.PREF_DESIGN, theme).apply()
     }
 
-    private fun readThemeFromPreferences(activity: Activity): EnumTheme =
+    private fun readThemeFromPreferences(activity: FragmentActivity?): EnumTheme =
             readThemeFromPreferences(PreferenceManager.getDefaultSharedPreferences(activity))
 
     fun readThemeFromPreferences(sp: SharedPreferences): EnumTheme {
@@ -103,7 +104,7 @@ object ThemeChanger {
         }
     }
 
-    fun themeIsLineage(activity: Activity): Boolean {
+    fun themeIsLineage(activity: FragmentActivity?): Boolean {
         val design = readThemeFromPreferences(activity)
         return design == EnumTheme.THEME_LINEAGE
     }

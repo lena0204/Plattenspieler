@@ -1,12 +1,12 @@
 package com.lk.plattenspieler.utils
 
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.lk.music_service_library.models.MusicList
+import androidx.recyclerview.widget.RecyclerView
+import com.lk.musicservicelibrary.models.MusicList
 import com.lk.plattenspieler.R
 import kotlinx.android.synthetic.main.row_music_data.view.*
 

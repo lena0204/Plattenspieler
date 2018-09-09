@@ -3,7 +3,6 @@ package com.lk.plattenspieler.main
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import android.support.annotation.RequiresApi
 
 /**
  * Erstellt von Lena am 18.08.18.

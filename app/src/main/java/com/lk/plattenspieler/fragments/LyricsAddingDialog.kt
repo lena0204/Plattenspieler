@@ -4,6 +4,7 @@ import android.app.*
 import android.content.Context
 import android.os.Bundle
 import android.widget.EditText
+import androidx.fragment.app.DialogFragment
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 
@@ -26,10 +27,10 @@ class LyricsAddingDialog: DialogFragment(){
 
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 		super.onCreateDialog(savedInstanceState)
-		val li = activity.layoutInflater
-		val view = li.inflate(R.layout.dialog_lyrics_adding, null)
-		val et = view.findViewById(R.id.et_lyrics_add) as EditText
-		val builder = AlertDialog.Builder(activity.applicationContext)
+		val li = activity?.layoutInflater
+		val view = li?.inflate(R.layout.dialog_lyrics_adding, null)
+		val et = view?.findViewById(R.id.et_lyrics_add) as EditText
+		val builder = AlertDialog.Builder(activity?.applicationContext)
 		builder.setTitle(R.string.dialog_title)
 		builder.setView(view)
 		builder.setPositiveButton(R.string.dialog_yes) { _, _ ->

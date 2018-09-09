@@ -30,7 +30,7 @@ class SongContentProvider: ContentProvider() {
     override fun onCreate(): Boolean {
         sURIMatcher.addURI(AUTHORITY, BASE_PATH, SONGS)
         sURIMatcher.addURI(AUTHORITY, "$BASE_PATH/#", SONG_ID)
-        database = SongDB(context)
+        database = SongDB(context)  // TODO Lösung für context? nötig
         return true
     }
 

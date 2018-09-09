@@ -1,25 +1,27 @@
 package com.lk.plattenspieler.main
 
 import android.app.ActionBar
-import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
+import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.annotation.RequiresApi
 import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
-import com.lk.music_service_library.models.*
-import com.lk.music_service_library.observables.*
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.FragmentActivity
+import com.lk.plattenspieler.observables.MedialistsObservable
+import com.lk.musicservicelibrary.models.MusicList
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
+import com.lk.plattenspieler.observables.PlaybackObservable
 import com.lk.plattenspieler.utils.*
 import java.util.*
 import kotlinx.android.synthetic.main.activity_main.*
@@ -28,7 +30,7 @@ import kotlinx.android.synthetic.main.activity_main.*
  * Erstellt von Lena am 12.05.18.
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
-class MainActivityNew : Activity(),
+class MainActivityNew : FragmentActivity(),
         Observer,
         AlbumFragment.OnClick,
         AlbumDetailsFragment.OnClick,
@@ -83,15 +85,14 @@ class MainActivityNew : Activity(),
         val color = ThemeChanger.getAccentColorLinage(this)
         if (color != 0) {
             tv.setTextColor(ColorStateList.valueOf(color))
-            // braucht API 26, Log.d(TAG, "Farbe wurde geändert: " + Color.valueOf(color))
         }
-        actionBar.customView = tv
-        actionBar.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+        actionBar?.customView = tv
+        actionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
     }
 
     private fun setupForMusicHandling(){
         MedialistsObservable.addObserver(this)
-        PlaybackDataObservable.addObserver(this)
+        PlaybackObservable.addObserver(this)
         musicClient = MusicClient(this)
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         setupMusicBar()
@@ -99,13 +100,13 @@ class MainActivityNew : Activity(),
 
     private fun setupMusicBar(){
         hideBar()
-        fragmentManager.beginTransaction()
+        supportFragmentManager.beginTransaction()
                 .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
                 .commit()
         val pf = PlayingFragment()
         fl_main_bar.setOnClickListener { view ->
             if(!pf.isVisible){
-                fragmentManager.beginTransaction()
+                supportFragmentManager.beginTransaction()
                         .addToBackStack(null)
                         .replace(R.id.fl_main_content, pf, "TAG_PLAYING")
                         .commit()
@@ -147,7 +148,7 @@ class MainActivityNew : Activity(),
         Log.i(TAG, "onDestroy")
         musicClient?.clear()
         musicClient = null
-        PlaybackDataObservable.deleteObserver(this)
+        PlaybackObservable.deleteObserver(this)
     }
 
     // Permissions
@@ -187,8 +188,8 @@ class MainActivityNew : Activity(),
 
     // Observable
     override fun update(observable: Observable?, arg: Any?) {
-        when (arg) {
-            is MusicList -> {
+        when {
+            observable is MedialistsObservable && arg is MusicList -> {
                 if (arg.getFlag() == MediaBrowser.MediaItem.FLAG_BROWSABLE) {
                     albumsSet = true
                     showAlbums()
@@ -196,15 +197,16 @@ class MainActivityNew : Activity(),
                     showTitles()
                 }
             }
-            equals(PlaybackActions.ACTION_STOP) -> hideBar()
-            /*else -> Log.e(TAG, "ML: unknown observable update from " +
-                    "${observable?.javaClass?.canonicalName}: $arg")*/
+            arg is PlaybackState -> {
+                if(arg.state == PlaybackState.STATE_STOPPED)
+                    hideBar()
+            }
         }
     }
 
     private fun showAlbums(){
         if(resumed) {
-            fragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                     .replace(R.id.fl_main_content, AlbumFragment())
                     .commit()
         }
@@ -212,9 +214,10 @@ class MainActivityNew : Activity(),
 
     private fun showTitles(){
         if(resumed) {
-            fragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                     .addToBackStack(null)
-                    .replace(R.id.fl_main_content, AlbumDetailsFragment()).commit()
+                    .replace(R.id.fl_main_content, AlbumDetailsFragment())
+                    .commit()
         }
     }
 
@@ -230,7 +233,7 @@ class MainActivityNew : Activity(),
     }
     override fun onSaveLyrics(lyrics: String) {
 		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-		LyricsAccess.writeLyrics(lyrics, PlaybackDataObservable.metadata.path)
+		LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
 	}
     override fun onClickPlay() {
         musicClient?.play()
@@ -263,7 +266,7 @@ class MainActivityNew : Activity(),
         if(item.itemId == R.id.menu_settings){
             val pf = PrefFragment()
             pf.arguments = prepareBundleForPrefFragment()
-            fragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                     .addToBackStack(null)
                     .replace(R.id.fl_main_content, pf, "PrefFragment")
                     .commit()
@@ -273,7 +276,7 @@ class MainActivityNew : Activity(),
         return super.onOptionsItemSelected(item)
     }
 
-    private fun prepareBundleForPrefFragment(): Bundle{
+    private fun prepareBundleForPrefFragment(): Bundle {
         val args = Bundle()
         if(isVersionGreaterThan(Build.VERSION_CODES.O) && checkLineageSDK()){
             args.putBoolean("LOS", true)

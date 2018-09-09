@@ -53,4 +53,14 @@ class MusicList(
         }
         return mlist
     }
+
+    companion object {
+        fun createListFromQueue(list: MutableList<MediaSession.QueueItem>): MusicList{
+            val mlist = MusicList()
+            for(item in list){
+                mlist.addItem(MusicMetadata.createFromMediaDescription(item.description))
+            }
+            return mlist
+        }
+    }
 }

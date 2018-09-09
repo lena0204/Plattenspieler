@@ -64,10 +64,10 @@ class MusicNotification(private val service: MusicService) {
     }
 
     private fun setMediaStyle(){
-         notificationBuilder.setStyle(Notification.MediaStyle()
-                 .setMediaSession(service.sessionToken)
-                 .setShowActionsInCompactView(1,2))
-     }
+         notificationBuilder.style = Notification.MediaStyle()
+                        .setMediaSession(service.sessionToken)
+                        .setShowActionsInCompactView(1,2)
+    }
 
     private fun configureShuffleAction(shuffleOn: Boolean){
         if(shuffleOn){

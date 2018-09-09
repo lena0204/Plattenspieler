@@ -2,9 +2,9 @@ package com.lk.plattenspieler.fragments
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
 import android.util.Log
+import androidx.preference.PreferenceFragmentCompat
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.utils.EnumTheme
@@ -12,7 +12,7 @@ import com.lk.plattenspieler.utils.EnumTheme
 /**
  * Erstellt von Lena am 27.07.18.
  */
-class PrefFragment: PreferenceFragment() {
+class PrefFragment: PreferenceFragmentCompat() {
 
     private lateinit var prefListener: SharedPreferences.OnSharedPreferenceChangeListener
     private lateinit var mActivity: MainActivityNew
@@ -23,15 +23,17 @@ class PrefFragment: PreferenceFragment() {
     private val PREF_DARK = "PREF_THEMELIGHT"
     private val TAG = "PrefFragment"
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.fragment_pref)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mActivity = activity as MainActivityNew
-        losSupport = arguments.getBoolean("LOS", false)
+        losSupport = if(arguments != null)
+            arguments?.getBoolean("LOS", false) as Boolean
+        else
+            false
         Log.d(TAG, "losSupport: $losSupport")
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity)
         enableValidPreferences(sharedPreferences)

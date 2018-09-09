@@ -14,7 +14,7 @@ import java.io.File
  * Erstellt von Lena am 13.05.18.
  * Lesender und schreibender Zugriff auf die Liedtexte eines Liedes über eine externe Bibliothek
  */
-object LyricsAccess{
+object LyricsAccess {
 
     private val TAG = this.javaClass.simpleName
     private var currentLyrics = ""

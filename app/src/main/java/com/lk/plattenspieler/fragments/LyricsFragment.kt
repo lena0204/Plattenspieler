@@ -1,11 +1,11 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Fragment
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_lyrics.*

@@ -116,7 +116,7 @@ class MusicPlayback(private val service: MusicService): Observer {
 
     private fun releaseAudioFocus(){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null){
-            audioManager.abandonAudioFocusRequest(audioFocusRequest)
+            audioManager.abandonAudioFocusRequest(audioFocusRequest as AudioFocusRequest)
         } else {
             audioManager.abandonAudioFocus(audioFocusCallback)
         }

@@ -194,7 +194,7 @@ class MusicService: MediaBrowserService(), Observer  {
 
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
-        if(session.controller.playbackState.state == PlaybackState.STATE_PAUSED) {
+        if(session.controller.playbackState?.state == PlaybackState.STATE_PAUSED) {
             PlaybackDataObservable.stop()
         }
         Log.v(TAG, "Service started: " + this.serviceStarted)
@@ -210,6 +210,7 @@ class MusicService: MediaBrowserService(), Observer  {
     }
 
     inner class MusicSessionCallback: MediaSession.Callback(){
+
         override fun onPlay() {
             PlaybackDataObservable.tryPlaying()
         }
@@ -227,7 +228,14 @@ class MusicService: MediaBrowserService(), Observer  {
         private fun shallPrepare(extras: Bundle?): Boolean = extras != null && extras.containsKey("I")
 
         override fun onPause() {
-            PlaybackDataObservable.pause(session.controller.playbackState.position)
+            PlaybackDataObservable.pause(aktuellePosition())
+        }
+
+        private fun aktuellePosition(): Long{
+            return if(session.controller.playbackState != null)
+                session.controller.playbackState.position
+            else
+                0L
         }
         override fun onStop() {
             PlaybackDataObservable.stop()
@@ -236,7 +244,7 @@ class MusicService: MediaBrowserService(), Observer  {
             PlaybackDataObservable.next()
         }
         override fun onSkipToPrevious() {
-            PlaybackDataObservable.previous(session.controller.playbackState.position)
+            PlaybackDataObservable.previous(aktuellePosition())
         }
 
         override fun onCommand(command: String, args: Bundle?, resultReceiver: ResultReceiver?) {
@@ -251,7 +259,8 @@ class MusicService: MediaBrowserService(), Observer  {
             if(args != null) {
                 args.classLoader = this.javaClass.classLoader
                 val list = args.getParcelable<MusicList>("L")
-                PlaybackDataObservable.setQueue(list)
+                if(list != null)
+                    PlaybackDataObservable.setQueue(list)
             }
         }
     }
@@ -260,7 +269,7 @@ class MusicService: MediaBrowserService(), Observer  {
 
         override fun onReceive(context: Context?, intent: Intent?) {
             if(intent != null){
-                Log.d(TAG, "onReceive: " + intent.action + "; " + session.controller.playbackState.state)
+                Log.d(TAG, "onReceive: " + intent.action + "; " + session.controller.playbackState?.state)
                 when(intent.action){
                     ACTION_MEDIA_PLAY -> handlePlayIntent()
                     ACTION_MEDIA_PAUSE -> handlePauseIntent()
@@ -278,7 +287,7 @@ class MusicService: MediaBrowserService(), Observer  {
 
         private fun handlePauseIntent(){
             if(PlaybackState.STATE_PLAYING == PlaybackDataObservable.getState().state){
-                PlaybackDataObservable.pause(session.controller.playbackState.position)
+                PlaybackDataObservable.pause(aktuellePosition())
                 // logCurrentState("PAUSE")
             }
         }
@@ -294,7 +303,14 @@ class MusicService: MediaBrowserService(), Observer  {
         private fun logCurrentState(intentAction: String){
             // zur Fehlererkennung
             Log.d(TAG, intentAction + ": Observablestate: " + PlaybackDataObservable.getState().state +
-                    " vs. Controllerstate:" + session.controller.playbackState.state)
+                    " vs. Controllerstate:" + session.controller.playbackState?.state)
+        }
+
+        private fun aktuellePosition(): Long{
+            return if(session.controller.playbackState != null)
+                session.controller.playbackState.position
+            else
+                0L
         }
     }
 }

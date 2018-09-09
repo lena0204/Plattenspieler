@@ -1,16 +1,15 @@
 package com.lk.plattenspieler.fragments
 
 import android.app.Activity
-import android.app.Fragment
 import android.content.res.ColorStateList
 import android.graphics.*
 import android.media.session.PlaybackState
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import com.lk.music_service_library.models.*
-import com.lk.music_service_library.observables.*
+import androidx.fragment.app.Fragment
+import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
+import com.lk.plattenspieler.observables.PlaybackObservable
 import com.lk.plattenspieler.utils.ThemeChanger
 import kotlinx.android.synthetic.main.bar_music_information.*
 import java.util.*
@@ -20,7 +19,6 @@ import java.util.*
  * Zeigt Informationen zum aktuell spielenden Lied (Metadaten) und die Playbackkontrolle an
  */
 class MusicBarFragment : Fragment(), java.util.Observer {
-
 
     private val TAG = "com.lk.pl-MusicBar"
     private var started = false
@@ -34,7 +32,6 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     override fun onAttach(activity: Activity?) {
         super.onAttach(activity)
-        Log.v(TAG, "onAttach")
         listener = activity as OnClick
     }
 
@@ -62,9 +59,9 @@ class MusicBarFragment : Fragment(), java.util.Observer {
     }
 
     private fun setupData(){
-        PlaybackDataObservable.addObserver(this)
-        writeMetadata(PlaybackDataObservable.metadata)
-        updatePlayback(PlaybackDataObservable.getState())
+        PlaybackObservable.addObserver(this)
+        writeMetadata(PlaybackObservable.getMetadata())
+        updatePlayback(PlaybackObservable.getState())
     }
 
     private fun writeMetadata(data: MusicMetadata){
@@ -76,7 +73,7 @@ class MusicBarFragment : Fragment(), java.util.Observer {
     }
 
     private fun updatePlayback(playbackState: PlaybackState){
-        updateShuffleMode(PlaybackDataObservable.shuffleOn)
+        updateShuffleMode(PlaybackObservable.getShuffleOn())
         if(playbackState.state == PlaybackState.STATE_PLAYING){
             ib_main_play.setImageBitmap(BitmapFactory.decodeResource(resources, R.mipmap.ic_pause))
         } else {
@@ -94,7 +91,6 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     override fun onResume() {
         super.onResume()
-        Log.v(TAG, "onResume")
         started = true
         setAccentColorIfLineageTheme()
     }
@@ -108,19 +104,17 @@ class MusicBarFragment : Fragment(), java.util.Observer {
     }
 
     override fun update(o: Observable?, arg: Any?) {
-        Log.v(TAG, "update observable")
-        if(started && arg is PlaybackActions) {
+        if(started) {
             when (arg) {
-                PlaybackActions.ACTION_UPDATE_METADATA -> {
-                    val metadata = PlaybackDataObservable.metadata
-                    if(!metadata.isEmpty()) {
-                        writeMetadata(metadata)
+                is MusicMetadata -> {
+                    if(!arg.isEmpty()) {
+                        writeMetadata(arg)
                     } else {
                         writeEmpty()
                     }
                 }
-                PlaybackActions.ACTION_UPDATE_PLAYBACKSTATE -> {
-                    updatePlayback(PlaybackDataObservable.getState())
+                is PlaybackState -> {
+                    updatePlayback(arg)
                 }
             }
         }
@@ -139,6 +133,6 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     override fun onDestroy() {
         super.onDestroy()
-        PlaybackDataObservable.deleteObserver(this)
+        PlaybackObservable.deleteObserver(this)
     }
 }
