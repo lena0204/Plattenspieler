@@ -7,7 +7,7 @@ import android.view.*
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.utils.ThemeChanger
+import com.lk.plattenspieler.main.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_lyrics.*
 import kotlinx.android.synthetic.main.fragment_lyrics.view.*
 

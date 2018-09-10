@@ -1,46 +1,45 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.*
-import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.view.*
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.lk.plattenspieler.observables.MedialistsObservable
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.utils.ThemeChanger
-import com.lk.plattenspieler.utils.TitleAdapter
+import com.lk.plattenspieler.main.ThemeChanger
+import com.lk.plattenspieler.musicbrowser.ControllerAction
+import com.lk.plattenspieler.musicbrowser.EnumActions
+import com.lk.plattenspieler.observables.*
+import com.lk.plattenspieler.utils.*
 import kotlinx.android.synthetic.main.fragment_album_details.*
-import java.util.*
 
 /**
 * Erstellt von Lena am 08.06.17.
  * Stellt eine Liste von Titel in einem Album dar, inkl. Verwaltung von Observer und RecyclerView
 */
-class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
+class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<MusicList> {
 
     private val TAG = "com.lk.pl-AlbumDetailsF"
-    private lateinit var listener: OnClick
     private var data = MusicList()
-    private var attached = false
 
-    interface OnClick{
-        fun onClickTitle(titleid: String)
-        fun onShuffleClick(ptitleid: String)
+    private lateinit var mediaListViewModel: MediaViewModel
+    private lateinit var playbackViewModel: PlaybackViewModel
+
+    override fun onClick(titleId: String) {
+        val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = mediaListBundle())
+        playbackViewModel.controllerAction.value = action
     }
 
-    override fun onClick(albumid: String) {
-        listener.onClickTitle(albumid)
-    }
-
-    override fun onAttach(activity: Activity?) {
-        super.onAttach(activity)
-        listener = activity as OnClick
+    private fun mediaListBundle(): Bundle {
+        return bundleOf("L" to mediaListViewModel.titleList.value!!
+        )
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
@@ -48,21 +47,21 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        attached = true
         fab_shuffle.setOnClickListener {
-            listener.onShuffleClick(data.getItemAt(0).id)
+            val action = ControllerAction(EnumActions.SHUFFLE,
+                    data.getItemAt(0).id,
+                    args = mediaListBundle())
+            playbackViewModel.controllerAction.value = action
         }
-        MedialistsObservable.addObserver(this)
-        setupRecyclerView(MedialistsObservable.getTitleList())
+        mediaListViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)
+        mediaListViewModel.titleList.observe(this, this)
+        playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
+        setupRecyclerView(mediaListViewModel.titleList.value!!)
         setColorIfLineageTheme()
     }
 
-    override fun update(o: Observable?, arg: Any?) {
-        if(arg is MusicList){
-            if(arg.getFlag() == MediaBrowser.MediaItem.FLAG_PLAYABLE && attached) {
-                setupRecyclerView(arg)
-            }
-        }
+    override fun onChanged(titlesList: MusicList?) {
+        setupRecyclerView(titlesList!!)
     }
 
     private fun setupRecyclerView(list: MusicList){
@@ -86,7 +85,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
             if(ThemeChanger.themeIsLineage(activity) && activity?.actionBar?.customView != null) {
                 (activity?.actionBar?.customView as TextView).text = album
             }
-            activity?.actionBar?.title = album  // Observer ist schneller als fragment
+            activity?.actionBar?.title = album
         }
     }
 
@@ -96,16 +95,6 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer {
             fab_shuffle.backgroundTintList = ColorStateList.valueOf(color)
             fab_shuffle.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        attached = false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        MedialistsObservable.deleteObserver(this)
     }
 
 }

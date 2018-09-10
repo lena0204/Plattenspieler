@@ -9,14 +9,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
+import androidx.core.os.bundleOf
+import androidx.fragment.app.*
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.observables.PlaybackObservable
+import com.lk.plattenspieler.observables.PlaybackViewModel
 import com.lk.plattenspieler.utils.LyricsAccess
-import com.lk.plattenspieler.utils.ThemeChanger
+import com.lk.plattenspieler.main.ThemeChanger
 import kotlinx.android.synthetic.main.fragment_playing.*
 import kotlinx.android.synthetic.main.fragment_playing.view.*
 import java.util.*
@@ -25,14 +27,12 @@ import java.util.*
  * Created by Lena on 08.06.17.
  * Zeigt Informationen zum aktuell spielenden Lied (Metadaten) und die Wiedergabeliste an
  */
-class PlayingFragment : Fragment(), java.util.Observer {
-
-    // IDEA_ Sekundenticker für den Fortschritt im Lied einrichten (Seekbar)
-    // IDEA_ Wischgesten um dieses Fragment aufzurufen und zu verstecken
+class PlayingFragment : Fragment(), Observer<Any>{
 
     private val TAG = "com.lk.pl-PlayingFrag"
 	private var lyrics: String? = null
-    private var started = false
+
+    private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         super.onCreateView(inflater, container, savedInstanceState)
@@ -42,10 +42,18 @@ class PlayingFragment : Fragment(), java.util.Observer {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setActionbarTitle()
-        PlaybackObservable.addObserver(this)
-        writeMetadata(PlaybackObservable.getMetadata())
-        setPlaylist(PlaybackObservable.getQueueLimited30())
+        playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
+        playbackViewModel.setObserverToAll(this, this)
+        writeMetadata(playbackViewModel.metadata.value!!)
+        setPlaylist(playbackViewModel.getQueueLimitedTo30())
         view.iv_playing_lyrics.setOnClickListener { onClickLyrics(it)}
+    }
+
+    override fun onChanged(update: Any?) {
+        when(update) {
+            is MusicMetadata -> writeMetadata(update)
+            is MusicList -> setPlaylist(playbackViewModel.getQueueLimitedTo30())
+        }
     }
 
     private fun setActionbarTitle(){
@@ -59,18 +67,17 @@ class PlayingFragment : Fragment(), java.util.Observer {
             val args = createBundleForLyricsFragment()
             val lyricsf = LyricsFragment()
             lyricsf.arguments = args
-            fragmentManager?.beginTransaction()
-                    ?.addToBackStack(null)
-                    ?.replace(R.id.fl_main_content, lyricsf, "TAG_LYRICS")
-                    ?.commit()
+            fragmentManager?.transaction {
+                addToBackStack(null)
+                replace(R.id.fl_main_content, lyricsf, "TAG_LYRICS")
+            }
         }
     }
 
     private fun createBundleForLyricsFragment(): Bundle {
-        val args = Bundle()
-        args.putString("L", lyrics)
-        if(!PlaybackObservable.getMetadata().isEmpty()) {
-            args.putString("C", PlaybackObservable.getMetadata().cover_uri)
+        val args = bundleOf("L" to lyrics)
+        if(playbackViewModel.metadata.value?.isEmpty() == false) {
+            args.putString("C", playbackViewModel.metadata.value!!.cover_uri)
         }
         return args
     }
@@ -113,10 +120,8 @@ class PlayingFragment : Fragment(), java.util.Observer {
         for (item in queue) {
             liste.add(item.title + "\n - " + item.artist)
         }
-        if (activity != null) {
-            val act = activity as FragmentActivity
-            lv_playing_list.adapter = ArrayAdapter(act.applicationContext, R.layout.row_playlist_tv, liste.toTypedArray())
-        }
+        lv_playing_list.adapter = ArrayAdapter(requireActivity().applicationContext,
+                R.layout.row_playlist_tv, liste.toTypedArray())
     }
 
     override fun onResume() {
@@ -125,7 +130,6 @@ class PlayingFragment : Fragment(), java.util.Observer {
         if(lyrics != null && lyrics != ""){
             iv_playing_lyrics.alpha = 1.0f
         }
-        started = true
     }
 
     private fun setAccentColorIfLineageTheme(){
@@ -134,24 +138,5 @@ class PlayingFragment : Fragment(), java.util.Observer {
             iv_playing_lyrics.backgroundTintList = ColorStateList.valueOf(color)
             iv_playing_lyrics.backgroundTintMode = PorterDuff.Mode.SRC_ATOP
         }
-    }
-
-    override fun update(o: Observable?, arg: Any?) {
-        if(started) {
-            when (arg) {
-                is MusicMetadata -> writeMetadata(arg)
-                is MusicList -> setPlaylist(PlaybackObservable.getQueueLimited30())
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        started = false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        PlaybackObservable.deleteObserver(this)
     }
 }

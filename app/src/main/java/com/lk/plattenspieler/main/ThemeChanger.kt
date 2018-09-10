@@ -1,4 +1,4 @@
-package com.lk.plattenspieler.utils
+package com.lk.plattenspieler.main
 
 import androidx.fragment.app.FragmentActivity
 import android.content.SharedPreferences
@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.preference.PreferenceManager
 import android.util.Log
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.main.MainActivityNew
+import com.lk.plattenspieler.utils.EnumTheme
 import lineageos.style.StyleInterface
 
 /**

@@ -1,44 +1,37 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Activity
-import android.media.browse.MediaBrowser
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.lk.plattenspieler.R
-import java.util.*
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.lk.plattenspieler.observables.MedialistsObservable
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
-import com.lk.plattenspieler.utils.AlbumAdapter
-import com.lk.plattenspieler.utils.ThemeChanger
+import com.lk.plattenspieler.main.ThemeChanger
+import com.lk.plattenspieler.musicbrowser.ControllerAction
+import com.lk.plattenspieler.musicbrowser.EnumActions
+import com.lk.plattenspieler.observables.*
+import com.lk.plattenspieler.utils.*
 import kotlinx.android.synthetic.main.fragment_album.*
 
 /**
  * Created by Lena on 08.06.17.
  * Stellt eine Liste von Alben dar, verwaltet den Observer und den RecyclerView
  */
-class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
+class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
 
     private val TAG = "AlbumFragment"
-    private lateinit var listener: OnClick
-    private var started = false
-
-    interface OnClick{
-        fun onClickAlbum(albumid: String)
-    }
+    private lateinit var mediaViewModel: MediaViewModel
+    private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onClick(albumid: String) {
-        listener.onClickAlbum(albumid)
-    }
-
-    override fun onAttach(activity: Activity?) {
-        super.onAttach(activity)
-        listener = activity as OnClick
+        val action = ControllerAction(EnumActions.SHOW_ALBUM, albumid)
+        playbackViewModel.controllerAction.value = action
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -46,12 +39,17 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
         return inflater.inflate(R.layout.fragment_album, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        started = true
-        MedialistsObservable.addObserver(this)
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        mediaViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)
+        mediaViewModel.albumlist.observe(this, this)
+        playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
         setTitleInActionbar()
-        setupRecyclerView(MedialistsObservable.getAlbumList())
+        setupRecyclerView(mediaViewModel.albumlist.value!!)
+    }
+
+    override fun onChanged(albumList: MusicList?) {
+        setupRecyclerView(albumList!!)
     }
 
     private fun setTitleInActionbar(){
@@ -77,25 +75,5 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer {
             }
         }
         return data
-    }
-
-    override fun update(o: Observable?, arg: Any?) {
-        if(arg is MusicList){
-            if(arg.getFlag() == MediaBrowser.MediaItem.FLAG_BROWSABLE) {
-                if(started) {
-                    setupRecyclerView(arg)
-                }
-            }
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        started = false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        MedialistsObservable.deleteObserver(this)
     }
 }

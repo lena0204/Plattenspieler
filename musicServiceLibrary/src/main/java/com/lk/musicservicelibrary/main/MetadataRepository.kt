@@ -147,6 +147,8 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
             var queueDetailed = MusicList()
             if(queueType == QueueType.QUEUE_ALL_SHUFFLE){
                 queueDetailed = fileRepository.getAllTitles(titleId)
+            } else if(queueType == QueueType.QUEUE_RESTORED){
+                queueDetailed = mediaList
             } else {
                 val queue = if(queueType == QueueType.QUEUE_ORDERED){
                     QueueCreation.createQueueFromTitle(mediaList, titleId)
@@ -158,6 +160,7 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
                 }
             }
             playbackData.queue = queueDetailed
+            Log.v(TAG, "newQueue with ${queueDetailed.countItems()} items.")
             updateMetadata(titleId)
             listeners.callWithParameter(playbackData)
         }

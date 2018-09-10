@@ -1,39 +1,30 @@
 package com.lk.plattenspieler.fragments
 
-import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.*
 import android.media.session.PlaybackState
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
-import com.lk.plattenspieler.observables.PlaybackObservable
-import com.lk.plattenspieler.utils.ThemeChanger
+import com.lk.plattenspieler.main.ThemeChanger
+import com.lk.plattenspieler.musicbrowser.ControllerAction
+import com.lk.plattenspieler.musicbrowser.EnumActions
+import com.lk.plattenspieler.observables.PlaybackViewModel
 import kotlinx.android.synthetic.main.bar_music_information.*
-import java.util.*
 
 /**
  * Created by Lena on 08.06.17.
  * Zeigt Informationen zum aktuell spielenden Lied (Metadaten) und die Playbackkontrolle an
  */
-class MusicBarFragment : Fragment(), java.util.Observer {
+class MusicBarFragment : Fragment(), Observer<Any> {
 
     private val TAG = "com.lk.pl-MusicBar"
-    private var started = false
-    private lateinit var listener: OnClick
-
-    interface OnClick{
-        fun onClickPlay()
-        fun onClickNext()
-        fun onClickPrevious()
-    }
-
-    override fun onAttach(activity: Activity?) {
-        super.onAttach(activity)
-        listener = activity as OnClick
-    }
+    private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         super.onCreateView(inflater, container, savedInstanceState)
@@ -48,20 +39,36 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     private fun setupOnClickListener(){
         ib_main_play.setOnClickListener {
-            listener.onClickPlay()
+            val action = ControllerAction(EnumActions.PLAY_PAUSE)
+            playbackViewModel.controllerAction.value = action
         }
         ib_main_next.setOnClickListener {
-            listener.onClickNext()
+            val action = ControllerAction(EnumActions.NEXT)
+            playbackViewModel.controllerAction.value = action
         }
         ib_main_previous.setOnClickListener {
-            listener.onClickPrevious()
+            val action = ControllerAction(EnumActions.PREVIOUS)
+            playbackViewModel.controllerAction.value = action
         }
     }
 
     private fun setupData(){
-        PlaybackObservable.addObserver(this)
-        writeMetadata(PlaybackObservable.getMetadata())
-        updatePlayback(PlaybackObservable.getState())
+        playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
+        playbackViewModel.setObserverToAll(this, this)
+        writeMetadata(playbackViewModel.metadata.value!!)
+        updatePlayback(playbackViewModel.playbackState.value!!)
+    }
+
+    override fun onChanged(update: Any?) {
+        when(update) {
+            is MusicMetadata -> {
+                if(update.isEmpty())
+                    writeEmpty()
+                else
+                    writeMetadata(update)
+            }
+            is PlaybackState -> updatePlayback(update)
+        }
     }
 
     private fun writeMetadata(data: MusicMetadata){
@@ -73,7 +80,7 @@ class MusicBarFragment : Fragment(), java.util.Observer {
     }
 
     private fun updatePlayback(playbackState: PlaybackState){
-        updateShuffleMode(PlaybackObservable.getShuffleOn())
+        updateShuffleMode(playbackState)
         if(playbackState.state == PlaybackState.STATE_PLAYING){
             ib_main_play.setImageBitmap(BitmapFactory.decodeResource(resources, R.mipmap.ic_pause))
         } else {
@@ -81,8 +88,9 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         }
     }
 
-    private fun updateShuffleMode(mode: Boolean) {
-        if(mode){
+    private fun updateShuffleMode(playbackState: PlaybackState) {
+        val mode = playbackState.extras?.getBoolean(MusicService.SHUFFLE_KEY)
+        if(mode == true){
             ib_main_shuffle?.alpha = 0.8f
         } else {
             ib_main_shuffle?.alpha = 0.3f
@@ -91,7 +99,6 @@ class MusicBarFragment : Fragment(), java.util.Observer {
 
     override fun onResume() {
         super.onResume()
-        started = true
         setAccentColorIfLineageTheme()
     }
 
@@ -103,36 +110,9 @@ class MusicBarFragment : Fragment(), java.util.Observer {
         }
     }
 
-    override fun update(o: Observable?, arg: Any?) {
-        if(started) {
-            when (arg) {
-                is MusicMetadata -> {
-                    if(!arg.isEmpty()) {
-                        writeMetadata(arg)
-                    } else {
-                        writeEmpty()
-                    }
-                }
-                is PlaybackState -> {
-                    updatePlayback(arg)
-                }
-            }
-        }
-    }
-
     private fun writeEmpty(){
         tv_music_title?.text = ""
-        iv_main_cover?.background = null
+        iv_main_cover?.setImageResource(R.color.transparent)
         ib_main_shuffle?.alpha = 0.5f
-    }
-
-    override fun onPause() {
-        super.onPause()
-        started = false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        PlaybackObservable.deleteObserver(this)
     }
 }

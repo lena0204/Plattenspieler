@@ -41,6 +41,7 @@ class MusicActionsCallback internal constructor(
     }
 
     override fun onPlayFromMediaId(mediaId: String, extras: Bundle?) {
+        extras?.classLoader = this.javaClass.classLoader
         val shuffleOn = extras?.getBoolean("shuffle") ?: false
         if(shallPrepare(extras)){
             // Callback onPrepareFromId ist erst ab API 24 (aktuell 21) möglich
@@ -53,12 +54,14 @@ class MusicActionsCallback internal constructor(
     private fun shallPrepare(extras: Bundle?): Boolean = extras != null && extras.containsKey("I")
 
     private fun playFromId(pId: String, shuffleOn: Boolean){
+        Log.v(TAG, "playFromId")
         currentPlaybackPosition = 0
         serviceDataHandler.callWithParameter(metadataRepo.updatePlayFromId(pId, shuffleOn))
         onPlay()
     }
 
     private fun prepareFromIdAfterRestart(pId: String, shuffleOn: Boolean){
+        Log.v(TAG, "prepareAfterRestart")
         currentPlaybackPosition = 0
         serviceDataHandler.callWithParameter(metadataRepo.updatePrepareFromId(pId, shuffleOn))
     }
@@ -76,6 +79,7 @@ class MusicActionsCallback internal constructor(
     private fun canPlay(): Boolean {
         if(musicPlayerCreated && musicPlayer.isPlaying)
             musicPlayer.stop()
+            musicPlayer.reset()
         if(metadataRepo.getCurrentMusicId() != "" && AudioFocusRequester.requestAudioFocus()){
             // audioFucosStatus = EnumAudioFucos.AUDIO_FOCUS
             return true
@@ -97,6 +101,7 @@ class MusicActionsCallback internal constructor(
             }
             musicPlayer.setOnCompletionListener { _ -> onSkipToNext() }
             musicPlayer.setAudioAttributes(AudioFocusRequester.audioAttr)
+            musicPlayerCreated = true
         }
     }
 
@@ -137,12 +142,12 @@ class MusicActionsCallback internal constructor(
         musicPlayer.reset()
         musicPlayer.release()
         musicPlayerCreated = false
-        service.stopService()
     }
 
     override fun onCommand(command: String, args: Bundle?, resultReceiver: ResultReceiver?) {
         when(command){
             "addQueue" -> addQueueToService(args, QueueType.QUEUE_ORDERED)
+            "addRestoredQueue" -> addQueueToService(args, QueueType.QUEUE_RESTORED)
             "addRandomQueue" -> addQueueToService(args, QueueType.QUEUE_SHUFFLE)
             "addAll" -> addAllSongsToPlayingQueue()
         }

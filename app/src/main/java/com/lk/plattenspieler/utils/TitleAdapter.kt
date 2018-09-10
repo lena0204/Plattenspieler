@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.row_music_data.view.*
 class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickTitle) : RecyclerView.Adapter<TitleAdapter.ViewHolderTitle>() {
 
     interface OnClickTitle{
-        fun onClick(albumid: String)
+        fun onClick(titleId: String)
     }
 
     override fun onBindViewHolder(holder: ViewHolderTitle, position: Int) {
@@ -37,16 +37,12 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
 
     inner class ViewHolderTitle(v: View) : RecyclerView.ViewHolder(v) {
 
-        private var tvId: TextView
-        private var tvTitle: TextView
-        private var tvInterpret: TextView
-        private var ivCover: ImageView
+        private var tvId: TextView = v.tv_music_id
+        private var tvTitle: TextView = v.tv_music_title
+        private var tvInterpret: TextView = v.tv_music_info
+        private var ivCover: ImageView = v.iv_music_cover
 
         init{
-            tvId = v.tv_music_id
-            tvTitle = v.tv_music_title
-            tvInterpret = v.tv_music_info
-            ivCover = v.iv_music_cover
             v.setOnClickListener { cl.onClick(tvId.text.toString()) }
         }
         fun getTvID(): TextView = tvId

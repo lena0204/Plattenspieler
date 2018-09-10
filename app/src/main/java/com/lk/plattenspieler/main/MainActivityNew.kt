@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
-import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -15,34 +14,33 @@ import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
-import com.lk.plattenspieler.observables.MedialistsObservable
+import androidx.fragment.app.transaction
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import com.lk.musicservicelibrary.models.MusicList
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
-import com.lk.plattenspieler.observables.PlaybackObservable
+import com.lk.plattenspieler.musicbrowser.*
+import com.lk.plattenspieler.observables.*
 import com.lk.plattenspieler.utils.*
-import java.util.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 /**
  * Erstellt von Lena am 12.05.18.
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
-class MainActivityNew : FragmentActivity(),
-        Observer,
-        AlbumFragment.OnClick,
-        AlbumDetailsFragment.OnClick,
-		LyricsAddingDialog.OnSaveLyrics,
-        MusicBarFragment.OnClick{
+class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDialog.OnSaveLyrics {
+
+    // TODO Funktionen durchtesten, refactoring nötig
 
     companion object {
         const val PREF_PLAYING = "playing"
         const val PREF_DESIGN = "design"
         const val PREF_SHUFFLE = "shuffle"
-        const val PREF_LYRICS = "lyrics"
-
+        // not used currently -- const val PREF_LYRICS = "lyrics"
         fun isVersionGreaterThan(versionCode: Int): Boolean
             = Build.VERSION.SDK_INT > versionCode
     }
@@ -50,12 +48,14 @@ class MainActivityNew : FragmentActivity(),
     private val TAG = "com.lk.pl-MainActNew"
     private var design = EnumTheme.THEME_LIGHT
     private var menu: Menu? = null
-    private var musicClient: MusicClient? = null
+    private var controllerAccess: ControllerAccess? = null
     private var albumsSet = false
     private var resumed = false
 
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var permissionRequester: PermissionRequester
+    private lateinit var mediaViewModel: MediaViewModel
+    private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,44 +91,71 @@ class MainActivityNew : FragmentActivity(),
     }
 
     private fun setupForMusicHandling(){
-        MedialistsObservable.addObserver(this)
-        PlaybackObservable.addObserver(this)
-        musicClient = MusicClient(this)
+        mediaViewModel = ViewModelProviders.of(this).get(MediaViewModel::class.java)
+        mediaViewModel.setObserversToAll(this, this)
+        playbackViewModel = ViewModelProviders.of(this).get(PlaybackViewModel::class.java)
+        controllerAccess = ControllerAccess(this)
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         setupMusicBar()
     }
 
     private fun setupMusicBar(){
         hideBar()
-        supportFragmentManager.beginTransaction()
-                .replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
-                .commit()
+        supportFragmentManager.transaction {
+            replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
+        }
         val pf = PlayingFragment()
-        fl_main_bar.setOnClickListener { view ->
+        fl_main_bar.setOnClickListener { _ ->
             if(!pf.isVisible){
-                supportFragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.fl_main_content, pf, "TAG_PLAYING")
-                        .commit()
+                supportFragmentManager.transaction {
+                    addToBackStack(null)
+                    replace(R.id.fl_main_content, pf, "TAG_PLAYING")
+                }
             }
         }
     }
 
-    fun showBar(){
-        fl_main_bar.visibility = View.VISIBLE
-    }
+    fun showBar() { fl_main_bar.visibility = View.VISIBLE }
 
-    fun hideBar(){
-        fl_main_bar.visibility = View.GONE
-    }
+    fun hideBar() { fl_main_bar.visibility = View.GONE }
 
     private fun finishSetupIfPermissionGranted(){
-        val hasQueueSaved = sharedPreferences.getBoolean(PREF_PLAYING, false)
         if(isVersionGreaterThan(Build.VERSION_CODES.M) && permissionRequester.checkReadPermission()) {
-            musicClient?.completeSetup(hasQueueSaved)
+            controllerAccess?.completeSetup()
         } else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            musicClient?.completeSetup(hasQueueSaved)
+            controllerAccess?.completeSetup()
         }
+    }
+
+    override fun onChanged(liste: MusicList?){
+        when(liste?.getFlag()){
+            MediaBrowser.MediaItem.FLAG_BROWSABLE -> showAlbums()
+            MediaBrowser.MediaItem.FLAG_PLAYABLE -> showTitles()
+        }
+    }
+
+    private fun showAlbums(){
+        // if(resumed) {
+        supportFragmentManager.transaction { replace(R.id.fl_main_content, AlbumFragment()) }
+        // }
+    }
+
+    private fun showTitles(){
+        // if(resumed) {
+        supportFragmentManager.transaction {
+            addToBackStack(null)
+            replace(R.id.fl_main_content, AlbumDetailsFragment())
+        }
+        // }
+    }
+
+    override fun onSaveLyrics(lyrics: String) {
+        Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
+        LyricsAccess.writeLyrics(lyrics, playbackViewModel.metadata.value!!.path)
+    }
+
+    fun setDesignFromPref(design: EnumTheme){
+        controllerAccess?.applyTheme(design)
     }
 
     override fun onResume() {
@@ -146,9 +173,8 @@ class MainActivityNew : FragmentActivity(),
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "onDestroy")
-        musicClient?.clear()
-        musicClient = null
-        PlaybackObservable.deleteObserver(this)
+        controllerAccess?.clear()
+        controllerAccess = null
     }
 
     // Permissions
@@ -158,7 +184,7 @@ class MainActivityNew : FragmentActivity(),
         when(requestCode){
             PermissionRequester.PERMISSION_REQUEST_READ -> {
                 if(isPermissionGranted(grantResults))
-                    musicClient?.completeSetup(sharedPreferences.getBoolean(PREF_PLAYING, false))
+                    controllerAccess?.completeSetup()
                 else
                     showToast(R.string.toast_no_permission)
             }
@@ -170,10 +196,10 @@ class MainActivityNew : FragmentActivity(),
             }
             PermissionRequester.PERMISSION_REQUEST_DESIGN -> {
                 if(isPermissionGranted(grantResults)){
-                    musicClient?.applyTheme(EnumTheme.THEME_LINEAGE)
+                    controllerAccess?.applyTheme(EnumTheme.THEME_LINEAGE)
                 } else {
                     showToast(R.string.toast_no_permission_design)
-                    musicClient?.applyTheme(EnumTheme.THEME_LIGHT)
+                    controllerAccess?.applyTheme(EnumTheme.THEME_LIGHT)
                 }
             }
         }
@@ -182,78 +208,15 @@ class MainActivityNew : FragmentActivity(),
     private fun isPermissionGranted(grantResults: IntArray): Boolean
             = (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
 
-    private fun showToast(stringResource: Int){
+    private fun showToast(stringResource: Int) {
         Toast.makeText(this, stringResource, Toast.LENGTH_LONG).show()
-    }
-
-    // Observable
-    override fun update(observable: Observable?, arg: Any?) {
-        when {
-            observable is MedialistsObservable && arg is MusicList -> {
-                if (arg.getFlag() == MediaBrowser.MediaItem.FLAG_BROWSABLE) {
-                    albumsSet = true
-                    showAlbums()
-                } else {
-                    showTitles()
-                }
-            }
-            arg is PlaybackState -> {
-                if(arg.state == PlaybackState.STATE_STOPPED)
-                    hideBar()
-            }
-        }
-    }
-
-    private fun showAlbums(){
-        if(resumed) {
-            supportFragmentManager.beginTransaction()
-                    .replace(R.id.fl_main_content, AlbumFragment())
-                    .commit()
-        }
-    }
-
-    private fun showTitles(){
-        if(resumed) {
-            supportFragmentManager.beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.fl_main_content, AlbumDetailsFragment())
-                    .commit()
-        }
-    }
-
-    // TODO anderes Handling für die Listener (Observable?)
-    override fun onClickAlbum(albumid: String) {
-        musicClient?.showAlbumTitles(albumid)
-    }
-    override fun onClickTitle(titleid: String) {
-        musicClient?.playFromTitle(titleid)
-    }
-    override fun onShuffleClick(ptitleid: String) {
-        musicClient?.shuffleTitles()
-    }
-    override fun onSaveLyrics(lyrics: String) {
-		Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-		LyricsAccess.writeLyrics(lyrics, PlaybackObservable.getMetadata().path)
-	}
-    override fun onClickPlay() {
-        musicClient?.play()
-    }
-    override fun onClickNext() {
-        musicClient?.next()
-    }
-    override fun onClickPrevious() {
-        musicClient?.previous()
-    }
-
-    fun setDesignFromPref(design: EnumTheme){
-        musicClient?.applyTheme(design)
     }
 
     // ------------- Menü -------------
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
         // TODO Lyrics hinzufügen nur anzeigen wenn PlayingFragment sichtbar ist
-        //menu?.findItem(R.id.menu_add_lyrics)?.isVisible = false
+        menu?.findItem(R.id.menu_add_lyrics)?.isVisible = false
         return true
     }
 
@@ -263,27 +226,33 @@ class MainActivityNew : FragmentActivity(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.menu_settings){
-            val pf = PrefFragment()
-            pf.arguments = prepareBundleForPrefFragment()
-            supportFragmentManager.beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.fl_main_content, pf, "PrefFragment")
-                    .commit()
-        } else {
-            musicClient?.menu(item.itemId)
+        when(item.itemId){
+            R.id.menu_settings -> launchPreferences()
+            R.id.menu_shuffle_all -> {
+                val action = ControllerAction(EnumActions.SHUFFLE_ALL)
+                playbackViewModel.controllerAction.value = action
+            }
+            R.id.menu_remove_playing -> {
+                val action = ControllerAction(EnumActions.STOP)
+                playbackViewModel.controllerAction.value = action
+            }
+            R.id.menu_add_lyrics -> controllerAccess?.addLyrics()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun prepareBundleForPrefFragment(): Bundle {
-        val args = Bundle()
-        if(isVersionGreaterThan(Build.VERSION_CODES.O) && checkLineageSDK()){
-            args.putBoolean("LOS", true)
-        } else {
-            args.putBoolean("LOS", false)
+    private fun launchPreferences(){
+        val pf = PrefFragment()
+        pf.arguments = prepareBundleForPrefFragment()
+        supportFragmentManager.transaction {
+            addToBackStack(null)
+            replace(R.id.fl_main_content, pf, "PrefFragment")
         }
-        return args
+    }
+
+    private fun prepareBundleForPrefFragment(): Bundle {
+        val losSupport = isVersionGreaterThan(Build.VERSION_CODES.O) && checkLineageSDK()
+        return bundleOf("LOS" to losSupport)
     }
 
     private fun checkLineageSDK() : Boolean =

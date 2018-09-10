@@ -10,7 +10,8 @@ typealias listenerFunction<parameterType> = (parameter: parameterType) -> Unit
 enum class QueueType {
     QUEUE_ORDERED,
     QUEUE_SHUFFLE,
-    QUEUE_ALL_SHUFFLE
+    QUEUE_ALL_SHUFFLE,
+    QUEUE_RESTORED
 }
 
 enum class EnumAudioFucos {
