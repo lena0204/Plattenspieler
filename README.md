@@ -1,6 +1,6 @@
 # Plattenspieler
 
-A music app for Android 7 or higher:
+A music app for Android 5.1 or higher:
 - uses local music files
 - sorted by album
 - shuffle albums and all songs
