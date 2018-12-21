@@ -1,1 +1,1 @@
-include ':app', ':musicServiceLibrary', ':music_service_library'
+include ':app', ':musicServiceLibrary'
