@@ -39,5 +39,21 @@
     <string name="dialog_title">Add lyrics</string>
     <string name="dialog_yes">Add</string>
     <string name="dialog_no">Cancel</string>
+    <string name="toast_no_permission_write">Permission for writing data wasn\'t granted, so no lyrics can be added.</string>
+    <string name="toast_no_permission_design">No permission to read system design. Design is reset to standard.</string>
+    <string name="menu_settings">Preferences</string>
+    <string name="pref_themecolor_title">Theme colour</string>
+    <string name="pref_themecolor_on">Green theme is used</string>
+    <string name="pref_themecolor_off">Pink design is used</string>
+    <string name="pref_themelight_title">Light / dark design</string>
+    <string name="pref_themelight_on">Dark design is used</string>
+    <string name="pref_themelight_off">Light design is used</string>
+    <string name="pref_themelos_title">System design (Lineage OS)</string>
+    <string name="pref_themelos_on">System design (Lineage OS) is used</string>
+    <string name="pref_themelos_off">App design is used</string>
+    <string name="pref_lyricsshow_title">Show lyrics</string>
+    <string name="pref_lyricsshow_on">Lyrics are shown if available</string>
+    <string name="pref_lyricsshow_off">Lyrics are hidden</string>
+    <string name="about_app">About this app: \nVersion 2.0 \nDeveloped by: xxx</string>
 
 </resources>

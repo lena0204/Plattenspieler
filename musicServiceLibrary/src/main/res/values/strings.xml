@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">musicServiceLibrary</string>
+    <string name="app_name">Music Service Library</string>
 
     <string name="queue_title">Wiedergabeliste</string>
 
