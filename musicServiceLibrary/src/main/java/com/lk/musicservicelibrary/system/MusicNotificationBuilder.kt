@@ -54,14 +54,18 @@ class MusicNotificationBuilder(private val service: MusicService) {
     private fun setNotificationContent(currentMusicMetadata: MusicMetadata){
         notificationBuilder.setContentTitle(currentMusicMetadata.title)
         notificationBuilder.setContentText(currentMusicMetadata.artist)
-        // TODO Localization for "Lieder noch"
-        notificationBuilder.setSubText(currentMusicMetadata.nr_of_songs_left.toString() + " Lieder noch")
+        var songsLeft = currentMusicMetadata.nr_of_songs_left.toString()
+        songsLeft += " " + service.resources.getString(R.string.notification_songs_left)
+        notificationBuilder.setSubText(songsLeft)
         notificationBuilder.setSmallIcon(R.drawable.ic_stat_musicnotification)
-        val albumart = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
-        if (albumart != null){
-            notificationBuilder.setLargeIcon(albumart)
-            // Log.v(TAG, "set large Icon")
+        if(currentMusicMetadata.cover_uri != ""){
+            val albumart = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
+            if (albumart != null){
+                notificationBuilder.setLargeIcon(albumart)
+                // Log.v(TAG, "set large Icon")
+            }
         }
+
     }
 
     private fun setMediaStyle(){

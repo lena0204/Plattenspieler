@@ -2,4 +2,6 @@
     <string name="app_name">musicServiceLibrary</string>
 
     <string name="queue_title">Wiedergabeliste</string>
+
+    <string name="notification_songs_left">Lieder noch</string>
 </resources>

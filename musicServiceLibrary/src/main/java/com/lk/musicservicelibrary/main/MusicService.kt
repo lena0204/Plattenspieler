@@ -125,15 +125,23 @@ class MusicService : MediaBrowserService() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
-        if (session.controller.playbackState?.state == PlaybackState.STATE_PAUSED) {
+        val state = session.controller.playbackState?.state
+        if (state == PlaybackState.STATE_PAUSED) {
+            Log.d(TAG, "Playback paused ($state), so stop")
             actionsCallback.onStop()
         }
         return bool
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.d(TAG, "onTaskRemoved")
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy")
+        actionsCallback.onStop()
         this.unregisterReceiver(nbReceiver)
         session.release()
         session.isActive = false
@@ -147,15 +155,25 @@ class MusicService : MediaBrowserService() {
         session.setQueue(queue.getQueueItemList())
         PLAYBACK_STATE = playbackState.state
         sendBroadcastForLightningLauncher(metadata)
-        val shuffleOn = playbackState.extras?.getBoolean("S") ?: false
-        launchNotification(metadata, shuffleOn)
+
+        val shuffleOn = playbackState.extras?.getBoolean(SHUFFLE_KEY) ?: false
+        val playing = PLAYBACK_STATE ==  PlaybackState.STATE_PLAYING
+        launchNotification(metadata, shuffleOn, playing)
+
+        if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
+            this.stopForeground(false)
+        }
     }
 
-    private fun launchNotification(metadata: MusicMetadata, shuffleOn: Boolean) {
+    private fun launchNotification(metadata: MusicMetadata, shuffleOn: Boolean, startInForeground: Boolean) {
         when (PLAYBACK_STATE) {
             PlaybackState.STATE_PLAYING, PlaybackState.STATE_PAUSED -> {
-                notificationManager.notify(NOTIFICATION_ID,
-                        notificationBuilder.showNotification(PLAYBACK_STATE, metadata, shuffleOn))
+                val noti = notificationBuilder.showNotification(PLAYBACK_STATE, metadata, shuffleOn)
+                if(startInForeground){
+                    this.startForeground(NOTIFICATION_ID, noti)
+                } else {
+                    notificationManager.notify(NOTIFICATION_ID, noti)
+                }
             }
             PlaybackState.STATE_STOPPED -> {
                 notificationManager.cancel(NOTIFICATION_ID)

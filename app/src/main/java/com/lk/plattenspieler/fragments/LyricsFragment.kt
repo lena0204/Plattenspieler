@@ -21,7 +21,6 @@ class LyricsFragment: Fragment() {
 
 	private var lyricsText : TextView? = null
 
-	// FIXME von Lyrics über zurück-Button zum PlayingFragment führt dazu, dass er Lyrics vergisst -> SaveState
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		super.onCreateView(inflater, container, savedInstanceState)
 		val v = inflater.inflate(R.layout.fragment_lyrics, container, false)

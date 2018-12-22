@@ -32,6 +32,8 @@ import kotlinx.android.synthetic.main.activity_main.*
  * Erstellt von Lena am 12.05.18.
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
+
+// TODO Merge auf Master
 class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDialog.OnSaveLyrics {
 
     // TODO Funktionen durchtesten, refactoring nötig
@@ -174,7 +176,7 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
         super.onDestroy()
         Log.i(TAG, "onDestroy")
         controllerAccess?.clear()
-        controllerAccess = null
+        // controllerAccess = null
     }
 
     // Permissions
@@ -255,6 +257,8 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
         return bundleOf("LOS" to losSupport)
     }
 
-    private fun checkLineageSDK() : Boolean =
-            lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
+    private fun checkLineageSDK() : Boolean {
+        Log.d(TAG, lineageos.os.Build.LINEAGE_VERSION.SDK_INT.toString())
+        return lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
+    }
 }

@@ -77,9 +77,10 @@ class MusicActionsCallback internal constructor(
     }
 
     private fun canPlay(): Boolean {
-        if(musicPlayerCreated && musicPlayer.isPlaying)
+        if(musicPlayerCreated && musicPlayer.isPlaying) {
             musicPlayer.stop()
-            musicPlayer.reset()
+        }
+        musicPlayer.reset()
         if(metadataRepo.getCurrentMusicId() != "" && AudioFocusRequester.requestAudioFocus()){
             // audioFucosStatus = EnumAudioFucos.AUDIO_FOCUS
             return true

@@ -50,6 +50,7 @@ object LyricsAccess {
     }
 
     // PROBLEM_ schreiben auf die SD-Karte ist nicht unbedingt ohne weiteres möglich ...
+    // TODO Nutzer informieren, wenn schreiben der Lyrics fehlgeschlagen ist, geeignete Rückgabe !!
     fun writeLyrics(lyrics: String, datapath: String){
         if(datapath != ""){
             Log.i(TAG, datapath)

@@ -9,8 +9,8 @@ android {
         applicationId "com.lk.plattenspieler"
         minSdkVersion 22
         targetSdkVersion 28
-        versionCode 8
-        versionName "3.2"
+        versionCode 9
+        versionName "2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -31,13 +31,13 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testImplementation 'junit:junit:4.12'
-    implementation 'androidx.core:core-ktx:1.0.0-rc02'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0-rc02'
-    implementation 'androidx.fragment:fragment-ktx:1.0.0-rc02'
-    implementation 'androidx.preference:preference-ktx:1.0.0-rc02'
+    implementation 'androidx.core:core-ktx:1.0.1'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.fragment:fragment-ktx:1.0.0'
+    implementation 'androidx.preference:preference-ktx:1.0.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.lifecycle:lifecycle-extensions:2.0.0-rc01"
+    implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
 
     implementation project(":musicServiceLibrary")
 }
