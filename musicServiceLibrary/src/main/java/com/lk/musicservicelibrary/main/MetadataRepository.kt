@@ -6,8 +6,7 @@ import androidx.core.os.bundleOf
 import com.lk.musicservicelibrary.models.*
 import com.lk.musicservicelibrary.system.MusicFileRepository
 import com.lk.musicservicelibrary.utils.*
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.*
 
 /**
  * Erstellt von Lena am 02.09.18.
@@ -143,7 +142,7 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
     }
 
     fun createQueueFromMediaList(mediaList: MusicList, titleId: String, queueType: QueueType) {
-        launch (CommonPool) {
+        GlobalScope.launch (Dispatchers.IO) {
             var queueDetailed = MusicList()
             if(queueType == QueueType.QUEUE_ALL_SHUFFLE){
                 queueDetailed = fileRepository.getAllTitles(titleId)

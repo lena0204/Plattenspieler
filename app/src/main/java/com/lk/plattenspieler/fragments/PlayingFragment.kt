@@ -106,7 +106,7 @@ class PlayingFragment : Fragment(), Observer<Any>{
             = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("PREF_LYRICSSHOW",true)
 
     private fun lyricsAbfragen(filepath: String){
-        iv_playing_lyrics.alpha = 0.4f
+        iv_playing_lyrics.alpha = 0.3f
         this.lyrics = null
         val texte = LyricsAccess.readLyrics(filepath)
         if(texte != ""){

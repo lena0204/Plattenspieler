@@ -31,8 +31,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     testImplementation 'junit:junit:4.12'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.0.0-rc02'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
+    implementation 'androidx.core:core-ktx:1.0.1'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.0"
 
 }
 

@@ -62,7 +62,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
                 restoreQueue()
         } else {
             val action = ControllerAction(EnumActions.PLAYS)
-            controllerAction.value = action
+            controllerAction.postValue(action)
         }
     }
 
@@ -79,15 +79,16 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     private fun sendFirstItemToController(titleId: String){
         val args = bundleOf("I" to 1,
                 MusicService.SHUFFLE_KEY to getShufflePreference())
-        controllerAction.value = ControllerAction(EnumActions.PREPARE_FROM_ID, titleId, args = args)
+        controllerAction.postValue(ControllerAction(EnumActions.PREPARE_FROM_ID, titleId, args = args))
     }
 
+    // FIXED_ Fehler, dass kein Value aus einem Backgroundthread gesetzt werden kann -> postValue
     private fun sendQueueIfAvailable(){
         val queueRestored = SongDBAccess.restorePlayingQueue(app.contentResolver)
         if(queueRestored != null){
             Log.v("ViewModel", "sendQueue")
             val args = bundleOf("L" to queueRestored)
-            controllerAction.value = ControllerAction(EnumActions.QUEUE_RESTORED, args = args)
+            controllerAction.postValue(ControllerAction(EnumActions.QUEUE_RESTORED, args = args))
         }
     }
 
@@ -95,7 +96,6 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         if(!queue.value!!.isEmpty()) {
             Log.d("ViewModel", "saveQueue")
             SongDBAccess.savePlayingQueue(app.contentResolver, queue.value!!, metadata.value!!)
-            sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, true) }
         }
     }
 

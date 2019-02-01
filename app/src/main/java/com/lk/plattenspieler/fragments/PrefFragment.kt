@@ -30,10 +30,11 @@ class PrefFragment: PreferenceFragmentCompat() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mActivity = activity as MainActivityNew
-        losSupport = if(arguments != null)
+        losSupport = if(arguments != null) {
             arguments?.getBoolean("LOS", false) as Boolean
-        else
+        } else {
             false
+        }
         Log.d(TAG, "losSupport: $losSupport")
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity)
         enableValidPreferences(sharedPreferences)
@@ -44,7 +45,10 @@ class PrefFragment: PreferenceFragmentCompat() {
         when {
             losSupport && isLosThemeEnabled(sp) -> setStandardThemeEnabled(false)
             losSupport && !isLosThemeEnabled(sp) -> setStandardThemeEnabled(true)
-            !losSupport -> findPreference(PREF_LOS).isEnabled = false
+            !losSupport -> {
+                findPreference(PREF_LOS).isEnabled = false
+                findPreference(PREF_LOS).setSummary(R.string.pref_themelos_unsupported)
+            }
         }
     }
 

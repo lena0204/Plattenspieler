@@ -36,7 +36,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 // TODO Merge auf Master
 class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDialog.OnSaveLyrics {
 
-    // TODO Funktionen durchtesten, refactoring nötig
+    // TODO Funktionen durchtesten, refactoring nötig ??
 
     companion object {
         const val PREF_PLAYING = "playing"
@@ -52,7 +52,6 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
     private var menu: Menu? = null
     private var controllerAccess: ControllerAccess? = null
     private var albumsSet = false
-    private var resumed = false
 
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var permissionRequester: PermissionRequester
@@ -137,18 +136,14 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
     }
 
     private fun showAlbums(){
-        // if(resumed) {
         supportFragmentManager.transaction { replace(R.id.fl_main_content, AlbumFragment()) }
-        // }
     }
 
     private fun showTitles(){
-        // if(resumed) {
         supportFragmentManager.transaction {
             addToBackStack(null)
             replace(R.id.fl_main_content, AlbumDetailsFragment())
         }
-        // }
     }
 
     override fun onSaveLyrics(lyrics: String) {
@@ -158,27 +153,23 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
 
     fun setDesignFromPref(design: EnumTheme){
         controllerAccess?.applyTheme(design)
+        Toast.makeText(this, R.string.toast_restart, Toast.LENGTH_LONG).show()
     }
 
     override fun onResume() {
         super.onResume()
-        resumed = true
         if(albumsSet)
             showAlbums()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-        resumed = false
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "onDestroy")
         controllerAccess?.clear()
-        // controllerAccess = null
+        controllerAccess = null
     }
 
+    // TODO einheitlich Design oder Theme benutzen im Code
     // Permissions
     @RequiresApi(23)
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -198,7 +189,7 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
             }
             PermissionRequester.PERMISSION_REQUEST_DESIGN -> {
                 if(isPermissionGranted(grantResults)){
-                    controllerAccess?.applyTheme(EnumTheme.THEME_LINEAGE)
+                    setDesignFromPref(EnumTheme.THEME_LINEAGE)
                 } else {
                     showToast(R.string.toast_no_permission_design)
                     controllerAccess?.applyTheme(EnumTheme.THEME_LIGHT)
@@ -258,7 +249,8 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
     }
 
     private fun checkLineageSDK() : Boolean {
-        Log.d(TAG, lineageos.os.Build.LINEAGE_VERSION.SDK_INT.toString())
-        return lineageos.os.Build.LINEAGE_VERSION.SDK_INT >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
+        val sdkInt = lineageos.os.Build.LINEAGE_VERSION.SDK_INT
+        Log.d(TAG, "Lineage-Version: "  + lineageos.os.Build.getNameForSDKInt(sdkInt))
+        return sdkInt >= lineageos.os.Build.LINEAGE_VERSION_CODES.ILAMA
     }
 }

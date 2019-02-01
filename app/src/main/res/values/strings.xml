@@ -1,68 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Plattenspieler</string>
-    <string name="action_playing">Wiedergabe</string>
-    <string name="action_lyrics">Liedtext</string>
-    <string name="songs">Lieder</string>
+
+    <string name="app_name">Gramophone</string>
+    <string name="action_playing">Playback</string>
+    <string name="songs">Songs</string>
+    <string name="toast_no_permission">No permission to read the storage,
+        therefore no songs can be shown.</string>
 
     <!-- Menü -->
-    <string name="menu_dark_light">Hell / Dunkel</string>
-    <string name="menu_change_design">Design wechseln</string>
-    <string name="menu_teal">Grünes Design anwenden</string>
-    <string name="menu_pink">Pinkes Design anwenden</string>
-    <string name="menu_remove_playing">Wiedergabe löschen</string>
-    <string name="menu_shuffle_all">Alle zufällig wiedergeben</string>
-    <string name="menu_add_lyrics">Liedtext hinzufügen</string>
-    <string name="menu_show_lyrics">Liedtext verbergen</string>
-    <string name="menu_show_lyrics_no">Liedtext anzeigen</string>
-    <string name="menu_theme_lineage">Lineage-Theme</string>
-    <!--<string name="menu_delete_database">Datenbank löschen</string>-->
+    <string name="menu_dark_light">Light / Dark</string>
+    <string name="menu_change_design">Change design</string>
+    <string name="menu_teal">Use teal design</string>
+    <string name="menu_pink">Use pink design</string>
+    <string name="menu_remove_playing">Delete playlist</string>
+    <string name="menu_shuffle_all">Shuffle all titles</string>
+    <string name="menu_add_lyrics">Add lyrics</string>
+    <string name="menu_show_lyrics">Hide lyrics</string>
+    <string name="menu_show_lyrics_no">Show lyrics</string>
+    <string name="menu_theme_lineage">Lineage theme</string>
+    <!--<string name="menu_delete_database">Delete database</string>-->
 
 
     <!-- Wiedergabe -->
-    <string name="no_title">Keine Wiedergabe</string>
-    <string name="queue_title">Aktuelle Wiedergabe</string>
+    <string name="no_title">No playback</string>
+    <string name="queue_title">Current playback</string>
+    <string name="action_lyrics">Lyrics</string>
 
     <!-- Content Description -->
-    <string name="iv_cd_lyrics">Liedtext vorhanden</string>
-    <string name="iv_cd_shuffle">Zufallswiedergabe</string>
-    <string name="iv_cd_fab_shuffle">Zufallswiedergabe starten</string>
-    <string name="iv_cd_play">Abspielen oder Pausieren</string>
-    <string name="iv_cd_next">Nächstes Lied abspielen</string>
-    <string name="iv_cd_previous">Vorheriges Lied abspielen</string>
-    <string name="iv_cd_cover">Albumcover</string>
+    <string name="iv_cd_lyrics">Has lyrics</string>
+    <string name="iv_cd_shuffle">Shuffle</string>
+    <string name="iv_cd_fab_shuffle">Shuffle</string>
+    <string name="iv_cd_play">Play or pause song</string>
+    <string name="iv_cd_next">Next song</string>
+    <string name="iv_cd_previous">Previous song</string>
+    <string name="iv_cd_cover">Cover</string>
 
     <!-- Dialog -->
-    <string name="dialog_title">Liedtext hinzufügen</string>
-    <string name="dialog_yes">Hinzufügen</string>
-    <string name="dialog_no">Abbrechen</string>
+    <string name="dialog_title">Add lyrics</string>
+    <string name="dialog_yes">Add</string>
+    <string name="dialog_no">Cancel</string>
 
-    <!-- Toast -->
-    <string name="toast_no_permission">Keine Berechtigung, den Speicher zu lesen, deshalb kann keine
-        Musik angezeigt werden.</string>
-    <string name="toast_no_permission_write">Keine Berechtigung, in den Speicher zu schreiben, deshalb können keine
-        neue Liedtexte hinzugefügt werden.</string>
-    <string name="toast_no_permission_design">Keine Berechtigung, das Design des Systems auszulesen.
-        Design wird auf Standard zurückgesetzt.</string>
+    <string name="toast_no_permission_write">Permission for writing data wasn\'t granted, so no lyrics can be added.</string>
+    <string name="toast_no_permission_design">No permission to read system design. Design is reset to standard.</string>
+    <string name="toast_restart">Please restart the app manually to apply the new design.</string>
 
-    <!-- Einstellungen -->
-    <string name="menu_settings">Einstellungen</string>
 
-    <string name="pref_themecolor_title">Designfarbe</string>
-    <string name="pref_themecolor_on">Grünes Design wird verwendet</string>
-    <string name="pref_themecolor_off">Pinkes Design wird verwendet</string>
+    <string name="menu_settings">Preferences</string>
+    <string name="pref_themecolor_title">Theme colour</string>
+    <string name="pref_themecolor_on">Green theme is used</string>
+    <string name="pref_themecolor_off">Pink design is used</string>
+    <string name="pref_themelight_title">Light / dark design</string>
+    <string name="pref_themelight_on">Dark design is used</string>
+    <string name="pref_themelight_off">Light design is used</string>
+    <string name="pref_themelos_title">System design (Lineage OS)</string>
+    <string name="pref_themelos_on">System design (Lineage OS) is used</string>
+    <string name="pref_themelos_off">App design is used</string>
+    <string name="pref_themelos_unsupported">Using system design is not supported</string>
 
-    <string name="pref_themelight_title">Helles / dunkles Design</string>
-    <string name="pref_themelight_on">Dunkles Design wird verwendet</string>
-    <string name="pref_themelight_off">Helles Design wird verwendet</string>
-
-    <string name="pref_themelos_title">Systemdesign (Lineage OS)</string>
-    <string name="pref_themelos_on">Systemdesign (Lineage OS) wird verwendet</string>
-    <string name="pref_themelos_off">Appdesign wird verwendet</string>
-
-    <string name="pref_lyricsshow_title">Liedtexte anzeigen</string>
-    <string name="pref_lyricsshow_on">Liedtexte werden angezeigt, falls vorhanden</string>
-    <string name="pref_lyricsshow_off">Liedtexte werden verborgen</string>
-
-    <string name="about_app">Über diese App: \nVersion: 3.2 \nEntwickelt von: xxx</string>
+    <string name="pref_lyricsshow_title">Show lyrics</string>
+    <string name="pref_lyricsshow_on">Lyrics are shown if available</string>
+    <string name="pref_lyricsshow_off">Lyrics are hidden</string>
+    <string name="about_app">About this app: \nVersion 0.9  \nDeveloped by: Lena K</string>
 
 </resources>

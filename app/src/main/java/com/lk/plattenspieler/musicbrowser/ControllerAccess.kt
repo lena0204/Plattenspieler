@@ -19,8 +19,7 @@ import com.lk.plattenspieler.fragments.LyricsAddingDialog
 import com.lk.plattenspieler.main.*
 import com.lk.plattenspieler.observables.*
 import com.lk.plattenspieler.utils.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.*
 import java.util.*
 
 /**
@@ -42,6 +41,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
 
     private lateinit var mbrowser: MediaBrowser
     private lateinit var musicController: MediaController
+    // PROBLEM_ Absturz: not initializied wenn ein Design geändert wurde
 
     init {
         playbackViewModel.controllerAction.observe(activityNew, this)
@@ -153,6 +153,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     private fun saveState(){
         if(musicController.playbackState?.state != PlaybackState.STATE_PLAYING){
             playbackViewModel.saveQueue()
+            sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, true) }
         } else {
             sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, false) }
         }
@@ -167,13 +168,15 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
                     && permissionRequester.requestDesignReadPermission()){
                 recreateActivity()
             }
-        } else
+        } else {
             recreateActivity()
+        }
     }
 
+    // TODO recreate führt zum Absturz aufgrund fehlender Initialisierung (s. PROBLEM_)
     private fun recreateActivity(){
         saveState()
-        activityNew.recreate()
+        // activityNew.recreate()
     }
 
     fun addLyrics() {
@@ -189,7 +192,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
             musicController = activityNew.mediaController
             musicController.registerCallback(controllerCallback)
             mbrowser.subscribe(mbrowser.root, subscriptionCallback)
-            launch(UI) {
+            GlobalScope.launch(Dispatchers.Default){
                 playbackViewModel.restoreSavedState(musicController.playbackState?.state)
             }
         }

@@ -4,7 +4,6 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '28.0.2'
     defaultConfig {
         applicationId "com.lk.plattenspieler"
         minSdkVersion 22
@@ -35,7 +34,8 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation 'androidx.fragment:fragment-ktx:1.0.0'
     implementation 'androidx.preference:preference-ktx:1.0.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
 
