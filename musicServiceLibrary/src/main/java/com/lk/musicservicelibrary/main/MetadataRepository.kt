@@ -4,14 +4,14 @@ import android.media.session.PlaybackState
 import android.util.Log
 import androidx.core.os.bundleOf
 import com.lk.musicservicelibrary.models.*
-import com.lk.musicservicelibrary.system.MusicFileRepository
+import com.lk.musicservicelibrary.system.MusicDataRepository
 import com.lk.musicservicelibrary.utils.*
 import kotlinx.coroutines.*
 
 /**
  * Erstellt von Lena am 02.09.18.
  */
-internal class MetadataRepository(private val fileRepository: MusicFileRepository) {
+internal class MetadataRepository(private val dataRepository: MusicDataRepository) {
 
     private val TAG = MetadataRepository::class.java.simpleName
     private val listeners = DelegatingFunctions<PlaybackData>()
@@ -35,7 +35,7 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
         listeners += listener
     }
 
-    fun getFirstItemForShuffleAll(): String = fileRepository.getFirstTitleForShuffle()
+    fun getFirstItemForShuffleAll(): String = dataRepository.getFirstTitleIDForShuffle()
 
     fun updatePrepareFromId(id: String, _shuffleOn: Boolean = false): PlaybackData{
         updateMetadata(id)
@@ -76,7 +76,7 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
     fun updatePrevious(position: Long): PlaybackData {
         val metadata = stack.topMedia()
         if(metadata != null && position <= 15000){
-            playbackData.queue.addFirstItem(playbackData.metadata)
+            playbackData.queue.insertAsFirstItem(playbackData.metadata)
             stack.popMedia()
             val id = metadata.id
             updateMetadata(id)
@@ -96,9 +96,9 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
     private fun updateMetadata(id: String){
         var number = 0L
         if(!playbackData.queue.isEmpty()){
-            number = playbackData.queue.countItems().toLong()
+            number = playbackData.queue.size().toLong()
         }
-        playbackData.metadata = fileRepository.getMediaMetadata(id)
+        playbackData.metadata = dataRepository.getTitleByID(id)
         playbackData.metadata.nr_of_songs_left = number
         if(playbackData.metadata.isEmpty()){
             Log.e(TAG, "Metadaten sind null")
@@ -145,7 +145,7 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
         GlobalScope.launch (Dispatchers.IO) {
             var queueDetailed = MusicList()
             if(queueType == QueueType.QUEUE_ALL_SHUFFLE){
-                queueDetailed = fileRepository.getAllTitles(titleId)
+                queueDetailed = dataRepository.getAllTitles(titleId)
             } else if(queueType == QueueType.QUEUE_RESTORED){
                 queueDetailed = mediaList
             } else {
@@ -155,11 +155,11 @@ internal class MetadataRepository(private val fileRepository: MusicFileRepositor
                     QueueCreation.createRandomQueue(mediaList, titleId)
                 }
                 for(queueItem in queue){
-                    queueDetailed.addItem(fileRepository.getMediaMetadata(queueItem.id))
+                    queueDetailed.addItem(dataRepository.getTitleByID(queueItem.id))
                 }
             }
             playbackData.queue = queueDetailed
-            Log.v(TAG, "newQueue with ${queueDetailed.countItems()} items.")
+            Log.v(TAG, "newQueue with ${queueDetailed.size()} items.")
             updateMetadata(titleId)
             listeners.callWithParameter(playbackData)
         }

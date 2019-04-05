@@ -24,7 +24,7 @@ class MusicService : MediaBrowserService() {
     private val TAG = MusicService::class.java.simpleName
     private val NOTIFICATION_ID = 9880
 
-    private lateinit var musicFileRepo: MusicFileRepository
+    private lateinit var musicDataRepo: MusicDataRepository
     private lateinit var session: MediaSession
     private lateinit var actionsCallback: MusicActionsCallback
 
@@ -53,8 +53,8 @@ class MusicService : MediaBrowserService() {
     }
 
     private fun initializeComponents() {
-        musicFileRepo = MusicFileRepository(this.applicationContext)
-        val metadataRepo = MetadataRepository(musicFileRepo)
+        musicDataRepo = LocalMusicFileRepository(this.applicationContext)
+        val metadataRepo = MetadataRepository(musicDataRepo)
         actionsCallback = MusicActionsCallback(this, metadataRepo)
         notificationManager = this.getSystemService<NotificationManager>() as NotificationManager
         notificationBuilder = MusicNotificationBuilder(this)
@@ -84,7 +84,7 @@ class MusicService : MediaBrowserService() {
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
             : MediaBrowserService.BrowserRoot {
         if (this.packageName == clientPackageName) {
-            return MediaBrowserService.BrowserRoot(MusicFileRepository.ROOT_ID, null)
+            return MediaBrowserService.BrowserRoot(MusicDataRepository.ROOT_ID, null)
         }
         return MediaBrowserService.BrowserRoot("", null)
     }
@@ -92,8 +92,8 @@ class MusicService : MediaBrowserService() {
     override fun onLoadChildren(parentId: String,
                          result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         when {
-            parentId == MusicFileRepository.ROOT_ID ->
-                result.sendResult(musicFileRepo.getAlbums().getMediaItemList())
+            parentId == MusicDataRepository.ROOT_ID ->
+                result.sendResult(musicDataRepo.getAllAlbums().getMediaItemList())
             parentId.contains("ALBUM-") ->
                 result.sendResult(getTitles(parentId))
             else -> Log.e(TAG, "No known parent ID")
@@ -102,7 +102,7 @@ class MusicService : MediaBrowserService() {
 
     private fun getTitles(albumId: String): MutableList<MediaBrowser.MediaItem> {
         val id = albumId.replace("ALBUM-", "")
-        return musicFileRepo.getTitlesForAlbumID(albumid = id)
+        return musicDataRepo.getTitlesByAlbumID(id)
                 .getMediaItemList()
     }
 
@@ -149,7 +149,7 @@ class MusicService : MediaBrowserService() {
 
     val onDataChanged = fun(playbackData: PlaybackData) {
         val (metadata, playbackState, queue) = playbackData
-        metadata.cover = MusicMetadata.decodeAlbumcover(metadata.cover_uri, resources)
+        metadata.cover = MusicMetadata.decodeAlbumCover(metadata.cover_uri, resources)
         session.setMetadata(metadata.getMediaMetadata())
         session.setPlaybackState(playbackState)
         session.setQueue(queue.getQueueItemList())

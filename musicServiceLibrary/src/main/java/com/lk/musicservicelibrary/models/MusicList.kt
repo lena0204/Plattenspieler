@@ -12,18 +12,18 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 class MusicList(
         private var list: MutableList<MusicMetadata>,
-        private var flag: Int = 0
+        private var mediaType: Int = 0
 ) : Iterable<MusicMetadata>, Parcelable {
 
     override fun iterator(): Iterator<MusicMetadata> = list.iterator()
 
     constructor(): this(mutableListOf())
 
-    fun countItems(): Int = list.size
+    fun size(): Int = list.size
 
     fun addItem(element: MusicMetadata) = list.add(element)
 
-    fun addFirstItem(element: MusicMetadata) = list.add(0, element)
+    fun insertAsFirstItem(element: MusicMetadata) = list.add(0, element)
 
     fun removeItemAt(i: Int) = list.removeAt(i)
 
@@ -31,36 +31,36 @@ class MusicList(
 
     fun getItemAt(i: Int): MusicMetadata = list[i]
 
-    fun isEmpty(): Boolean = countItems() == 0
+    fun isEmpty(): Boolean = size() == 0
 
-    fun addFlag(flag: Int) { this.flag = flag }
+    fun setMediaType(mediaType: Int) { this.mediaType = mediaType }
 
-    fun getFlag(): Int = flag
+    fun getMediaType(): Int = mediaType
 
     fun getQueueItemList(): MutableList<MediaSession.QueueItem>{
-        val qlist = mutableListOf<MediaSession.QueueItem>()
+        val queueItemList = mutableListOf<MediaSession.QueueItem>()
         var counter = 1L
         for (item in list){
-            qlist.add(MediaSession.QueueItem(item.getMediaDescription(), counter++))
+            queueItemList.add(MediaSession.QueueItem(item.getMediaDescription(), counter++))
         }
-        return qlist
+        return queueItemList
     }
 
     fun getMediaItemList(): MutableList<MediaBrowser.MediaItem>{
-        val mlist = mutableListOf<MediaBrowser.MediaItem>()
+        val mediaItemList = mutableListOf<MediaBrowser.MediaItem>()
         for (item in list){
-            mlist.add(MediaBrowser.MediaItem(item.getMediaDescription(), flag))
+            mediaItemList.add(MediaBrowser.MediaItem(item.getMediaDescription(), mediaType))
         }
-        return mlist
+        return mediaItemList
     }
 
     companion object {
         fun createListFromQueue(list: MutableList<MediaSession.QueueItem>): MusicList{
-            val mlist = MusicList()
+            val musicList = MusicList()
             for(item in list){
-                mlist.addItem(MusicMetadata.createFromMediaDescription(item.description))
+                musicList.addItem(MusicMetadata.createFromMediaDescription(item.description))
             }
-            return mlist
+            return musicList
         }
     }
 }

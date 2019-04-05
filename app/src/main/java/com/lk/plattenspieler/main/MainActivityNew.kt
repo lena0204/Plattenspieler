@@ -129,7 +129,7 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
     }
 
     override fun onChanged(liste: MusicList?){
-        when(liste?.getFlag()){
+        when(liste?.getMediaType()){
             MediaBrowser.MediaItem.FLAG_BROWSABLE -> showAlbums()
             MediaBrowser.MediaItem.FLAG_PLAYABLE -> showTitles()
         }

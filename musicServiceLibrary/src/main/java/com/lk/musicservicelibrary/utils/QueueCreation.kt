@@ -11,26 +11,26 @@ object QueueCreation {
 
     private var currentMedialist = MusicList()
 
-    fun createQueueFromTitle(medialist: MusicList, titleid: String): MusicList {
-        currentMedialist = medialist
-        val indexInMedialist = searchTitleInMedialist(titleid)
+    fun createQueueFromTitle(musicList: MusicList, titleId: String): MusicList {
+        currentMedialist = musicList
+        val indexInMedialist = searchTitleInMediaList(titleId)
         return addFollowingTitlesToQueue(indexInMedialist)
     }
 
-    private fun searchTitleInMedialist(titleid: String): Int {
+    private fun searchTitleInMediaList(titleId: String): Int {
         for(item in currentMedialist){
-            if(item.id == titleid){
+            if(item.id == titleId){
                 return currentMedialist.indexOf(item)
             }
         }
         return -1
     }
 
-    private fun addFollowingTitlesToQueue(titleindex: Int): MusicList {
+    private fun addFollowingTitlesToQueue(titleIndex: Int): MusicList {
         val queue = MusicList()
-        if(titleindex != -1){
-            var i = titleindex + 1
-            while(i < currentMedialist.countItems()){
+        if(titleIndex != -1){
+            var i = titleIndex + 1
+            while(i < currentMedialist.size()){
                 queue.addItem(currentMedialist.getItemAt(i))
                 i++
             }
@@ -38,27 +38,27 @@ object QueueCreation {
         return queue
     }
 
-    fun createRandomQueue(medialist: MusicList, titleid: String): MusicList {
-        copyMediaList(medialist)
-        return shuffleMediaListToQueue(titleid)
+    fun createRandomQueue(mediaList: MusicList, titleId: String): MusicList {
+        copyMediaList(mediaList)
+        return shuffleMediaListToQueue(titleId)
 
     }
 
-    private fun copyMediaList(medialist: MusicList){
+    private fun copyMediaList(mediaList: MusicList){
         currentMedialist = MusicList()
-        for(item in medialist){
+        for(item in mediaList){
             currentMedialist.addItem(item)
         }
     }
 
-    private fun shuffleMediaListToQueue(titleid: String): MusicList {
+    private fun shuffleMediaListToQueue(titleId: String): MusicList {
         val random = Random()
         val queue = MusicList()
         var randomValue: Int
         while(!currentMedialist.isEmpty()){
-            randomValue = random.nextInt(currentMedialist.countItems())
+            randomValue = random.nextInt(currentMedialist.size())
             val element = currentMedialist.removeItemAt(randomValue)
-            if(element.id != titleid)
+            if(element.id != titleId)
                 queue.addItem(element)
         }
         return queue

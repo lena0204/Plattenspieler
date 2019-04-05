@@ -12,17 +12,21 @@ import com.lk.musicservicelibrary.models.MusicMetadata
  * Erstellt von Lena am 11.05.18.
  * Zugriff auf die appeigene Datenbank, die die aktuelle Wiedergabeliste speichert
  */
-object SongDBAccess{
+object SongDBAccess: PlaylistRepository{
 
+    // IDEA_ daraus eine normale Klasse machen, contentResolver als Konstruktorparameter, eh Änderung wenn Room
     private var TAG = "SongDBAccess"
-    private lateinit var contentResolver: ContentResolver
+    private var contentResolver: ContentResolver? = null
 
-    fun savePlayingQueue(cr: ContentResolver, playingQueue: MusicList, metadata: MusicMetadata){
-        Log.d(TAG, "savePlayingQueue(): Evtl Warteschlange abspeichern")
+    fun setContentResolver(cr: ContentResolver){
         contentResolver = cr
-        contentResolver.delete(SongContentProvider.CONTENT_URI, null, null)
-        if(playingQueue.countItems() > 0){
-            saveCurrentMetadata(metadata)
+    }
+
+    override fun savePlayingQueue(playingQueue: MusicList, playingMetadata: MusicMetadata){
+        Log.d(TAG, "savePlayingQueue(): Evtl. Warteschlange abspeichern")
+        contentResolver?.delete(SongContentProvider.CONTENT_URI, null, null)
+        if(playingQueue.size() > 0){
+            saveCurrentMetadata(playingMetadata)
             saveQueue(playingQueue)
         }
     }
@@ -38,12 +42,12 @@ object SongDBAccess{
                 SongDB.COLUMN_DURATION to metadata.duration.toString(),
                 SongDB.COLUMN_NUMTRACKS to metadata.nr_of_songs_left.toString(),
                 SongDB.COLUMN_FILE to metadata.path)
-        contentResolver.insert(SongContentProvider.CONTENT_URI, values)
+        contentResolver?.insert(SongContentProvider.CONTENT_URI, values)
     }
     
     private fun saveQueue(playingQueue: MusicList) {
         var values: ContentValues
-        Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.countItems())
+        Log.d(TAG, "Saving: Länge der Schlange: " + playingQueue.size())
         for(item in playingQueue) {
             values = contentValuesOf(
                     SongDB.COLUMN_ID to item.id,
@@ -54,77 +58,75 @@ object SongDBAccess{
                     SongDB.COLUMN_DURATION to "",
                     SongDB.COLUMN_NUMTRACKS to "",
                     SongDB.COLUMN_FILE to "")
-            contentResolver.insert(SongContentProvider.CONTENT_URI, values)
+            contentResolver?.insert(SongContentProvider.CONTENT_URI, values)
         }
     }
 
-    fun restoreFirstQueueItem(cr: ContentResolver): MusicMetadata?{
-        contentResolver = cr
+    override fun restoreFirstItem(): MusicMetadata? {
         val projection = getProjection()
-        val orderby = SongDB.COLUMN_ID + " LIMIT 1"
-        val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, orderby)
-        if(c != null && c.count != 0) {
-            Log.d(TAG, c.count.toString() + " Zeilen bei restoring first")
-            c.moveToFirst()
-            val dur = c.fetchString(SongDB.COLUMN_DURATION).toLongOrNull() ?: 0L
-            val songnr = c.fetchString(SongDB.COLUMN_NUMTRACKS).toLongOrNull() ?: 0
+        val orderBy = SongDB.COLUMN_ID + " LIMIT 1"
+        val cursor = contentResolver?.query(
+            SongContentProvider.CONTENT_URI, projection, null, null, orderBy)
 
-            val music = MusicMetadata(
-                    c.fetchString(SongDB.COLUMN_ID),
-                    c.fetchString(SongDB.COLUMN_ALBUM),
-                    c.fetchString(SongDB.COLUMN_ARTIST),
-                    c.fetchString(SongDB.COLUMN_TITLE),
-                    c.fetchString(SongDB.COLUMN_COVER_URI),
-                    duration = dur,
-                    nr_of_songs_left = songnr
-            )
-            c.close()
+        if(cursor != null && cursor.count != 0) {
+            cursor.moveToFirst()
+            val music = createMetadataFromCursor(cursor)
+            cursor.close()
             return music
         }
-        c?.close()
+        cursor?.close()
         return null
     }
 
-    fun restorePlayingQueue(contentResolver: ContentResolver): MusicList?{
+    private fun createMetadataFromCursor(cursor: Cursor): MusicMetadata {
+        val duration = cursor.fetchString(SongDB.COLUMN_DURATION).toLongOrNull() ?: 0L
+        val songsLeft = cursor.fetchString(SongDB.COLUMN_NUMTRACKS).toLongOrNull() ?: 0
+
+        return MusicMetadata(
+            cursor.fetchString(SongDB.COLUMN_ID),
+            cursor.fetchString(SongDB.COLUMN_ALBUM),
+            cursor.fetchString(SongDB.COLUMN_ARTIST),
+            cursor.fetchString(SongDB.COLUMN_TITLE),
+            cursor.fetchString(SongDB.COLUMN_COVER_URI),
+            duration = duration,
+            nr_of_songs_left = songsLeft
+        )
+    }
+
+    override fun restorePlayingQueue(): MusicList? {
         val playingQueue = MusicList()
         val projection = getProjection()
-        val c = contentResolver.query(SongContentProvider.CONTENT_URI, projection, null, null, null)
-        if(c != null && c.moveToFirst()) {
-            Log.d(TAG, c.count.toString() + " Zeilen bei restoring")
-            c.moveToNext()
-            while (!c.isAfterLast) {
-                val item = MusicMetadata(
-                        c.fetchString(SongDB.COLUMN_ID),
-                        c.fetchString(SongDB.COLUMN_ALBUM),
-                        c.fetchString(SongDB.COLUMN_ARTIST),
-                        c.fetchString(SongDB.COLUMN_TITLE),
-                        c.fetchString(SongDB.COLUMN_COVER_URI)
-                )
+        val cursor = contentResolver?.query(
+            SongContentProvider.CONTENT_URI, projection, null, null, null)
+        if(cursor != null && cursor.moveToFirst()) {
+            Log.d(TAG, cursor.count.toString() + " Zeilen bei restoring")
+
+            cursor.moveToNext()
+            while (!cursor.isAfterLast) {
+                val item = createMetadataFromCursor(cursor)
                 playingQueue.addItem(item)
-                c.moveToNext()
+                cursor.moveToNext()
             }
-            c.close()
+            cursor.close()
             return playingQueue
         }
-        c?.close()
+        cursor?.close()
         return null
     }
 
     private fun getProjection(): Array<String>{
-            val p = Array(7) { _ -> "" }
-            p[0] = SongDB.COLUMN_ID
-            p[1] = SongDB.COLUMN_TITLE
-            p[2] = SongDB.COLUMN_ARTIST
-            p[3] = SongDB.COLUMN_ALBUM
-            p[4] = SongDB.COLUMN_COVER_URI
-            p[5] = SongDB.COLUMN_DURATION
-            p[6] = SongDB.COLUMN_NUMTRACKS
-            return p
+            val projection = Array(7) { "" }
+            projection[0] = SongDB.COLUMN_ID
+            projection[1] = SongDB.COLUMN_TITLE
+            projection[2] = SongDB.COLUMN_ARTIST
+            projection[3] = SongDB.COLUMN_ALBUM
+            projection[4] = SongDB.COLUMN_COVER_URI
+            projection[5] = SongDB.COLUMN_DURATION
+            projection[6] = SongDB.COLUMN_NUMTRACKS
+            return projection
     }
     
     private fun Cursor.fetchString(column: String): String =
             this.getString(this.getColumnIndex(column))
-        
-    
 
 }

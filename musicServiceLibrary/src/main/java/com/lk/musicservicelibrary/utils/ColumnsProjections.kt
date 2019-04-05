@@ -7,18 +7,18 @@ import android.provider.MediaStore.Audio as MSAudio
  */
 object Columns {
     
-    val albumartColumns = arrayOf(
+    val albumArtColumns = arrayOf(
             MSAudio.Albums._ID,
             MSAudio.Albums.ALBUM_ART)
 
-    val albumlistColumns = arrayOf(
+    val albumsColumns = arrayOf(
             MSAudio.Albums._ID,
             MSAudio.Albums.ALBUM,
             MSAudio.Albums.ALBUM_ART,
             MSAudio.Albums.ARTIST,
             MSAudio.Albums.NUMBER_OF_SONGS)
 
-    val titleListColumns = arrayOf(
+    val titlesColumns = arrayOf(
             MSAudio.Media._ID,
             MSAudio.Media.TITLE,
             MSAudio.Media.ARTIST,

@@ -43,20 +43,20 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     }
 
     fun getQueueLimitedTo30(): MusicList{
-        var queue30 = MusicList()
-        if(queue.value!!.countItems() > 30) {
+        var limitedQueue = MusicList()
+        if(queue.value!!.size() > 30) {
             for(i in 0..29){
-                queue30.addItem(queue.value!!.getItemAt(i))
+                limitedQueue.addItem(queue.value!!.getItemAt(i))
             }
         } else {
-            queue30 = queue.value as MusicList
+            limitedQueue = queue.value as MusicList
         }
-        return queue30
+        return limitedQueue
     }
 
     fun restoreSavedState(controllerState: Int?){
         val wasQueueSaved = sharedPreferences.getBoolean(MainActivityNew.PREF_PLAYING, false)
-        Log.d("PlaybackViewModel", "restoreSavedState: " + wasQueueSaved)
+        Log.d("PlaybackViewModel", "restoreSavedState: $wasQueueSaved")
         if(controllerState != PlaybackState.STATE_PLAYING && controllerState != PlaybackState.STATE_PAUSED){
             if(wasQueueSaved)
                 restoreQueue()
@@ -67,7 +67,8 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     }
 
     private fun restoreQueue(){
-        val music = SongDBAccess.restoreFirstQueueItem(app.contentResolver)
+        SongDBAccess.setContentResolver(app.contentResolver)
+        val music = SongDBAccess.restoreFirstItem()
         if(music == null){
             sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, false) }
         } else {
@@ -82,9 +83,9 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         controllerAction.postValue(ControllerAction(EnumActions.PREPARE_FROM_ID, titleId, args = args))
     }
 
-    // FIXED_ Fehler, dass kein Value aus einem Backgroundthread gesetzt werden kann -> postValue
     private fun sendQueueIfAvailable(){
-        val queueRestored = SongDBAccess.restorePlayingQueue(app.contentResolver)
+        SongDBAccess.setContentResolver(app.contentResolver)
+        val queueRestored = SongDBAccess.restorePlayingQueue()
         if(queueRestored != null){
             Log.v("ViewModel", "sendQueue")
             val args = bundleOf("L" to queueRestored)
@@ -95,7 +96,8 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     fun saveQueue(){
         if(!queue.value!!.isEmpty()) {
             Log.d("ViewModel", "saveQueue")
-            SongDBAccess.savePlayingQueue(app.contentResolver, queue.value!!, metadata.value!!)
+            SongDBAccess.setContentResolver(app.contentResolver)
+            SongDBAccess.savePlayingQueue(queue.value!!, metadata.value!!)
         }
     }
 

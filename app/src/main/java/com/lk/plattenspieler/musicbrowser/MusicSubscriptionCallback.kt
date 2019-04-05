@@ -15,13 +15,13 @@ class MusicSubscriptionCallback(
     override fun onChildrenLoaded(parentId: String, children: MutableList<MediaBrowser.MediaItem>) {
         val medialist = MusicList()
         if(parentId == mediaBrowser.root){
-            medialist.addFlag(MediaBrowser.MediaItem.FLAG_BROWSABLE)
+            medialist.setMediaType(MediaBrowser.MediaItem.FLAG_BROWSABLE)
             for(mediaItem in children){
                 medialist.addItem(MusicMetadata.createFromMediaDescription(mediaItem.description))
             }
             mediaData.albumlist.value = medialist
         } else if(parentId.contains("ALBUM-")){
-            medialist.addFlag(MediaBrowser.MediaItem.FLAG_PLAYABLE)
+            medialist.setMediaType(MediaBrowser.MediaItem.FLAG_PLAYABLE)
             for(mediaItem in children){
                 medialist.addItem(MusicMetadata.createFromMediaDescription(mediaItem.description))
             }

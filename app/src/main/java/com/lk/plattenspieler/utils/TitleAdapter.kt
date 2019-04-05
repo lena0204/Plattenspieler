@@ -33,7 +33,7 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
         return ViewHolderTitle(v)
     }
 
-    override fun getItemCount(): Int = dataset.countItems()
+    override fun getItemCount(): Int = dataset.size()
 
     inner class ViewHolderTitle(v: View) : RecyclerView.ViewHolder(v) {
 

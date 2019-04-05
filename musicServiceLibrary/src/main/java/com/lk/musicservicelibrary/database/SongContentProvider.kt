@@ -13,6 +13,7 @@ import java.util.*
  * Created by Lena on 19.08.17.
  * ContentProvider (einfügen, löschen, updaten) für die interne Datenbank
  */
+// TODO Change to Room as a database
 class SongContentProvider: ContentProvider() {
 
     companion object {

@@ -129,7 +129,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     private fun playFirstTitleRandomly(action: ControllerAction) {
         val list = action.args.getParcelable<MusicList>("L")
         if(list != null) {
-            val i = Random().nextInt(list.countItems())
+            val i = Random().nextInt(list.size())
             val titleid = mediaViewModel.titleList.value!!.getItemAt(i).id
             val args = bundleOf(MusicService.SHUFFLE_KEY to true)
             musicController.transportControls.playFromMediaId(titleid, args)
@@ -173,7 +173,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
         }
     }
 
-    // TODO recreate führt zum Absturz aufgrund fehlender Initialisierung (s. PROBLEM_)
+    // TODO recreate führt zum Absturz aufgrund fehlender Initialisierung (s. PROBLEM)
     private fun recreateActivity(){
         saveState()
         // activityNew.recreate()

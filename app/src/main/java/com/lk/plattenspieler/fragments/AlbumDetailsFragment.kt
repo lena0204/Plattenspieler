@@ -70,7 +70,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
         for(item in list){
             if(!item.isEmpty()){
                 album = item.album
-                item.cover = MusicMetadata.decodeAlbumcover(item.cover_uri, resources)
+                item.cover = MusicMetadata.decodeAlbumCover(item.cover_uri, resources)
                 data.addItem(item)
             }
         }

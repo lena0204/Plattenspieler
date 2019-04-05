@@ -34,7 +34,7 @@ class AlbumAdapter(private var dataset: MusicList, val cl: Click)
         return ViewHolder(v)
     }
 
-    override fun getItemCount(): Int = dataset.countItems()
+    override fun getItemCount(): Int = dataset.size()
 
 
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
