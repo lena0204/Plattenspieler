@@ -91,7 +91,7 @@ class MusicActionsCallback internal constructor(
     private fun createMusicPlayerIfNecessary(){
         if(!musicPlayerCreated) {
             musicPlayer = MediaPlayer()
-            musicPlayer.setOnPreparedListener { _ ->
+            musicPlayer.setOnPreparedListener {
                 musicPlayer.seekTo(currentPlaybackPosition.toInt())
                 musicPlayer.start()
                 serviceDataHandler.callWithParameter(metadataRepo.updatePlay(currentPlaybackPosition))
@@ -100,7 +100,7 @@ class MusicActionsCallback internal constructor(
                 Log.e(TAG, "MusicPlayerError: $what; $extra")
                 false
             }
-            musicPlayer.setOnCompletionListener { _ -> onSkipToNext() }
+            musicPlayer.setOnCompletionListener { onSkipToNext() }
             musicPlayer.setAudioAttributes(AudioFocusRequester.audioAttr)
             musicPlayerCreated = true
         }

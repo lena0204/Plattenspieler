@@ -12,7 +12,7 @@ import com.lk.musicservicelibrary.utils.Columns
 /**
  * Erstellt von Lena am 01/04/2019.
  */
-class LocalMusicFileRepository(private val context: Context): MusicDataRepository() {
+class LocalMusicFileRepository(private val context: Context): MusicDataRepository {
 
     private val TAG = "LocalMusicFileRepo"
 

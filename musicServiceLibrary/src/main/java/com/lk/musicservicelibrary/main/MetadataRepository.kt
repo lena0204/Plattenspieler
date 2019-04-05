@@ -144,18 +144,18 @@ internal class MetadataRepository(private val dataRepository: MusicDataRepositor
     fun createQueueFromMediaList(mediaList: MusicList, titleId: String, queueType: QueueType) {
         GlobalScope.launch (Dispatchers.IO) {
             var queueDetailed = MusicList()
-            if(queueType == QueueType.QUEUE_ALL_SHUFFLE){
-                queueDetailed = dataRepository.getAllTitles(titleId)
-            } else if(queueType == QueueType.QUEUE_RESTORED){
-                queueDetailed = mediaList
-            } else {
-                val queue = if(queueType == QueueType.QUEUE_ORDERED){
-                    QueueCreation.createQueueFromTitle(mediaList, titleId)
-                } else {
-                    QueueCreation.createRandomQueue(mediaList, titleId)
-                }
-                for(queueItem in queue){
-                    queueDetailed.addItem(dataRepository.getTitleByID(queueItem.id))
+            when(queueType){
+                QueueType.QUEUE_ALL_SHUFFLE -> queueDetailed = dataRepository.getAllTitles(titleId)
+                QueueType.QUEUE_RESTORED -> queueDetailed = mediaList
+                else -> {
+                    val queue = if(queueType == QueueType.QUEUE_ORDERED){
+                        QueueCreation.createQueueFromTitle(mediaList, titleId)
+                    } else {
+                        QueueCreation.createRandomQueue(mediaList, titleId)
+                    }
+                    for(queueItem in queue){
+                        queueDetailed.addItem(dataRepository.getTitleByID(queueItem.id))
+                    }
                 }
             }
             playbackData.queue = queueDetailed
