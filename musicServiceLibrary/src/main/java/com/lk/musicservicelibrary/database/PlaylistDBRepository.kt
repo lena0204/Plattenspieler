@@ -7,7 +7,7 @@ import com.lk.musicservicelibrary.models.MusicMetadata
 /**
  * Erstellt von Lena am 03/04/2019.
  */
-class PlaylistDBAccess(private val application: Application): PlaylistRepository {
+class PlaylistDBRepository (private val application: Application): PlaylistRepository {
 
     private val TAG = "PlaylistDBAccess"
     private val repository = PlayingItemRepository(application)
@@ -20,9 +20,9 @@ class PlaylistDBAccess(private val application: Application): PlaylistRepository
     }
 
     private fun insertMetadata(playingQueue: MusicList, playingMetadata: MusicMetadata){
-        repository.insertPlayingItem(PlayingItemEntity.createFromMusicMetadata(playingMetadata))
+        repository.insertPlayingItem(PlayingItemEntity.createPlayingItemEntity(playingMetadata))
         for(item in playingQueue){
-            repository.insertPlayingItem(PlayingItemEntity.createFromMusicMetadata(item))
+            repository.insertPlayingItem(PlayingItemEntity.createPlayingItemEntity(item))
         }
     }
 

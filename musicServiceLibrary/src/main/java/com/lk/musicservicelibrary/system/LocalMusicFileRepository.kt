@@ -1,5 +1,6 @@
 package com.lk.musicservicelibrary.system
 
+import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
 import android.media.browse.MediaBrowser
@@ -7,7 +8,7 @@ import android.provider.MediaStore
 import android.util.Log
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
-import com.lk.musicservicelibrary.utils.Columns
+import com.lk.musicservicelibrary.utils.AudioColumns
 
 /**
  * Erstellt von Lena am 01/04/2019.
@@ -15,10 +16,11 @@ import com.lk.musicservicelibrary.utils.Columns
 class LocalMusicFileRepository(private val context: Context): MusicDataRepository {
 
     private val TAG = "LocalMusicFileRepo"
+    private val mediaStoreURI = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
     private var currentMusicList = MusicList()
 
-    override fun getFirstTitleIDForShuffle(): String{
+    override fun getFirstTitleForShuffle(): MusicMetadata {
         val sortOrder = MediaStore.Audio.Media._ID + " LIMIT 1"
         val titleCursor = queryTitleTable(arrayOf(MediaStore.Audio.Media._ID), sortOrder = sortOrder)
         val titleId = if (titleCursor != null && titleCursor.moveToFirst()) {
@@ -27,7 +29,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
             ""
         }
         titleCursor?.close()
-        return titleId
+        return getTitleByID(titleId)
     }
 
     override fun getAllTitles(playingTitleId: String): MusicList {
@@ -59,7 +61,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
     override fun getTitlesByAlbumID(albumId: String): MusicList {
         val albumID = albumId.replace("ALBUM-", "")
         val selection = MediaStore.Audio.Media.ALBUM_ID + "='" + albumID + "'"
-        val titleCursor = queryTitleTable(Columns.titlesColumns, where = selection)
+        val titleCursor = queryTitleTable(AudioColumns.metadataColumns, where = selection)
         if(titleCursor != null && titleCursor.moveToFirst()){
             currentMusicList = MusicList()
             currentMusicList.setMediaType(MediaBrowser.MediaItem.FLAG_PLAYABLE)
@@ -72,16 +74,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
     private fun addTitlesToAlbumList(titleCursor: Cursor, albumId: String){
         do {
             val trackId = titleCursor.fetchString(MediaStore.Audio.Media._ID)
-            val trackTitle = titleCursor.fetchString(MediaStore.Audio.Media.TITLE)
-            val interpret = titleCursor.fetchString(MediaStore.Audio.Media.ARTIST)
-            val album = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM)
-            val music = MusicMetadata(
-                trackId,
-                album,
-                interpret,
-                trackTitle,
-                cover_uri = getCoverPathForAlbum(albumId)
-            )
+            val music = parseMetadata(titleCursor, trackId)
             currentMusicList.addItem(music)
         } while(titleCursor.moveToNext())
     }
@@ -90,7 +83,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
 
     override fun getAllAlbums(): MusicList {
         val sortOrder = MediaStore.Audio.Albums.ALBUM + " ASC"
-        val albumCursor = queryAlbumTable(Columns.albumsColumns, sortOrder = sortOrder)
+        val albumCursor = queryAlbumTable(AudioColumns.albumsColumns, sortOrder = sortOrder)
         currentMusicList = MusicList()
         currentMusicList.setMediaType(MediaBrowser.MediaItem.FLAG_BROWSABLE)
         if(albumCursor != null && albumCursor.moveToFirst()) {
@@ -123,7 +116,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
     private fun getCoverPathForAlbum(albumId: String): String{
         var cover = ""
         val selection = MediaStore.Audio.Albums._ID + "='" + albumId + "'"
-        val cursorAlbum = queryAlbumTable(Columns.albumArtColumns, where = selection)
+        val cursorAlbum = queryAlbumTable(AudioColumns.albumArtColumns, where = selection)
         if(cursorAlbum != null && cursorAlbum.count == 1){
             cursorAlbum.moveToFirst()
             cover = cursorAlbum.fetchString(MediaStore.Audio.Albums.ALBUM_ART)
@@ -137,8 +130,8 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
     override fun getTitleByID (titleId: String): MusicMetadata {
         var music = MusicMetadata()
         val selection = MediaStore.Audio.Media._ID + "='" + titleId + "'"
-        val titleCursor = queryTitleTable(Columns.metadataColumns, where = selection)
-        if(titleCursor  != null && titleCursor.moveToFirst()){
+        val titleCursor = queryTitleTable(AudioColumns.metadataColumns, where = selection)
+        if(titleCursor != null && titleCursor.moveToFirst()){
             music = parseMetadata(titleCursor, titleId)
         }
         titleCursor?.close()
@@ -148,6 +141,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
     private fun parseMetadata(titleCursor: Cursor, mediaId: String): MusicMetadata {
         val albumId = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM_ID)
         val coverUri = getCoverPathForAlbum(albumId)
+        val path = ContentUris.withAppendedId(mediaStoreURI, mediaId.toLong())
         return MusicMetadata(
             id = mediaId,
             album = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM),
@@ -171,7 +165,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
                                 whereArgs: Array<String>? = null,
                                 sortOrder: String? = null): Cursor? {
         return context.contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            mediaStoreURI,
             columns, where, whereArgs, sortOrder)
     }
 

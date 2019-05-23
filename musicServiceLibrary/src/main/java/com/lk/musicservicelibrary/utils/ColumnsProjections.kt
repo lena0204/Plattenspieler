@@ -5,7 +5,7 @@ import android.provider.MediaStore.Audio as MSAudio
 /**
  * Erstellt von Lena am 07.09.18.
  */
-object Columns {
+object AudioColumns {
     
     val albumArtColumns = arrayOf(
             MSAudio.Albums._ID,
@@ -26,6 +26,7 @@ object Columns {
     )
     
     val metadataColumns = arrayOf(
+            MSAudio.Media._ID,
             MSAudio.Media.TITLE,
             MSAudio.Media.ALBUM,
             MSAudio.Media.ARTIST,

@@ -48,7 +48,7 @@ class PlayingItemEntity {
 
     companion object {
 
-        fun createFromMusicMetadata(metadata: MusicMetadata): PlayingItemEntity {
+        fun createPlayingItemEntity(metadata: MusicMetadata): PlayingItemEntity {
             val item = PlayingItemEntity()
             item.id = metadata.id
             item.title = metadata.title

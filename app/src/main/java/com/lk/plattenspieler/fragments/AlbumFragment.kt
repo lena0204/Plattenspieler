@@ -70,7 +70,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
             if (!item.isEmpty()) {
                 item.id = item.id.replace("ALBUM-", "")
                 item.cover = MusicMetadata.decodeAlbumCover(item.cover_uri, resources)
-                item.alltracks = item.num_tracks_album.toString() + " " + resources.getString(R.string.songs)
+                item.allTracksFormatted = item.num_tracks_album.toString() + " " + resources.getString(R.string.songs)
                 data.addItem(item)
             }
         }

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.session.PlaybackState
 import android.os.Build
-import android.util.Log
 import com.lk.musicservicelibrary.R
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicMetadata
@@ -16,7 +15,7 @@ import com.lk.musicservicelibrary.models.MusicMetadata
  */
 class MusicNotificationBuilder(private val service: MusicService) {
 
-    private val CHANNELID = "plattenspieler_playback"
+    private val CHANNEL_ID = "plattenspieler_playback"
     private val TAG = "MusicNotification"
     private val ACTION = "com.lk.plattenspieler.ACTION_LAUNCH_PL"
 
@@ -34,7 +33,7 @@ class MusicNotificationBuilder(private val service: MusicService) {
     private fun initializeBuilder(){
         notificationBuilder = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
-            Notification.Builder(service, CHANNELID)
+            Notification.Builder(service, CHANNEL_ID)
         } else {
             Notification.Builder(service)
         }
@@ -42,7 +41,7 @@ class MusicNotificationBuilder(private val service: MusicService) {
 
     private fun createChannel() {
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNELID, "Music playback", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNEL_ID, "Music playback", NotificationManager.IMPORTANCE_LOW)
             channel.description = "Music playback controls"
             channel.setShowBadge(false)
             channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
@@ -59,9 +58,9 @@ class MusicNotificationBuilder(private val service: MusicService) {
         notificationBuilder.setSubText(songsLeft)
         notificationBuilder.setSmallIcon(R.drawable.ic_stat_musicnotification)
         if(currentMusicMetadata.cover_uri != ""){
-            val albumart = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
-            if (albumart != null){
-                notificationBuilder.setLargeIcon(albumart)
+            val cover = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
+            if (cover != null){
+                notificationBuilder.setLargeIcon(cover)
                 // Log.v(TAG, "set large Icon")
             }
         }

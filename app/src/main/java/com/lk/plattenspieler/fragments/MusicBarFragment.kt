@@ -73,7 +73,8 @@ class MusicBarFragment : Fragment(), Observer<Any> {
 
     private fun writeMetadata(data: MusicMetadata){
         if(!data.isEmpty()) {
-            iv_main_cover.setImageBitmap(data.cover)
+            val cover = MusicMetadata.decodeAlbumCover(data.cover_uri, resources)
+            iv_main_cover.setImageBitmap(cover)
             tv_music_title.text = data.title
             // TODO nicht ganz zuverlässig -> SaveState Handling
         }

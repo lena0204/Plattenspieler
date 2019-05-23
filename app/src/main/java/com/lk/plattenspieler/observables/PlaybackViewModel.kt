@@ -7,6 +7,7 @@ import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
+import com.lk.musicservicelibrary.database.PlaylistRepository
 import com.lk.musicservicelibrary.database.SongDBAccess
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicList
@@ -27,6 +28,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
 
     val app = getApplication<Application>()
 
+    private var playlistRepo: PlaylistRepository
     private val sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(application)
 
@@ -34,6 +36,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         metadata.value = MusicMetadata()
         playbackState.value = PlaybackState.Builder().build()
         queue.value = MusicList()
+        playlistRepo = SongDBAccess(app.contentResolver)
     }
 
     fun setObserverToAll(owner: LifecycleOwner, observer: Observer<Any>){
@@ -67,8 +70,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     }
 
     private fun restoreQueue(){
-        SongDBAccess.setContentResolver(app.contentResolver)
-        val music = SongDBAccess.restoreFirstItem()
+        val music = playlistRepo.restoreFirstItem()
         if(music == null){
             sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, false) }
         } else {
@@ -84,8 +86,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     }
 
     private fun sendQueueIfAvailable(){
-        SongDBAccess.setContentResolver(app.contentResolver)
-        val queueRestored = SongDBAccess.restorePlayingQueue()
+        val queueRestored = playlistRepo.restorePlayingQueue()
         if(queueRestored != null){
             Log.v("ViewModel", "sendQueue")
             val args = bundleOf("L" to queueRestored)
@@ -96,8 +97,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     fun saveQueue(){
         if(!queue.value!!.isEmpty()) {
             Log.d("ViewModel", "saveQueue")
-            SongDBAccess.setContentResolver(app.contentResolver)
-            SongDBAccess.savePlayingQueue(queue.value!!, metadata.value!!)
+            playlistRepo.savePlayingQueue(queue.value!!, metadata.value!!)
         }
     }
 

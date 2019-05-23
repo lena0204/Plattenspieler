@@ -106,7 +106,7 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
             replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
         }
         val pf = PlayingFragment()
-        fl_main_bar.setOnClickListener { _ ->
+        fl_main_bar.setOnClickListener {
             if(!pf.isVisible){
                 supportFragmentManager.transaction {
                     addToBackStack(null)

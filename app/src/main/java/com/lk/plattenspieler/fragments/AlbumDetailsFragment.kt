@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.R
@@ -33,8 +34,13 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
     private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onClick(titleId: String) {
-        val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = mediaListBundle())
+        val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = shuffleBundle(false))
         playbackViewModel.controllerAction.value = action
+    }
+
+    private fun shuffleBundle(shuffle: Boolean): Bundle {
+        return bundleOf(MusicService.SHUFFLE_KEY to shuffle,
+            "L" to mediaListViewModel.titleList.value!!)
     }
 
     private fun mediaListBundle(): Bundle {
@@ -50,7 +56,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
         fab_shuffle.setOnClickListener {
             val action = ControllerAction(EnumActions.SHUFFLE,
                     data.getItemAt(0).id,
-                    args = mediaListBundle())
+                    args = shuffleBundle(true))
             playbackViewModel.controllerAction.value = action
         }
         mediaListViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)

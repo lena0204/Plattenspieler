@@ -1,9 +1,9 @@
 package com.lk.musicservicelibrary.system
 
 import android.content.*
+import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.util.Log
-import com.lk.musicservicelibrary.main.MusicActionsCallback
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.main.MusicService.Companion.ACTION_MEDIA_NEXT
 import com.lk.musicservicelibrary.main.MusicService.Companion.ACTION_MEDIA_PAUSE
@@ -12,7 +12,7 @@ import com.lk.musicservicelibrary.main.MusicService.Companion.ACTION_MEDIA_PLAY
 /**
  * Erstellt von Lena am 05.09.18.
  */
-class NotificationActionReceiver(private val actionsCallback: MusicActionsCallback)
+class NotificationActionReceiver(private val mediaCallback: MediaSession.Callback)
             : BroadcastReceiver() {
 
     private val TAG = this::class.java.simpleName
@@ -30,25 +30,20 @@ class NotificationActionReceiver(private val actionsCallback: MusicActionsCallba
 
     private fun handlePlayIntent(){
         if(PlaybackState.STATE_PAUSED == MusicService.PLAYBACK_STATE){
-            actionsCallback.onPlay()
+            mediaCallback.onPlay()
         }
     }
 
     private fun handlePauseIntent(){
         if(PlaybackState.STATE_PLAYING == MusicService.PLAYBACK_STATE){
-            actionsCallback.onPause()
+            mediaCallback.onPause()
         }
     }
 
     private fun handleNextIntent(){
         if(PlaybackState.STATE_PLAYING == MusicService.PLAYBACK_STATE ||
                 PlaybackState.STATE_PAUSED == MusicService.PLAYBACK_STATE) {
-            actionsCallback.onSkipToNext()
+            mediaCallback.onSkipToNext()
         }
     }
-
-    /*private fun logCurrentState(intentAction: String){
-        // zur Fehlererkennung
-        Log.d(TAG, intentAction + ": Servicestate: " + MusicService.PLAYBACK_STATE)
-    }*/
 }

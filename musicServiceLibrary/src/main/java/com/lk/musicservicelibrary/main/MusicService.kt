@@ -12,21 +12,23 @@ import android.service.media.MediaBrowserService
 import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.core.os.bundleOf
+import androidx.lifecycle.Observer
 import com.lk.musicservicelibrary.R
 import com.lk.musicservicelibrary.models.*
+import com.lk.musicservicelibrary.playback.PlaybackCallback
 import com.lk.musicservicelibrary.system.*
 
 /**
  * Erstellt von Lena am 02.09.18.
  */
-class MusicService : MediaBrowserService() {
+class MusicService : MediaBrowserService(), Observer<Any> {
 
     private val TAG = MusicService::class.java.simpleName
     private val NOTIFICATION_ID = 9880
 
     private lateinit var musicDataRepo: MusicDataRepository
     private lateinit var session: MediaSession
-    private lateinit var actionsCallback: MusicActionsCallback
+    private lateinit var sessionCallback: PlaybackCallback
 
     private lateinit var notificationManager: NotificationManager
     private lateinit var notificationBuilder: MusicNotificationBuilder
@@ -49,18 +51,17 @@ class MusicService : MediaBrowserService() {
         initializeComponents()
         registerBroadcastReceiver()
         prepareSession()
-        actionsCallback.createInitialData()
+        registerPlaybackObserver()
     }
 
     private fun initializeComponents() {
         musicDataRepo = LocalMusicFileRepository(this.applicationContext)
-        val metadataRepo = MetadataRepository(musicDataRepo)
-        actionsCallback = MusicActionsCallback(this, metadataRepo)
+        sessionCallback = PlaybackCallback(musicDataRepo)
         notificationManager = this.getSystemService<NotificationManager>() as NotificationManager
         notificationBuilder = MusicNotificationBuilder(this)
-        nbReceiver = NotificationActionReceiver(actionsCallback)
+        nbReceiver = NotificationActionReceiver(sessionCallback)
         val am = this.getSystemService<AudioManager>() as AudioManager
-        AudioFocusRequester.setup(actionsCallback.audioFocusChanged, am)
+        // AudioFocusRequester.setup(sessionCallback.audioFocusChanged, am)
     }
 
     private fun registerBroadcastReceiver() {
@@ -76,10 +77,17 @@ class MusicService : MediaBrowserService() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             session.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS)
         }
-        session.setCallback(actionsCallback)
+        session.setCallback(sessionCallback)
         session.setQueueTitle(getString(R.string.queue_title))
         sessionToken = session.sessionToken
     }
+
+    private fun registerPlaybackObserver() {
+        sessionCallback.getPlaybackState().observeForever(this)
+        sessionCallback.getPlayingList().observeForever(this)
+    }
+
+
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
             : MediaBrowserService.BrowserRoot {
@@ -92,19 +100,24 @@ class MusicService : MediaBrowserService() {
     override fun onLoadChildren(parentId: String,
                          result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         when {
-            parentId == MusicDataRepository.ROOT_ID ->
+            parentId == MusicDataRepository.ROOT_ID -> {
                 result.sendResult(musicDataRepo.getAllAlbums().getMediaItemList())
-            parentId.contains("ALBUM-") ->
+            }
+            parentId.contains("ALBUM-") -> {
                 result.sendResult(getTitles(parentId))
+            }
             else -> Log.e(TAG, "No known parent ID")
         }
     }
 
     private fun getTitles(albumId: String): MutableList<MediaBrowser.MediaItem> {
         val id = albumId.replace("ALBUM-", "")
-        return musicDataRepo.getTitlesByAlbumID(id)
-                .getMediaItemList()
+        val playingList = musicDataRepo.getTitlesByAlbumID(id)
+        sessionCallback.setQueriedMediaList(playingList)
+        return playingList.getMediaItemList()
     }
+
+
 
     fun startServiceIfNecessary() {
         if (!serviceStarted) {
@@ -116,53 +129,68 @@ class MusicService : MediaBrowserService() {
             session.isActive = true
     }
 
-    fun stopService() {
-        Log.d(TAG, "handleOnStop in service")
-        this.stopSelf()
-        serviceStarted = false
-        this.stopForeground(true)
-    }
-
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
         val state = session.controller.playbackState?.state
         if (state == PlaybackState.STATE_PAUSED) {
             Log.d(TAG, "Playback paused ($state), so stop")
-            actionsCallback.onStop()
+            sessionCallback.onStop()
         }
         return bool
-    }
-
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        Log.d(TAG, "onTaskRemoved")
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy")
-        actionsCallback.onStop()
+        sessionCallback.onStop()
         this.unregisterReceiver(nbReceiver)
+        unregisterPlaybackObserver()
         session.release()
         session.isActive = false
     }
 
-    val onDataChanged = fun(playbackData: PlaybackData) {
-        val (metadata, playbackState, queue) = playbackData
-        metadata.cover = MusicMetadata.decodeAlbumCover(metadata.cover_uri, resources)
-        session.setMetadata(metadata.getMediaMetadata())
-        session.setPlaybackState(playbackState)
-        session.setQueue(queue.getQueueItemList())
-        PLAYBACK_STATE = playbackState.state
-        sendBroadcastForLightningLauncher(metadata)
+    private fun unregisterPlaybackObserver(){
+        sessionCallback.getPlayingList().removeObserver(this)
+        sessionCallback.getPlaybackState().removeObserver(this)
+    }
 
-        val shuffleOn = playbackState.extras?.getBoolean(SHUFFLE_KEY) ?: false
-        val playing = PLAYBACK_STATE ==  PlaybackState.STATE_PLAYING
-        launchNotification(metadata, shuffleOn, playing)
+    override fun onChanged(update: Any?) {
+        if(update is MusicList) {
+            val playingTitle = update.getItemAtCurrentPlaying()
+            if(playingTitle != null ){
+                session.setMetadata(playingTitle.getMediaMetadata())
+                sendBroadcastForLightningLauncher(playingTitle)
+            }
+            session.setQueue(showQueueFromPlayingItem(update).getQueueItemList())
+        } else if (update is PlaybackState) {
+            PLAYBACK_STATE = update.state
+            session.setPlaybackState(update)
+            updateNotification(update)
 
-        if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
-            this.stopForeground(false)
+            if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
+                this.stopForeground(false)
+            }
         }
+    }
+
+    private fun showQueueFromPlayingItem(playingList: MusicList) : MusicList {
+        val shortedQueue = MusicList()
+        for (i in playingList.getCurrentPlaying() until (playingList.count() - 1)) {
+            shortedQueue.addItem(playingList.getItemAt(i))
+        }
+        // IDEA_ hier gibts auch die Info wie viele Titel noch kommen
+        return shortedQueue
+    }
+
+    private fun updateNotification(state: PlaybackState) {
+        val shuffleOn = state.extras?.getBoolean(SHUFFLE_KEY) ?: false
+        val playing = PLAYBACK_STATE ==  PlaybackState.STATE_PLAYING
+        val metadata = if(session.controller.metadata != null) {
+            MusicMetadata.createFromMediaMetadata(session.controller.metadata!!)
+        } else {
+            MusicMetadata()
+        }
+        launchNotification(metadata, shuffleOn, playing)
     }
 
     private fun launchNotification(metadata: MusicMetadata, shuffleOn: Boolean, startInForeground: Boolean) {
@@ -180,6 +208,13 @@ class MusicService : MediaBrowserService() {
                 stopService()
             }
         }
+    }
+
+    private fun stopService() {
+        Log.d(TAG, "handleOnStop in service")
+        this.stopSelf()
+        serviceStarted = false
+        this.stopForeground(true)
     }
 
     private fun sendBroadcastForLightningLauncher(metadata: MusicMetadata) {

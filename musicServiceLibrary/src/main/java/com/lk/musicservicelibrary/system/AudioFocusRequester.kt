@@ -2,7 +2,7 @@ package com.lk.musicservicelibrary.system
 
 import android.media.*
 import android.os.Build
-import com.lk.musicservicelibrary.utils.EnumAudioFucos
+import com.lk.musicservicelibrary.utils.EnumAudioFocus
 import com.lk.musicservicelibrary.utils.audioFocusChanged
 
 /**
@@ -10,7 +10,7 @@ import com.lk.musicservicelibrary.utils.audioFocusChanged
  */
 object AudioFocusRequester: AudioManager.OnAudioFocusChangeListener {
 
-    var audioFocusStatus = EnumAudioFucos.AUDIO_LOSS
+    private var audioFocusStatus = EnumAudioFocus.AUDIO_LOSS
 
     val audioAttr: AudioAttributes = AudioAttributes.Builder()
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -50,16 +50,16 @@ object AudioFocusRequester: AudioManager.OnAudioFocusChangeListener {
         val oldFocus = audioFocusStatus
         when(newAudioFocusType){
             AudioManager.AUDIOFOCUS_LOSS -> {
-                audioFocusStatus = EnumAudioFucos.AUDIO_LOSS
+                audioFocusStatus = EnumAudioFocus.AUDIO_LOSS
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                audioFocusStatus = EnumAudioFucos.AUDIO_PAUSE_PLAYING
+                audioFocusStatus = EnumAudioFocus.AUDIO_PAUSE_PLAYING
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                audioFocusStatus = EnumAudioFucos.AUDIO_DUCK
+                audioFocusStatus = EnumAudioFocus.AUDIO_DUCK
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
-                audioFocusStatus = EnumAudioFucos.AUDIO_FOCUS
+                audioFocusStatus = EnumAudioFocus.AUDIO_FOCUS
             }
         }
         changedHandler(oldFocus, audioFocusStatus)

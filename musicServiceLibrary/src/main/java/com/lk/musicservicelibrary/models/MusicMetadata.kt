@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.MediaDescription
 import android.media.MediaMetadata
 import android.os.Parcelable
+import android.util.Log
 import com.lk.musicservicelibrary.R
 
 import kotlinx.android.parcel.IgnoredOnParcel
@@ -30,7 +31,7 @@ data class MusicMetadata(
 ) : Parcelable {
 
     @IgnoredOnParcel
-    lateinit var alltracks: String
+    lateinit var allTracksFormatted: String
 
     constructor() : this("","","")
 
@@ -57,6 +58,8 @@ data class MusicMetadata(
                 .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, nr_of_songs_left)
         if(cover != null){
             b.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, cover)
+        } else {
+            Log.v("MusicMetadata", "Cover for $title is not available at URI: $cover_uri.")
         }
         return b.build()
     }

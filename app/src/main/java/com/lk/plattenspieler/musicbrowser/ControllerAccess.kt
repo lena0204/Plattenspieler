@@ -87,8 +87,8 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     private fun playFromMediaId(action: ControllerAction) {
+        // queue(action)
         musicController.transportControls.playFromMediaId(action.titleId, action.args)
-        queue(action)
         activityNew.showBar()
     }
 

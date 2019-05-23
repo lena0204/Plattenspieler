@@ -25,7 +25,7 @@ class AlbumAdapter(private var dataset: MusicList, val cl: Click)
         val album = dataset.getItemAt(position)
         holder.getTvID().text = album.id
         holder.getTvAlbum().text = album.album
-        holder.getTvArtist().text = "${album.artist} | ${album.alltracks}"
+        holder.getTvArtist().text = "${album.artist} | ${album.allTracksFormatted}"
         holder.getIvCover().setImageBitmap(album.cover)
     }
 

@@ -12,7 +12,8 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 class MusicList(
         private var list: MutableList<MusicMetadata>,
-        private var mediaType: Int = 0
+        private var mediaType: Int = 0,
+        private var currentPlaying: Int = -1
 ) : Iterable<MusicMetadata>, Parcelable {
 
     override fun iterator(): Iterator<MusicMetadata> = list.iterator()
@@ -21,21 +22,47 @@ class MusicList(
 
     fun size(): Int = list.size
 
-    fun addItem(element: MusicMetadata) = list.add(element)
+    fun addItem(element: MusicMetadata) {
+        if(isEmpty()){
+            currentPlaying = 0
+        }
+        list.add(element)
+    }
 
-    fun insertAsFirstItem(element: MusicMetadata) = list.add(0, element)
+    fun insertAsFirstItem(element: MusicMetadata){
+        if(isEmpty()){
+            currentPlaying = 0
+        }
+        list.add(0, element)
+    }
 
-    fun removeItemAt(i: Int) = list.removeAt(i)
-
-    fun removeAll() = list.clear()
+    fun removeItemAt(i: Int){
+        list.removeAt(i)
+        if(isEmpty()){
+            currentPlaying = -1
+        }
+    }
 
     fun getItemAt(i: Int): MusicMetadata = list[i]
+    fun getItemAtCurrentPlaying(): MusicMetadata? {
+        return if(currentPlaying != -1)
+            getItemAt(currentPlaying)
+        else
+            null
+    }
 
     fun isEmpty(): Boolean = size() == 0
 
     fun setMediaType(mediaType: Int) { this.mediaType = mediaType }
-
     fun getMediaType(): Int = mediaType
+
+    fun getCurrentPlaying(): Int = currentPlaying
+    fun setCurrentPlaying(value: Int){
+        if(value >= 0 && value < size())
+            currentPlaying = value
+    }
+
+
 
     fun getQueueItemList(): MutableList<MediaSession.QueueItem>{
         val queueItemList = mutableListOf<MediaSession.QueueItem>()
