@@ -19,31 +19,27 @@ class CommandResolver(private val playbackCallback: PlaybackCallback) {
     fun resolveCommand(command: String, args: Bundle?, cb: ResultReceiver?){
         Log.i(TAG, "Resolve command: $command")
         when(command){
-            Commands.ADD_QUEUE -> addQueueToService(args, QueueType.QUEUE_ORDERED)
             Commands.ADD_ALL -> addAllSongsToPlayingQueue()
+            Commands.ADD_QUEUE -> addQueue(args)
         }
     }
 
-    private fun addQueueToService(args: Bundle?, flag: QueueType){
-        val mediaList: MusicList
+    private fun addQueue(args: Bundle?) {
         if(args != null) {
-            Log.d(TAG, "addQueueToService: Load musiclist from parcel")
             args.classLoader = this.javaClass.classLoader
-            val list = args.getParcelable<MusicList>("L")
-            if(list != null) {
-                mediaList = list
-                playbackCallback.setQueriedMediaList(mediaList)
-            }
+            val newQueue: MusicList = args.getParcelable(MusicService.QUEUE_KEY) ?: MusicList()
+            playbackCallback.setQueriedMediaList(newQueue)
+            playbackCallback.setPlayingList(newQueue)
         }
     }
 
     private fun addAllSongsToPlayingQueue(){
         val repo = playbackCallback.getDataRepository()
-        val firstTitle = repo.getFirstTitleForShuffle()
+        val firstTitle = repo.queryFirstTitle()
         if(!firstTitle.isEmpty()) {
             playFirstTitle(firstTitle)
 
-            var musicList = repo.getAllTitles(firstTitle.id)
+            var musicList = repo.queryTitles(firstTitle.id)
             musicList = QueueCreator.shuffleQueueFromMediaList(musicList)
             musicList.insertAsFirstItem(firstTitle)
             musicList.setCurrentPlaying(0)

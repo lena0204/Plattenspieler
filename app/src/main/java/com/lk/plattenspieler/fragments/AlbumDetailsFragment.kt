@@ -39,13 +39,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
     }
 
     private fun shuffleBundle(shuffle: Boolean): Bundle {
-        return bundleOf(MusicService.SHUFFLE_KEY to shuffle,
-            "L" to mediaListViewModel.titleList.value!!)
-    }
-
-    private fun mediaListBundle(): Bundle {
-        return bundleOf("L" to mediaListViewModel.titleList.value!!
-        )
+        return bundleOf(MusicService.SHUFFLE_KEY to shuffle)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?

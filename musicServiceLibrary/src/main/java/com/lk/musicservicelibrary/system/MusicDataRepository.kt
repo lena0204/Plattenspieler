@@ -12,14 +12,11 @@ interface MusicDataRepository {
         const val ROOT_ID = "__ ROOT__"
     }
 
-    fun getFirstTitleForShuffle(): MusicMetadata
+    fun queryFirstTitle(): MusicMetadata
 
-    fun getAllTitles(playingTitleId: String): MusicList
+    fun queryTitles(playingTitleId: String): MusicList
 
-    fun getTitlesByAlbumID(albumId: String): MusicList
+    fun queryTitlesByAlbumID(albumId: String): MusicList
 
-    fun getAllAlbums(): MusicList
-
-    fun getTitleByID(titleId: String): MusicMetadata
-
+    fun queryAlbums(): MusicList
 }

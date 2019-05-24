@@ -20,6 +20,8 @@ import com.lk.musicservicelibrary.system.*
 
 /**
  * Erstellt von Lena am 02.09.18.
+ * MediaBrowserService; zusammen mit PlaybackController (ControllerCallback)
+ * mögliche Controller-Aktionen: playFromId, play, pause, next, previous, stop, Command: addAll (als shuffle)
  */
 class MusicService : MediaBrowserService(), Observer<Any> {
 
@@ -41,8 +43,8 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         const val ACTION_MEDIA_PAUSE = "com.lk.pl-ACTION_MEDIA_PAUSE"
         const val ACTION_MEDIA_NEXT = "com.lk.pl-ACTION_MEDIA_NEXT"
         const val SHUFFLE_KEY = "shuffle"
+        const val QUEUE_KEY = "queue"
         var PLAYBACK_STATE = PlaybackState.STATE_STOPPED
-
     }
 
     override fun onCreate() {
@@ -87,6 +89,16 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         sessionCallback.getPlayingList().observeForever(this)
     }
 
+    private fun startServiceIfNecessary() {
+        if (!serviceStarted) {
+            this.startService(android.content.Intent(applicationContext,
+                com.lk.musicservicelibrary.main.MusicService::class.java))
+            Log.d(TAG, "started service")
+            serviceStarted = true
+        }
+        if (!session.isActive)
+            session.isActive = true
+    }
 
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
@@ -101,7 +113,7 @@ class MusicService : MediaBrowserService(), Observer<Any> {
                          result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
         when {
             parentId == MusicDataRepository.ROOT_ID -> {
-                result.sendResult(musicDataRepo.getAllAlbums().getMediaItemList())
+                result.sendResult(musicDataRepo.queryAlbums().getMediaItemList())
             }
             parentId.contains("ALBUM-") -> {
                 result.sendResult(getTitles(parentId))
@@ -112,31 +124,27 @@ class MusicService : MediaBrowserService(), Observer<Any> {
 
     private fun getTitles(albumId: String): MutableList<MediaBrowser.MediaItem> {
         val id = albumId.replace("ALBUM-", "")
-        val playingList = musicDataRepo.getTitlesByAlbumID(id)
+        val playingList = musicDataRepo.queryTitlesByAlbumID(id)
         sessionCallback.setQueriedMediaList(playingList)
         return playingList.getMediaItemList()
     }
 
-
-
-    fun startServiceIfNecessary() {
-        if (!serviceStarted) {
-            this.startService(android.content.Intent(applicationContext,
-                    com.lk.musicservicelibrary.main.MusicService::class.java))
-            serviceStarted = true
-        }
-        if (!session.isActive)
-            session.isActive = true
-    }
-
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
+        Log.v(TAG, "onUnbind")
         val state = session.controller.playbackState?.state
         if (state == PlaybackState.STATE_PAUSED) {
             Log.d(TAG, "Playback paused ($state), so stop")
             sessionCallback.onStop()
         }
         return bool
+    }
+
+    private fun stopService() {
+        Log.d(TAG, "stopService in service")
+        this.stopSelf()
+        serviceStarted = false
+        this.stopForeground(true)
     }
 
     override fun onDestroy() {
@@ -154,31 +162,55 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         sessionCallback.getPlaybackState().removeObserver(this)
     }
 
+    // - - - Changes handler - - -
+
     override fun onChanged(update: Any?) {
         if(update is MusicList) {
-            val playingTitle = update.getItemAtCurrentPlaying()
-            if(playingTitle != null ){
-                session.setMetadata(playingTitle.getMediaMetadata())
-                sendBroadcastForLightningLauncher(playingTitle)
-            }
-            session.setQueue(showQueueFromPlayingItem(update).getQueueItemList())
+            updatePlayingList(update)
         } else if (update is PlaybackState) {
-            PLAYBACK_STATE = update.state
-            session.setPlaybackState(update)
-            updateNotification(update)
-
-            if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
-                this.stopForeground(false)
-            }
+            updatePlaybackState(update)
         }
     }
 
-    private fun showQueueFromPlayingItem(playingList: MusicList) : MusicList {
+    private fun updatePlayingList(playingList: MusicList) {
+        val playingTitle = playingList.getItemAtCurrentPlaying()
+        val shortQueue = getRealQueue(playingList)
+        if(playingTitle != null ){
+            playingTitle.nr_of_songs_left = shortQueue.count().toLong()
+            session.setMetadata(playingTitle.getMediaMetadata())
+            sendBroadcastForLightningLauncher(playingTitle)
+        }
+        session.setQueue(shortQueue.getQueueItemList())
+    }
+
+    private fun sendBroadcastForLightningLauncher(metadata: MusicMetadata) {
+        val track = bundleOf(
+            "title" to metadata.title,
+            "album" to metadata.album,
+            "artist" to metadata.artist)
+        val extras = bundleOf(
+            "track" to track,
+            "aaPath" to metadata.cover_uri)
+        this.sendBroadcast(Intent("com.lk.plattenspieler.metachanged").putExtras(extras))
+    }
+
+    private fun updatePlaybackState(state: PlaybackState) {
+        PLAYBACK_STATE = state.state
+        session.setPlaybackState(state)
+        updateNotification(state)
+
+        if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
+            this.stopForeground(false)
+        }
+    }
+
+    private fun getRealQueue(playingList: MusicList) : MusicList {
         val shortedQueue = MusicList()
-        for (i in playingList.getCurrentPlaying() until (playingList.count() - 1)) {
+        val firstAfterPlaying = playingList.getCurrentPlaying() + 1
+        val lastItem = playingList.count() - 1
+        for (i in firstAfterPlaying until lastItem) {
             shortedQueue.addItem(playingList.getItemAt(i))
         }
-        // IDEA_ hier gibts auch die Info wie viele Titel noch kommen
         return shortedQueue
     }
 
@@ -198,6 +230,7 @@ class MusicService : MediaBrowserService(), Observer<Any> {
             PlaybackState.STATE_PLAYING, PlaybackState.STATE_PAUSED -> {
                 val noti = notificationBuilder.showNotification(PLAYBACK_STATE, metadata, shuffleOn)
                 if(startInForeground){
+                    startServiceIfNecessary()
                     this.startForeground(NOTIFICATION_ID, noti)
                 } else {
                     notificationManager.notify(NOTIFICATION_ID, noti)
@@ -208,23 +241,5 @@ class MusicService : MediaBrowserService(), Observer<Any> {
                 stopService()
             }
         }
-    }
-
-    private fun stopService() {
-        Log.d(TAG, "handleOnStop in service")
-        this.stopSelf()
-        serviceStarted = false
-        this.stopForeground(true)
-    }
-
-    private fun sendBroadcastForLightningLauncher(metadata: MusicMetadata) {
-        val track = bundleOf(
-                "title" to metadata.title,
-                "album" to metadata.album,
-                "artist" to metadata.artist)
-        val extras = bundleOf(
-                "track" to track,
-                "aaPath" to metadata.cover_uri)
-        this.sendBroadcast(Intent("com.lk.plattenspieler.metachanged").putExtras(extras))
     }
 }

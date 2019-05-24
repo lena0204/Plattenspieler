@@ -1,23 +1,14 @@
-package com.lk.musicservicelibrary.playback
+package com.lk.musicservicelibrary.playback.state
 
-import android.os.Bundle
-import com.lk.musicservicelibrary.main.MusicService
-import com.lk.musicservicelibrary.utils.PlaybackStateCreator
+import com.lk.musicservicelibrary.playback.PlaybackCallback
+import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
 
 /**
  * Erstellt von Lena am 05/04/2019.
  */
-class PlayingState(private val playback: PlaybackCallback): PlayerState(playback) {
+class PlayingState(private val playback: PlaybackCallback): BasicState(playback) {
 
     private val TAG = "PlayingState"
-
-    override fun playFromId(mediaId: String?, extras: Bundle?) {
-        extras?.classLoader = this.javaClass.classLoader
-        val shuffle = extras?.getBoolean(MusicService.SHUFFLE_KEY) ?: false
-        val playingList = createPlayingList(mediaId, shuffle)
-        playCurrentPlayingItem(playingList)
-        playback.setPlayerState(PlayingState(playback))
-    }
 
     override fun play() {
         throw UnsupportedOperationException()
@@ -28,16 +19,12 @@ class PlayingState(private val playback: PlaybackCallback): PlayerState(playback
         val position = playback.getPlayer().getCurrentPosition()
         val shuffle = playback.getShuffleFromPlaybackState()
         playback.setPlaybackState(
-            PlaybackStateCreator.createStateForPaused(
+            PlaybackStateBuilder.createStateForPaused(
                 position.toLong(),
                 shuffle
             )
         )
         playback.setPlayerState(PausedState(playback))
-    }
-
-    override fun stop() {
-        stopPlayback()
     }
 
     override fun skipToNext() {

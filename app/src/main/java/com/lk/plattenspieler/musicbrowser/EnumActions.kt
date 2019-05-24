@@ -5,7 +5,7 @@ package com.lk.plattenspieler.musicbrowser
  */
 enum class EnumActions {
 
-    PLAYS,
+    IS_PLAYING,
     PREPARE_FROM_ID,
     PLAY_FROM_ID,
     PLAY_PAUSE,

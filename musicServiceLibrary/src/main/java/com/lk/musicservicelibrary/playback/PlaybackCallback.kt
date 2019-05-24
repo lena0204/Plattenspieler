@@ -8,31 +8,34 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.lk.musicservicelibrary.main.*
 import com.lk.musicservicelibrary.models.*
+import com.lk.musicservicelibrary.playback.state.BasicState
+import com.lk.musicservicelibrary.playback.state.StoppedState
 import com.lk.musicservicelibrary.system.MusicDataRepository
-import com.lk.musicservicelibrary.utils.PlaybackStateCreator
+import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
 
 /**
  * Erstellt von Lena am 05/04/2019.
  */
-class PlaybackCallback(private val dataRepository: MusicDataRepository): MediaSession.Callback() {
+class PlaybackCallback(private val dataRepository: MusicDataRepository):
+    MediaSession.Callback(),
+    MusicPlayer.PlaybackFinished {
 
     // private val TAG = "MusicPlayer"
-    // TODO pause -> play führt zu nix hören
-    // TODO Anzahl der Musikstücke wird nicht angezeigt
 
-    private var playerState: PlayerState = StoppedState(this)
+    private var playerState: BasicState =
+        StoppedState(this)
     private var commandResolver = CommandResolver(this)
 
     private var playingList = MutableLiveData<MusicList>()
     private var playbackState = MutableLiveData<PlaybackState>()
-    private var player = SimpleMusicPlayer()
+    private var player = SimpleMusicPlayer(this)
     private var queriedMediaList = MusicList()
 
     // TODO check audiofocus
 
     init {
         playingList.value = MusicList()
-        playbackState.value = PlaybackStateCreator.createStateForStopped()
+        playbackState.value = PlaybackStateBuilder.createStateForStopped()
     }
 
     fun getPlayingList(): LiveData<MusicList> = playingList
@@ -54,14 +57,18 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository): MediaSe
         return extras?.getBoolean(MusicService.SHUFFLE_KEY) ?: false
     }
 
-    fun getPlayerState(): PlayerState = playerState
-    fun setPlayerState(state: PlayerState) {
+    fun getPlayerState(): BasicState = playerState
+    fun setPlayerState(state: BasicState) {
         playerState = state
     }
 
     fun getDataRepository(): MusicDataRepository = dataRepository
 
     fun getPlayer(): MusicPlayer = player
+
+    override fun playbackFinished() {
+        playerState.skipToNext()
+    }
 
     override fun onPlay() {
         playerState.play()

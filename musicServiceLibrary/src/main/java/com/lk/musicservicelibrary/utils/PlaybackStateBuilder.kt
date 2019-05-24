@@ -7,7 +7,7 @@ import com.lk.musicservicelibrary.main.MusicService
 /**
  * Erstellt von Lena am 06/04/2019.
  */
-object PlaybackStateCreator {
+object PlaybackStateBuilder {
 
     private val TAG = "PlaybackStateCreator"
 

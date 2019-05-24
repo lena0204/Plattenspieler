@@ -8,8 +8,8 @@ android {
         applicationId "com.lk.plattenspieler"
         minSdkVersion 22
         targetSdkVersion 28
-        versionCode 9
-        versionName "2.0"
+        versionCode 10
+        versionName "2.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -30,7 +30,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testImplementation 'junit:junit:4.12'
-    implementation 'androidx.core:core-ktx:1.0.1'
+    implementation 'androidx.core:core-ktx:1.0.2'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation 'androidx.fragment:fragment-ktx:1.0.0'
     implementation 'androidx.preference:preference-ktx:1.0.0'

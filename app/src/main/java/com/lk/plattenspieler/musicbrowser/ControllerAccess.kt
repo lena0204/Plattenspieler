@@ -15,6 +15,7 @@ import com.lk.musicservicelibrary.database.SongContentProvider
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.Commands
 import com.lk.plattenspieler.fragments.LyricsAddingDialog
 import com.lk.plattenspieler.main.*
 import com.lk.plattenspieler.observables.*
@@ -48,8 +49,8 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     fun completeSetup(){
-        val c = ComponentName(context, MusicService::class.java)
-        mbrowser = MediaBrowser(context, c, connectionCallback, null)
+        val component = ComponentName(context, MusicService::class.java)
+        mbrowser = MediaBrowser(context, component, connectionCallback, null)
         subscriptionCallback = MusicSubscriptionCallback(mbrowser, mediaViewModel)
         mbrowser.connect()
     }
@@ -58,23 +59,23 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
         if(update is ControllerAction) {
             Log.d(TAG, "ControllerAction: ${update.action}")
             when (update.action) {
-                EnumActions.PLAYS -> plays()
+                EnumActions.IS_PLAYING -> updateAlreadyPlaying()
                 EnumActions.PLAY_FROM_ID -> playFromMediaId(update)
-                EnumActions.PREPARE_FROM_ID -> prepareFromId(update)
+                // EnumActions.PREPARE_FROM_ID -> prepareFromId(update)
                 EnumActions.PLAY_PAUSE -> playPause()
                 EnumActions.NEXT -> musicController.transportControls.skipToNext()
                 EnumActions.PREVIOUS -> musicController.transportControls.skipToPrevious()
                 EnumActions.STOP -> stop()
-                EnumActions.QUEUE -> queue(update)
+                // EnumActions.QUEUE -> queue(update)
                 EnumActions.QUEUE_RESTORED -> queueRestored(update)
-                EnumActions.SHUFFLE -> shuffle(update)
+                EnumActions.SHUFFLE -> playFromMediaId(update)
                 EnumActions.SHUFFLE_ALL -> shuffleAll()
                 EnumActions.SHOW_ALBUM -> showAlbumTitles(update.titleId)
             }
         }
     }
 
-    private fun plays(){
+    private fun updateAlreadyPlaying(){
         activityNew.showBar()
         playbackViewModel.queue.value = MusicList.createListFromQueue(musicController.queue!!)
         playbackViewModel.metadata.value = MusicMetadata.createFromMediaMetadata(musicController.metadata!!)
@@ -87,7 +88,6 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     private fun playFromMediaId(action: ControllerAction) {
-        // queue(action)
         musicController.transportControls.playFromMediaId(action.titleId, action.args)
         activityNew.showBar()
     }
@@ -108,12 +108,13 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
         sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, false) }
     }
 
-    private fun queue(action: ControllerAction) {
-        musicController.sendCommand("addQueue", action.args, null)
+    private fun queueRestored(action: ControllerAction){
+        musicController.sendCommand(Commands.ADD_QUEUE, action.args, null)
     }
 
-    private fun queueRestored(action: ControllerAction){
-        musicController.sendCommand("addRestoredQueue", action.args, null)
+/*
+    private fun queue(action: ControllerAction) {
+        musicController.sendCommand("addQueue", action.args, null)
     }
 
     private fun shuffle(action: ControllerAction){
@@ -134,10 +135,10 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
             val args = bundleOf(MusicService.SHUFFLE_KEY to true)
             musicController.transportControls.playFromMediaId(titleid, args)
         }
-    }
+    } */
 
     private fun shuffleAll() {
-        musicController.sendCommand("addAll", null, null)
+        musicController.sendCommand(Commands.ADD_ALL, null, null)
         activityNew.showBar()
     }
 

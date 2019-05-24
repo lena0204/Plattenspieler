@@ -64,7 +64,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
             if(wasQueueSaved)
                 restoreQueue()
         } else {
-            val action = ControllerAction(EnumActions.PLAYS)
+            val action = ControllerAction(EnumActions.IS_PLAYING)
             controllerAction.postValue(action)
         }
     }
@@ -80,16 +80,16 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     }
 
     private fun sendFirstItemToController(titleId: String){
-        val args = bundleOf("I" to 1,
-                MusicService.SHUFFLE_KEY to getShufflePreference())
-        controllerAction.postValue(ControllerAction(EnumActions.PREPARE_FROM_ID, titleId, args = args))
+        val args = bundleOf(MusicService.SHUFFLE_KEY to getShufflePreference())
+        controllerAction.postValue(ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = args))
+        controllerAction.postValue(ControllerAction(EnumActions.PLAY_PAUSE, titleId, args = args))
     }
 
     private fun sendQueueIfAvailable(){
         val queueRestored = playlistRepo.restorePlayingQueue()
         if(queueRestored != null){
             Log.v("ViewModel", "sendQueue")
-            val args = bundleOf("L" to queueRestored)
+            val args = bundleOf(MusicService.SHUFFLE_KEY to queueRestored)
             controllerAction.postValue(ControllerAction(EnumActions.QUEUE_RESTORED, args = args))
         }
     }

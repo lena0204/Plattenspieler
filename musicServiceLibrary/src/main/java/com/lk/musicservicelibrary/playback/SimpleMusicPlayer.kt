@@ -7,12 +7,13 @@ import com.lk.musicservicelibrary.system.AudioFocusRequester
 /**
  * Erstellt von Lena am 06/04/2019.
  */
-class SimpleMusicPlayer: MusicPlayer {
+class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): MusicPlayer {
 
     private val TAG = "SimpleMusicPlayer"
 
     private var musicPlayer = MediaPlayer()
     private var startPosition = 0
+    private var created = false
 
     override fun getCurrentPosition(): Int = musicPlayer.currentPosition
 
@@ -23,10 +24,8 @@ class SimpleMusicPlayer: MusicPlayer {
     }
 
     private fun createMusicPlayer(){
-        // TODO music player states abfangen, stoppes is called beforehand...
         musicPlayer = MediaPlayer()
         musicPlayer.setOnPreparedListener {
-            Log.v(TAG, "prepared player: start to play")
             musicPlayer.seekTo(startPosition)
             musicPlayer.start()
         }
@@ -34,10 +33,12 @@ class SimpleMusicPlayer: MusicPlayer {
             Log.e(TAG, "MusicPlayerError: $what; $extra")
             false
         }
-        musicPlayer.setOnCompletionListener { // TODO Zugriff auf skipToNext fehlt
-            }
+        musicPlayer.setOnCompletionListener {
+            listener.playbackFinished()
+        }
         musicPlayer.setAudioAttributes(AudioFocusRequester.audioAttr)
         Log.v(TAG, "Musicplayer created")
+        created = true
     }
 
     private fun playMediaFile(mediaFile: String){
@@ -48,6 +49,8 @@ class SimpleMusicPlayer: MusicPlayer {
 
     override fun play(position: Int) {
         startPosition = position
+        musicPlayer.seekTo(position)
+        musicPlayer.start()
     }
 
     override fun pause() {
@@ -55,9 +58,12 @@ class SimpleMusicPlayer: MusicPlayer {
     }
 
     override fun stop() {
-        musicPlayer.stop()
-        musicPlayer.reset()
-        musicPlayer.release()
+        if (created) {
+            musicPlayer.stop()
+            musicPlayer.reset()
+            musicPlayer.release()
+            created = false
+        }
     }
 
 }

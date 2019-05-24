@@ -9,6 +9,8 @@ import com.lk.musicservicelibrary.models.MusicMetadata
  */
 class PlaylistDBRepository (private val application: Application): PlaylistRepository {
 
+    // TODO Change playlistRepo to Room and also test restoring
+
     private val TAG = "PlaylistDBAccess"
     private val repository = PlayingItemRepository(application)
 

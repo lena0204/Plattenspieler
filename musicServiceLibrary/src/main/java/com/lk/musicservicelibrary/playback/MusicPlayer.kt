@@ -12,4 +12,8 @@ interface MusicPlayer {
 
     fun getCurrentPosition(): Int
 
+    interface PlaybackFinished {
+        fun playbackFinished()
+    }
+
 }

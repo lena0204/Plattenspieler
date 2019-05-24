@@ -61,7 +61,6 @@ class MusicNotificationBuilder(private val service: MusicService) {
             val cover = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
             if (cover != null){
                 notificationBuilder.setLargeIcon(cover)
-                // Log.v(TAG, "set large Icon")
             }
         }
 

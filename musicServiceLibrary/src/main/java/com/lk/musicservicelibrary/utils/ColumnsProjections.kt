@@ -17,13 +17,6 @@ object AudioColumns {
             MSAudio.Albums.ALBUM_ART,
             MSAudio.Albums.ARTIST,
             MSAudio.Albums.NUMBER_OF_SONGS)
-
-    val titlesColumns = arrayOf(
-            MSAudio.Media._ID,
-            MSAudio.Media.TITLE,
-            MSAudio.Media.ARTIST,
-            MSAudio.Media.ALBUM
-    )
     
     val metadataColumns = arrayOf(
             MSAudio.Media._ID,
