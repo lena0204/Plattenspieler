@@ -11,14 +11,16 @@ A music app for Android 5.1 or higher:
 
 ### The unusual stuff:
 - sort by album (only)
-- show the amount of songs to come in the album
-- show stored lyrics
-- light and dark design available, plus two colours (pink and teal)
+- show the amount of songs in an album, and the amount left to play
+- show stored lyrics (within mp3 / m4a files)
+- light and dark design available, with two colours (pink and teal)
+- can adapt to LineageOS theme if this ROM (Android Oreo and higher) is installed and offers support for that
 
-__Known problems__
+__Known problems (To be worked on)__
 - Lyrics can't be added if songs are saved on external SD-Card; storage access is problematic there
-- app crashes mostly when changing design; currently a manual restart is necessary and advised
+- on Android Pie (some) album covers might not show up because the thumbnails disappeared from where they should be
+- app crashes when applying a new design internally; currently a manual restart is necessary
 
 Still under development
 
-*Feel free to submit feature suggestions!*
+__Feel free to submit feature suggestions in the issues!__
