@@ -2,6 +2,7 @@ package com.lk.plattenspieler.musicbrowser
 
 import android.media.MediaMetadata
 import android.media.session.*
+import android.util.Log
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.plattenspieler.observables.PlaybackViewModel
@@ -16,6 +17,7 @@ class MetadataCallback(private val viewModel: PlaybackViewModel): MediaControlle
     }
 
     override fun onPlaybackStateChanged(state: PlaybackState) {
+        Log.v(this::class.java.simpleName, "New state: ${state.state}")
         viewModel.playbackState.value = state
     }
 

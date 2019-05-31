@@ -25,6 +25,8 @@ import com.lk.musicservicelibrary.system.*
  */
 class MusicService : MediaBrowserService(), Observer<Any> {
 
+    // TODO MediaScan scheint nicht vernünftig zu funktionieren, manuelles Laden der Cover könnte notwendig werden; ähnlich zu Eleven
+
     private val TAG = MusicService::class.java.simpleName
     private val NOTIFICATION_ID = 9880
 
@@ -207,8 +209,7 @@ class MusicService : MediaBrowserService(), Observer<Any> {
     private fun getRealQueue(playingList: MusicList) : MusicList {
         val shortedQueue = MusicList()
         val firstAfterPlaying = playingList.getCurrentPlaying() + 1
-        val lastItem = playingList.count() - 1
-        for (i in firstAfterPlaying until lastItem) {
+        for (i in firstAfterPlaying until playingList.size()) {
             shortedQueue.addItem(playingList.getItemAt(i))
         }
         return shortedQueue

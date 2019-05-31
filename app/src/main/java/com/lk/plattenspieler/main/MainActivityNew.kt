@@ -6,9 +6,11 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
-import android.os.Build
-import android.os.Bundle
+import android.media.session.PlaybackState
+import android.net.Uri
+import android.os.*
 import android.preference.PreferenceManager
+import android.provider.MediaStore
 import android.util.Log
 import android.view.*
 import android.widget.TextView
@@ -34,7 +36,7 @@ import kotlinx.android.synthetic.main.activity_main.*
  */
 
 // TODO Merge auf Master
-class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDialog.OnSaveLyrics {
+class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.OnSaveLyrics {
 
     // TODO Funktionen durchtesten, refactoring nötig ??
 
@@ -95,6 +97,7 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
         mediaViewModel = ViewModelProviders.of(this).get(MediaViewModel::class.java)
         mediaViewModel.setObserversToAll(this, this)
         playbackViewModel = ViewModelProviders.of(this).get(PlaybackViewModel::class.java)
+        playbackViewModel.playbackState.observe(this, this)
         controllerAccess = ControllerAccess(this)
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         setupMusicBar()
@@ -128,10 +131,17 @@ class MainActivityNew : FragmentActivity(), Observer<MusicList>, LyricsAddingDia
         }
     }
 
-    override fun onChanged(liste: MusicList?){
-        when(liste?.getMediaType()){
-            MediaBrowser.MediaItem.FLAG_BROWSABLE -> showAlbums()
-            MediaBrowser.MediaItem.FLAG_PLAYABLE -> showTitles()
+    override fun onChanged(update: Any?){
+        if(update is MusicList) {
+            when (update.getMediaType()) {
+                MediaBrowser.MediaItem.FLAG_BROWSABLE -> showAlbums()
+                MediaBrowser.MediaItem.FLAG_PLAYABLE -> showTitles()
+            }
+        } else if (update is PlaybackState) {
+            if(update.state == PlaybackState.STATE_STOPPED) {
+                hideBar()
+                // TODO Should also close PlayingFragment if open
+            }
         }
     }
 

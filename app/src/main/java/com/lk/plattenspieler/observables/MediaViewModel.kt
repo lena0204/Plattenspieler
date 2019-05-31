@@ -9,11 +9,11 @@ import com.lk.musicservicelibrary.models.MusicList
  */
 class MediaViewModel(application: Application): AndroidViewModel(application) {
 
-    var albumlist = MutableLiveData<MusicList>()
+    var albumList = MutableLiveData<MusicList>()
     var titleList = MutableLiveData<MusicList>()
 
-    fun setObserversToAll(owner: LifecycleOwner, observer: Observer<MusicList>){
-        albumlist.observe(owner, observer)
+    fun setObserversToAll(owner: LifecycleOwner, observer: Observer<Any>){
+        albumList.observe(owner, observer)
         titleList.observe(owner, observer)
     }
 

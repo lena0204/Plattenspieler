@@ -4,6 +4,7 @@ import android.media.browse.MediaBrowser
 import android.media.session.MediaSession
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
+import java.lang.StringBuilder
 
 /**
  * Erstellt von Lena am 10.05.18.
@@ -62,7 +63,13 @@ class MusicList(
             currentPlaying = value
     }
 
-
+    override fun toString(): String {
+        val builder = StringBuilder()
+        for(item in list){
+            builder.append(item.title).append(", ")
+        }
+        return builder.toString()
+    }
 
     fun getQueueItemList(): MutableList<MediaSession.QueueItem>{
         val queueItemList = mutableListOf<MediaSession.QueueItem>()

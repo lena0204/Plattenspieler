@@ -57,7 +57,9 @@ abstract class BasicState(private var playback: PlaybackCallback) {
 
     protected fun skipToNextOrStop(): Boolean {
         val playlist = playback.getPlayingList().value!!
-        return if(playlist.getCurrentPlaying() < playlist.size()) {
+        Log.v(TAG, "is current playing: ${playlist.getCurrentPlaying()} < Size: ${playlist.size()}")
+        Log.v(TAG, "$playlist")
+        return if(playlist.getCurrentPlaying() < playlist.size() - 1) {
             playlist.setCurrentPlaying(playlist.getCurrentPlaying() + 1)
             playCurrentPlayingItem(playlist)
             playback.setPlayingList(playlist)

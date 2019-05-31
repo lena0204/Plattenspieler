@@ -1,6 +1,7 @@
 package com.lk.musicservicelibrary.utils
 
 import android.media.session.PlaybackState
+import android.util.Log
 import androidx.core.os.bundleOf
 import com.lk.musicservicelibrary.main.MusicService
 
@@ -39,6 +40,7 @@ object PlaybackStateBuilder {
 
     fun createStateForStopped(): PlaybackState {
         val builder = PlaybackState.Builder()
+        Log.v(TAG, "Stopped state: ${PlaybackState.STATE_STOPPED}")
         builder.setActions(PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)
         builder.setState(PlaybackState.STATE_STOPPED, 0L, 1.0f)
         return builder.build()

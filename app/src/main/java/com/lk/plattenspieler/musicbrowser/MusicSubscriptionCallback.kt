@@ -19,7 +19,7 @@ class MusicSubscriptionCallback(
             for(mediaItem in children){
                 medialist.addItem(MusicMetadata.createFromMediaDescription(mediaItem.description))
             }
-            mediaData.albumlist.value = medialist
+            mediaData.albumList.value = medialist
         } else if(parentId.contains("ALBUM-")){
             medialist.setMediaType(MediaBrowser.MediaItem.FLAG_PLAYABLE)
             for(mediaItem in children){

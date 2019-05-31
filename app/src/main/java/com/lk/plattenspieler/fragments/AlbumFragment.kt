@@ -42,10 +42,10 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mediaViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)
-        mediaViewModel.albumlist.observe(this, this)
+        mediaViewModel.albumList.observe(this, this)
         playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
         setTitleInActionbar()
-        setupRecyclerView(mediaViewModel.albumlist.value!!)
+        setupRecyclerView(mediaViewModel.albumList.value!!)
     }
 
     override fun onChanged(albumList: MusicList?) {
