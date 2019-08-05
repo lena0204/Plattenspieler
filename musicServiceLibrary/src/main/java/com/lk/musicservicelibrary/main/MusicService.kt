@@ -25,7 +25,7 @@ import com.lk.musicservicelibrary.system.*
  */
 class MusicService : MediaBrowserService(), Observer<Any> {
 
-    // TODO MediaScan scheint nicht vernünftig zu funktionieren, manuelles Laden der Cover könnte notwendig werden; ähnlich zu Eleven
+    // TODO MediaScan scheint nicht vernünftig zu funktionieren, manuelles Laden der Cover könnte notwendig werden; ähnlich zu Eleven; scheint auf dem Pixel aktuell zu funktionieren ...
 
     private val TAG = MusicService::class.java.simpleName
     private val NOTIFICATION_ID = 9880
@@ -70,9 +70,9 @@ class MusicService : MediaBrowserService(), Observer<Any> {
 
     private fun registerBroadcastReceiver() {
         val ifilter = IntentFilter()
-        ifilter.addAction(MusicService.ACTION_MEDIA_PLAY)
-        ifilter.addAction(MusicService.ACTION_MEDIA_PAUSE)
-        ifilter.addAction(MusicService.ACTION_MEDIA_NEXT)
+        ifilter.addAction(ACTION_MEDIA_PLAY)
+        ifilter.addAction(ACTION_MEDIA_PAUSE)
+        ifilter.addAction(ACTION_MEDIA_NEXT)
         this.registerReceiver(nbReceiver, ifilter)
     }
 
@@ -93,7 +93,7 @@ class MusicService : MediaBrowserService(), Observer<Any> {
 
     private fun startServiceIfNecessary() {
         if (!serviceStarted) {
-            this.startService(android.content.Intent(applicationContext,
+            this.startService(Intent(applicationContext,
                 com.lk.musicservicelibrary.main.MusicService::class.java))
             Log.d(TAG, "started service")
             serviceStarted = true
@@ -104,15 +104,15 @@ class MusicService : MediaBrowserService(), Observer<Any> {
 
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
-            : MediaBrowserService.BrowserRoot {
+            : BrowserRoot {
         if (this.packageName == clientPackageName) {
-            return MediaBrowserService.BrowserRoot(MusicDataRepository.ROOT_ID, null)
+            return BrowserRoot(MusicDataRepository.ROOT_ID, null)
         }
-        return MediaBrowserService.BrowserRoot("", null)
+        return BrowserRoot("", null)
     }
 
     override fun onLoadChildren(parentId: String,
-                         result: MediaBrowserService.Result<MutableList<MediaBrowser.MediaItem>>) {
+                         result: Result<MutableList<MediaBrowser.MediaItem>>) {
         when {
             parentId == MusicDataRepository.ROOT_ID -> {
                 result.sendResult(musicDataRepo.queryAlbums().getMediaItemList())

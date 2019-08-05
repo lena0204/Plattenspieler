@@ -135,11 +135,25 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
         return cover
     }
 
-    private fun Cursor.fetchString(column: String): String =
-        this.getString(this.getColumnIndexOrThrow(column))
+    private fun Cursor.fetchString(column: String): String{
+        val index = this.getColumnIndex(column)
+        return if(index != -1) {
+            this.getString(index) ?: ""
+        } else {
+            ""
+        }
+    }
 
-    private fun Cursor.fetchLong(column: String): Long =
-        this.getLong(this.getColumnIndexOrThrow(column))
+
+    private fun Cursor.fetchLong(column: String): Long{
+        val index = this.getColumnIndex(column)
+        return if(index >= 0) {
+            this.getLong(index)
+        } else {
+            0L
+        }
+    }
+
 
     private fun queryTitleTable(columns: Array<String>,
                                 where: String? = null,
