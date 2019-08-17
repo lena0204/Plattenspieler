@@ -6,6 +6,7 @@ import androidx.room.*
 /**
  * Erstellt von Lena am 02/04/2019.
  */
+@Dao
 interface PlaylistDAO {
 
     @Insert

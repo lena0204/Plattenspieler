@@ -40,23 +40,23 @@ class MusicBarFragment : Fragment(), Observer<Any> {
     private fun setupOnClickListener(){
         ib_main_play.setOnClickListener {
             val action = ControllerAction(EnumActions.PLAY_PAUSE)
-            playbackViewModel.controllerAction.value = action
+            playbackViewModel.callAction(action)
         }
         ib_main_next.setOnClickListener {
             val action = ControllerAction(EnumActions.NEXT)
-            playbackViewModel.controllerAction.value = action
+            playbackViewModel.callAction(action)
         }
         ib_main_previous.setOnClickListener {
             val action = ControllerAction(EnumActions.PREVIOUS)
-            playbackViewModel.controllerAction.value = action
+            playbackViewModel.callAction(action)
         }
     }
 
     private fun setupData(){
         playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
         playbackViewModel.setObserverToAll(this, this)
-        writeMetadata(playbackViewModel.metadata.value!!)
-        updatePlayback(playbackViewModel.playbackState.value!!)
+        writeMetadata(playbackViewModel.getMetadata())
+        updatePlayback(playbackViewModel.getPlaybackState())
     }
 
     override fun onChanged(update: Any?) {

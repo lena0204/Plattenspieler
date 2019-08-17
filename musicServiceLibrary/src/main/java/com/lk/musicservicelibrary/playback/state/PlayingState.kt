@@ -1,7 +1,8 @@
 package com.lk.musicservicelibrary.playback.state
 
+import android.util.Log
 import com.lk.musicservicelibrary.playback.PlaybackCallback
-import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
+import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
 /**
  * Erstellt von Lena am 05/04/2019.
@@ -9,6 +10,7 @@ import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
 class PlayingState(private val playback: PlaybackCallback): BasicState(playback) {
 
     private val TAG = "PlayingState"
+    override var type: States = States.PLAYING
 
     override fun play() {
         throw UnsupportedOperationException()
@@ -17,13 +19,8 @@ class PlayingState(private val playback: PlaybackCallback): BasicState(playback)
     override fun pause() {
         playback.getPlayer().pause()
         val position = playback.getPlayer().getCurrentPosition()
-        val shuffle = playback.getShuffleFromPlaybackState()
-        playback.setPlaybackState(
-            PlaybackStateBuilder.createStateForPaused(
-                position.toLong(),
-                shuffle
-            )
-        )
+
+        updateState(States.PAUSED, position.toLong())
         playback.setPlayerState(PausedState(playback))
     }
 
@@ -31,8 +28,6 @@ class PlayingState(private val playback: PlaybackCallback): BasicState(playback)
         val skippedToNext = skipToNextOrStop()
         if(skippedToNext) {
             playback.setPlayerState(PlayingState(playback))
-        } else {
-            playback.setPlayerState(StoppedState(playback))
         }
     }
 

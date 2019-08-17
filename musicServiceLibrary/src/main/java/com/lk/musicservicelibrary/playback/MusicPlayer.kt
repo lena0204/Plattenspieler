@@ -6,11 +6,12 @@ package com.lk.musicservicelibrary.playback
 interface MusicPlayer {
 
     fun preparePlayer(mediaFile: String)
-    fun play(position: Int = 0)
+    fun play(position: Int)
     fun pause()
     fun stop()
 
     fun getCurrentPosition(): Int
+    fun resetPosition()
 
     interface PlaybackFinished {
         fun playbackFinished()

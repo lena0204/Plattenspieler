@@ -7,10 +7,8 @@ import android.content.res.ColorStateList
 import android.media.AudioManager
 import android.media.browse.MediaBrowser
 import android.media.session.PlaybackState
-import android.net.Uri
 import android.os.*
 import android.preference.PreferenceManager
-import android.provider.MediaStore
 import android.util.Log
 import android.view.*
 import android.widget.TextView
@@ -35,10 +33,10 @@ import kotlinx.android.synthetic.main.activity_main.*
  * Hauptklasse, verwaltet Menü, Observer, Berechtigungen und den MusicClient
  */
 
-// TODO Merge auf Master
 class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.OnSaveLyrics {
 
-    // TODO Funktionen durchtesten, refactoring nötig ??
+    // IDEA_ ProgressBar für den Abspielfortschritt
+    // TODO auf ConstraintLayout umstellen
 
     companion object {
         const val PREF_PLAYING = "playing"
@@ -97,7 +95,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
         mediaViewModel = ViewModelProviders.of(this).get(MediaViewModel::class.java)
         mediaViewModel.setObserversToAll(this, this)
         playbackViewModel = ViewModelProviders.of(this).get(PlaybackViewModel::class.java)
-        playbackViewModel.playbackState.observe(this, this)
+        playbackViewModel.setObserverToPlaybackState(this, this)
         controllerAccess = ControllerAccess(this)
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         setupMusicBar()
@@ -158,7 +156,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     override fun onSaveLyrics(lyrics: String) {
         Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-        LyricsAccess.writeLyrics(lyrics, playbackViewModel.metadata.value!!.path)
+        LyricsAccess.writeLyrics(lyrics, playbackViewModel.getMetadata().path)
     }
 
     fun setDesignFromPref(design: EnumTheme){
@@ -233,11 +231,11 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
             R.id.menu_settings -> launchPreferences()
             R.id.menu_shuffle_all -> {
                 val action = ControllerAction(EnumActions.SHUFFLE_ALL)
-                playbackViewModel.controllerAction.value = action
+                playbackViewModel.callAction(action)
             }
             R.id.menu_remove_playing -> {
                 val action = ControllerAction(EnumActions.STOP)
-                playbackViewModel.controllerAction.value = action
+                playbackViewModel.callAction(action)
             }
             R.id.menu_add_lyrics -> controllerAccess?.addLyrics()
         }

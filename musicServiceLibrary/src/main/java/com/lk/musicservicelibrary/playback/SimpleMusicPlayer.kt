@@ -17,6 +17,10 @@ class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): Mus
 
     override fun getCurrentPosition(): Int = musicPlayer.currentPosition
 
+    override fun resetPosition() {
+        musicPlayer.seekTo(0)
+    }
+
     override fun preparePlayer(mediaFile: String) {
         stop()
         createMusicPlayer()
@@ -59,6 +63,7 @@ class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): Mus
 
     override fun stop() {
         if (created) {
+            startPosition = 0
             musicPlayer.stop()
             musicPlayer.reset()
             musicPlayer.release()

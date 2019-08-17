@@ -45,7 +45,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     // PROBLEM_ Absturz: not initializied wenn ein Design geändert wurde
 
     init {
-        playbackViewModel.controllerAction.observe(activityNew, this)
+        playbackViewModel.setObserverToAction(activityNew, this)
     }
 
     fun completeSetup(){
@@ -77,9 +77,9 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
 
     private fun updateAlreadyPlaying(){
         activityNew.showBar()
-        playbackViewModel.queue.value = MusicList.createListFromQueue(musicController.queue!!)
-        playbackViewModel.metadata.value = MusicMetadata.createFromMediaMetadata(musicController.metadata!!)
-        playbackViewModel.playbackState.value = musicController.playbackState
+        playbackViewModel.setQueue(MusicList.createListFromQueue(musicController.queue!!))
+        playbackViewModel.setMetadata(MusicMetadata.createFromMediaMetadata(musicController.metadata!!))
+        playbackViewModel.setPlaybackState(musicController.playbackState!!)
     }
 
     private fun prepareFromId(action: ControllerAction) {
@@ -93,7 +93,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     private fun playPause(){
-        if(playbackViewModel.playbackState.value?.state == PlaybackState.STATE_PLAYING)
+        if(playbackViewModel.getPlaybackState().state == PlaybackState.STATE_PLAYING)
             musicController.transportControls.pause()
         else
             musicController.transportControls.play()

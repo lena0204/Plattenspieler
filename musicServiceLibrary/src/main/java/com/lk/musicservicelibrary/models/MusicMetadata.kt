@@ -37,17 +37,8 @@ data class MusicMetadata(
 
     fun isEmpty(): Boolean = id == ""
 
-    fun getDurationAsFormattedText(): String{
-        var dur = duration
-        dur /= 1000
-        val min = (dur / 60).toInt()
-        val sec = (dur % 60).toInt()
-        val s = String.format("%02d", sec)
-        return "$min:$s"
-    }
-
     fun getMediaMetadata(): MediaMetadata{
-        val b = MediaMetadata.Builder()
+        val builder = MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, id)
                 .putString(MediaMetadata.METADATA_KEY_ALBUM, album)
                 .putString(MediaMetadata.METADATA_KEY_TITLE, title)
@@ -57,11 +48,11 @@ data class MusicMetadata(
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
                 .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, nr_of_songs_left)
         if(cover != null){
-            b.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, cover)
+            builder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, cover)
         } else {
             Log.v("MusicMetadata", "Cover for $title is not available at URI: $cover_uri.")
         }
-        return b.build()
+        return builder.build()
     }
 
     fun getMediaDescription(): MediaDescription{
@@ -112,6 +103,14 @@ data class MusicMetadata(
                 albumArt = BitmapFactory.decodeResource(resources, R.mipmap.ic_no_cover)
             }
             return albumArt
+        }
+
+        fun formatMilliseconds(millis: Long) : String {
+            val seconds = millis / 1000
+            val min = (seconds / 60).toInt()
+            val sec = (seconds % 60).toInt()
+            val s = String.format("%02d", sec)
+            return "$min:$s"
         }
     }
 

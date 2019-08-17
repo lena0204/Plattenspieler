@@ -8,10 +8,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.lk.musicservicelibrary.main.*
 import com.lk.musicservicelibrary.models.*
-import com.lk.musicservicelibrary.playback.state.BasicState
-import com.lk.musicservicelibrary.playback.state.StoppedState
+import com.lk.musicservicelibrary.playback.state.*
 import com.lk.musicservicelibrary.system.MusicDataRepository
-import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
+import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
 /**
  * Erstellt von Lena am 05/04/2019.
@@ -35,7 +34,7 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
 
     init {
         playingList.value = MusicList()
-        playbackState.value = PlaybackStateBuilder.createStateForStopped()
+        playbackState.value = PlaybackStateFactory.createState(States.STOPPED)
     }
 
     fun getPlayingList(): LiveData<MusicList> = playingList

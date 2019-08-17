@@ -1,89 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ll_playing_fragment"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
+    android:background="@mipmap/ic_no_cover"
     android:backgroundTint="@color/darker"
-    android:backgroundTintMode="src_atop">
+    android:backgroundTintMode="src_atop"
+    android:padding="8dp">
 
-    <LinearLayout
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp"
-        android:layout_marginBottom="4dp"
+        android:layout_height="0dp"
+        android:background="@drawable/background_card_playing"
         android:elevation="2dp"
-        android:background="@drawable/background_card_playing">
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tv_playing_title"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="19sp"
-            android:text="@string/no_title"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="@tools:sample/cities" />
+
         <TextView
             android:id="@+id/tv_playing_artist"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textSize="15sp"
-            android:text="@string/no_title"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_playing_title"
+            tools:text="@tools:sample/cities" />
+
         <TextView
             android:id="@+id/tv_playing_album"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingBottom="3dp"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_playing_artist"
+            tools:text="@tools:sample/cities" />
+
+        <ImageView
+            android:id="@+id/iv_playing_lyrics"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:text="@string/no_title"/>
+            android:alpha="0.3"
+            android:background="@mipmap/ic_lyrics"
+            android:backgroundTint="?android:attr/colorAccent"
+            android:contentDescription="@string/iv_cd_lyrics"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/pb_song_progress" />
 
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tv_playing_progress"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="3dp">
+            android:layout_marginBottom="1dp"
+            android:gravity="end"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/pb_song_progress"
+            app:layout_constraintEnd_toStartOf="@+id/tv_playing_duration"
+            app:layout_constraintTop_toTopOf="@+id/pb_song_progress"
+            tools:text="@tools:sample/date/hhmm" />
 
-            <ImageView
-                android:contentDescription="@string/iv_cd_lyrics"
-                android:id="@+id/iv_playing_lyrics"
-                android:background="@mipmap/ic_lyrics"
-                android:backgroundTint="?android:attr/colorAccent"
-                android:alpha="0.3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <TextView
-                android:id="@+id/tv_playing_duration"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:gravity="end"/>
-            <TextView
-                android:id="@+id/tv_playing_songnumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="15sp"
-                android:layout_below="@id/tv_playing_duration"
-                android:layout_alignParentEnd="true" />
+        <TextView
+            android:id="@+id/tv_playing_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="1dp"
+            android:gravity="end"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/pb_song_progress"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toEndOf="@+id/iv_playing_lyrics"
+            app:layout_constraintTop_toTopOf="@+id/pb_song_progress"
+            tools:text="@tools:sample/date/hhmm" />
 
-        </RelativeLayout>
+        <TextView
+            android:id="@+id/tv_playing_songnumber"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_playing_duration"
+            android:layout_alignParentEnd="true"
+            android:gravity="end"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_playing_lyrics"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/iv_playing_lyrics"
+            app:layout_constraintTop_toTopOf="@+id/iv_playing_lyrics"
+            tools:text="@tools:sample/date/day_of_week" />
 
+        <ProgressBar
+            android:id="@+id/pb_song_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:progress="50"
+            android:progressTint="@color/colorAccent"
+            app:layout_constraintEnd_toStartOf="@+id/tv_playing_progress"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_playing_album" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-    <RelativeLayout
+    <ListView
+        android:id="@+id/lv_playing_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="8dp">
+        android:layout_height="0dp"
+        android:divider="@color/lv_divider"
+        android:dividerHeight="0.2dp"
+        android:textColor="@color/light_grey"
+        android:layout_margin="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
-        <ListView
-            android:id="@+id/lv_playing_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:textColor="@color/light_grey"
-            android:dividerHeight="0.2dp"
-            android:divider="@color/lv_divider">
-        </ListView>
-
-    </RelativeLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

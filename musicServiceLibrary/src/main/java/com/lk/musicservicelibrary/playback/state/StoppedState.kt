@@ -8,6 +8,7 @@ import com.lk.musicservicelibrary.playback.PlaybackCallback
 class StoppedState (playback: PlaybackCallback): BasicState(playback) {
 
     private val TAG = "StoppedState"
+    override var type: States = States.STOPPED
 
     override fun play() {
         throw UnsupportedOperationException("Can't play in stopped state")

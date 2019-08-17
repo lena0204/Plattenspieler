@@ -3,6 +3,7 @@ package com.lk.plattenspieler.fragments
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
+import android.media.session.PlaybackState
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.LayoutInflater
@@ -44,15 +45,16 @@ class PlayingFragment : Fragment(), Observer<Any>{
         setActionbarTitle()
         playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
         playbackViewModel.setObserverToAll(this, this)
-        writeMetadata(playbackViewModel.metadata.value!!)
+        writeMetadata(playbackViewModel.getMetadata())
         setPlaylist(playbackViewModel.getQueueLimitedTo30())
-        view.iv_playing_lyrics.setOnClickListener { onClickLyrics(it)}
+        view.iv_playing_lyrics.setOnClickListener { onClickLyrics()}
     }
 
     override fun onChanged(update: Any?) {
         when(update) {
             is MusicMetadata -> writeMetadata(update)
             is MusicList -> setPlaylist(playbackViewModel.getQueueLimitedTo30())
+            is PlaybackState -> fillProgressBar()
         }
     }
 
@@ -62,7 +64,7 @@ class PlayingFragment : Fragment(), Observer<Any>{
         activity?.actionBar?.title = getString(R.string.action_playing)
     }
 
-    private fun onClickLyrics(view: View?){
+    private fun onClickLyrics(){
         if (!lyrics.isNullOrEmpty()) {
             val args = createBundleForLyricsFragment()
             val lyricsf = LyricsFragment()
@@ -76,8 +78,8 @@ class PlayingFragment : Fragment(), Observer<Any>{
 
     private fun createBundleForLyricsFragment(): Bundle {
         val args = bundleOf("L" to lyrics)
-        if(playbackViewModel.metadata.value?.isEmpty() == false) {
-            args.putString("C", playbackViewModel.metadata.value!!.cover_uri)
+        if(!playbackViewModel.getMetadata().isEmpty()) {
+            args.putString("C", playbackViewModel.getMetadata().cover_uri)
         }
         return args
     }
@@ -89,7 +91,9 @@ class PlayingFragment : Fragment(), Observer<Any>{
             tv_playing_album.text = data.album
             tv_playing_songnumber.text = data.nr_of_songs_left.toString()
             tv_playing_songnumber.append(" " + getString(R.string.songs))
-            tv_playing_duration.text = data.getDurationAsFormattedText()
+            tv_playing_duration.text = " / "
+            tv_playing_duration.append(MusicMetadata.formatMilliseconds(data.duration))
+            pb_song_progress.max = data.duration.toInt()
             // TODO cover wird noch nicht gut eingesetzt weil je nachdem Bitmap oder Drawable erforderlich ist -> Factory
             var cover = Drawable.createFromPath(data.cover_uri)
             if (cover == null){
@@ -100,6 +104,12 @@ class PlayingFragment : Fragment(), Observer<Any>{
                 lyricsAbfragen(data.path)
             }
         }
+    }
+
+    private fun fillProgressBar() {
+        val position = playbackViewModel.getPlaybackState().position
+        pb_song_progress.progress = position.toInt()
+        tv_playing_progress.text = MusicMetadata.formatMilliseconds(position)
     }
 
     private fun shallShowLyrics(): Boolean

@@ -21,12 +21,10 @@ import com.lk.plattenspieler.musicbrowser.EnumActions
  */
 class PlaybackViewModel(application: Application): AndroidViewModel(application) {
 
-    var metadata = MutableLiveData<MusicMetadata>()
-    var playbackState = MutableLiveData<PlaybackState>()
-    var queue = MutableLiveData<MusicList>()
-    var controllerAction = MutableLiveData<ControllerAction>()
-
-    val app = getApplication<Application>()
+    private var metadata = MutableLiveData<MusicMetadata>()
+    private var playbackState = MutableLiveData<PlaybackState>()
+    private var queue = MutableLiveData<MusicList>()
+    private var controllerAction = MutableLiveData<ControllerAction>()
 
     private var playlistRepo: PlaylistRepository
     private val sharedPreferences =
@@ -36,7 +34,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         metadata.value = MusicMetadata()
         playbackState.value = PlaybackState.Builder().build()
         queue.value = MusicList()
-        playlistRepo = SongDBAccess(app.contentResolver)
+        playlistRepo = SongDBAccess(getApplication<Application>().contentResolver)
     }
 
     fun setObserverToAll(owner: LifecycleOwner, observer: Observer<Any>){
@@ -45,16 +43,16 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         queue.observe(owner, observer)
     }
 
-    fun getQueueLimitedTo30(): MusicList{
-        var limitedQueue = MusicList()
-        if(queue.value!!.size() > 30) {
-            for(i in 0..29){
-                limitedQueue.addItem(queue.value!!.getItemAt(i))
-            }
-        } else {
-            limitedQueue = queue.value as MusicList
-        }
-        return limitedQueue
+    fun setObserverToPlaybackState(owner: LifecycleOwner, observer: Observer<Any>){
+        playbackState.observe(owner, observer)
+    }
+
+    fun setObserverToAction(owner: LifecycleOwner, observer: Observer<Any>){
+        controllerAction.observe(owner, observer)
+    }
+
+    fun callAction(action: ControllerAction) {
+        controllerAction.value = action
     }
 
     fun restoreSavedState(controllerState: Int?){
@@ -106,4 +104,34 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
 
     fun getShuffleFromPlaybackState(): Boolean =
             playbackState.value?.extras?.getBoolean(MusicService.SHUFFLE_KEY) ?: false
+
+    fun getMetadata(): MusicMetadata {
+        return metadata.value ?: MusicMetadata()
+    }
+    fun setMetadata(data: MusicMetadata) {
+        metadata.value = data
+    }
+
+    fun getPlaybackState(): PlaybackState {
+        return playbackState.value ?: PlaybackState.Builder().build()
+    }
+    fun setPlaybackState(data: PlaybackState) {
+        playbackState.value = data
+    }
+
+    fun setQueue(data: MusicList) {
+        queue.value = data
+    }
+
+    fun getQueueLimitedTo30(): MusicList{
+        var limitedQueue = MusicList()
+        if(queue.value!!.size() > 30) {
+            for(i in 0..29){
+                limitedQueue.addItem(queue.value!!.getItemAt(i))
+            }
+        } else {
+            limitedQueue = queue.value as MusicList
+        }
+        return limitedQueue
+    }
 }

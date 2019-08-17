@@ -31,7 +31,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
 
     override fun onClick(albumid: String) {
         val action = ControllerAction(EnumActions.SHOW_ALBUM, albumid)
-        playbackViewModel.controllerAction.value = action
+        playbackViewModel.callAction(action)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

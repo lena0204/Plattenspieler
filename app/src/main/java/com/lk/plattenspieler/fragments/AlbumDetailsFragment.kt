@@ -35,7 +35,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
 
     override fun onClick(titleId: String) {
         val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = shuffleBundle(false))
-        playbackViewModel.controllerAction.value = action
+        playbackViewModel.callAction(action)
     }
 
     private fun shuffleBundle(shuffle: Boolean): Bundle {
@@ -51,7 +51,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
             val action = ControllerAction(EnumActions.SHUFFLE,
                     data.getItemAt(0).id,
                     args = shuffleBundle(true))
-            playbackViewModel.controllerAction.value = action
+            playbackViewModel.callAction(action)
         }
         mediaListViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)
         mediaListViewModel.titleList.observe(this, this)

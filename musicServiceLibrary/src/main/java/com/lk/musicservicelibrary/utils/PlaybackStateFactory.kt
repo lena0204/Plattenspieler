@@ -4,15 +4,24 @@ import android.media.session.PlaybackState
 import android.util.Log
 import androidx.core.os.bundleOf
 import com.lk.musicservicelibrary.main.MusicService
+import com.lk.musicservicelibrary.playback.state.States
 
 /**
  * Erstellt von Lena am 06/04/2019.
  */
-object PlaybackStateBuilder {
+object PlaybackStateFactory {
 
-    private val TAG = "PlaybackStateCreator"
+    private val TAG = "PlaybackStateFactory"
 
-    fun createStateForPlaying(position: Long, shuffle: Boolean): PlaybackState {
+    fun createState(state: States, position: Long = 0L, shuffle: Boolean = false): PlaybackState{
+        return when(state) {
+            States.PLAYING -> createStateForPlaying(position, shuffle)
+            States.PAUSED -> createStateForPaused(position, shuffle)
+            States.STOPPED -> createStateForStopped()
+        }
+    }
+
+    private fun createStateForPlaying(position: Long, shuffle: Boolean): PlaybackState {
         val builder = PlaybackState.Builder()
         builder.setActions(PlaybackState.ACTION_PAUSE
                 or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID
@@ -25,7 +34,7 @@ object PlaybackStateBuilder {
         return builder.build()
     }
 
-    fun createStateForPaused(position: Long, shuffle: Boolean): PlaybackState {
+    private fun createStateForPaused(position: Long, shuffle: Boolean): PlaybackState {
         val builder = PlaybackState.Builder()
         builder.setActions(PlaybackState.ACTION_PLAY
                 or PlaybackState.ACTION_PLAY_FROM_MEDIA_ID
@@ -38,7 +47,7 @@ object PlaybackStateBuilder {
         return builder.build()
     }
 
-    fun createStateForStopped(): PlaybackState {
+    private fun createStateForStopped(): PlaybackState {
         val builder = PlaybackState.Builder()
         Log.v(TAG, "Stopped state: ${PlaybackState.STATE_STOPPED}")
         builder.setActions(PlaybackState.ACTION_PLAY_FROM_MEDIA_ID)

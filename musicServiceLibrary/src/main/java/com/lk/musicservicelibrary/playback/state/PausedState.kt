@@ -1,7 +1,7 @@
 package com.lk.musicservicelibrary.playback.state
 
 import com.lk.musicservicelibrary.playback.PlaybackCallback
-import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
+import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
 /**
  * Erstellt von Lena am 05/04/2019.
@@ -9,16 +9,15 @@ import com.lk.musicservicelibrary.utils.PlaybackStateBuilder
 class PausedState (private val playback: PlaybackCallback): BasicState(playback) {
 
     private val TAG = "PausedState"
+    override var type: States = States.PAUSED
 
     override fun play() {
         val firstMetadata = playback.getPlayingList().value!!.getItemAtCurrentPlaying()
         if(firstMetadata != null) {
-            playback.getPlayer().play()
-            val shuffle = playback.getShuffleFromPlaybackState()
-            playback.setPlaybackState(
-                PlaybackStateBuilder.createStateForPlaying(0L, shuffle)
-            )
+            val position = playback.getPlayer().getCurrentPosition()
+            playback.getPlayer().play(position)
             playback.setPlayerState(PlayingState(playback))
+            updateState(States.PLAYING, position.toLong())
         }
     }
 
@@ -30,8 +29,6 @@ class PausedState (private val playback: PlaybackCallback): BasicState(playback)
         val skippedToNext = skipToNextOrStop()
         if(skippedToNext) {
             playback.setPlayerState(PausedState(playback))
-        } else {
-            playback.setPlayerState(StoppedState(playback))
         }
     }
 

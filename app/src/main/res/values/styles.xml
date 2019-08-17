@@ -63,4 +63,12 @@
         <item name="android:background">@color/transparent</item>
     </style>
 
+    <style name="ImageButtonStyle1">
+        <item name="android:tint">?android:attr/textColor</item>
+        <item name="android:tintMode">src_atop</item>
+        <item name="android:alpha">1</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:background">@color/transparent</item>
+    </style>
+
 </resources>
