@@ -1,4 +1,4 @@
-package com.lk.musicservicelibrary;
+package com.lk.musicservicelibrary.tests;
 
 import org.junit.Test;
 

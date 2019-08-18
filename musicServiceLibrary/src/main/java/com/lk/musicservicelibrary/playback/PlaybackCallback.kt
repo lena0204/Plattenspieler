@@ -12,6 +12,7 @@ import com.lk.musicservicelibrary.playback.state.*
 import com.lk.musicservicelibrary.system.MusicDataRepository
 import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
+
 /**
  * Erstellt von Lena am 05/04/2019.
  */
@@ -19,15 +20,13 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     MediaSession.Callback(),
     MusicPlayer.PlaybackFinished {
 
-    // private val TAG = "MusicPlayer"
-
     private var playerState: BasicState =
         StoppedState(this)
     private var commandResolver = CommandResolver(this)
 
     private var playingList = MutableLiveData<MusicList>()
     private var playbackState = MutableLiveData<PlaybackState>()
-    private var player = SimpleMusicPlayer(this)
+    private var player: MusicPlayer = SimpleMusicPlayer(this)
     private var queriedMediaList = MusicList()
 
     // TODO check audiofocus
@@ -64,6 +63,7 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     fun getDataRepository(): MusicDataRepository = dataRepository
 
     fun getPlayer(): MusicPlayer = player
+    fun setPlayer(player: MusicPlayer) { this.player = player }
 
     override fun playbackFinished() {
         playerState.skipToNext()
