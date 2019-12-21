@@ -9,6 +9,7 @@ import android.os.Build
 import com.lk.musicservicelibrary.R
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.CoverLoader
 
 /**
  * Erstellt von Lena am 02.09.18.
@@ -58,10 +59,9 @@ class MusicNotificationBuilder(private val service: MusicService) {
         notificationBuilder.setSubText(songsLeft)
         notificationBuilder.setSmallIcon(R.drawable.ic_stat_musicnotification)
         if(currentMusicMetadata.cover_uri != ""){
-            val cover = BitmapFactory.decodeFile(currentMusicMetadata.cover_uri)
-            if (cover != null){
-                notificationBuilder.setLargeIcon(cover)
-            }
+            val cover = CoverLoader.decodeAlbumCover(service.applicationContext,
+            currentMusicMetadata.content_uri, currentMusicMetadata.cover_uri)
+            notificationBuilder.setLargeIcon(cover)
         }
 
     }

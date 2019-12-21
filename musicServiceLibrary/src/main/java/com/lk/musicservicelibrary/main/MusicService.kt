@@ -14,9 +14,12 @@ import androidx.core.content.getSystemService
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import com.lk.musicservicelibrary.R
+import com.lk.musicservicelibrary.database.PlaylistRepository
+import com.lk.musicservicelibrary.database.room.PlaylistRoomRepository
 import com.lk.musicservicelibrary.models.*
 import com.lk.musicservicelibrary.playback.PlaybackCallback
 import com.lk.musicservicelibrary.system.*
+import com.lk.musicservicelibrary.utils.SharedPrefsWrapper
 
 /**
  * Erstellt von Lena am 02.09.18.
@@ -25,12 +28,11 @@ import com.lk.musicservicelibrary.system.*
  */
 class MusicService : MediaBrowserService(), Observer<Any> {
 
-    // TODO MediaScan scheint nicht vernünftig zu funktionieren, manuelles Laden der Cover könnte notwendig werden; ähnlich zu Eleven; scheint auf dem Pixel aktuell zu funktionieren ...
-
     private val TAG = MusicService::class.java.simpleName
     private val NOTIFICATION_ID = 9880
 
     private lateinit var musicDataRepo: MusicDataRepository
+    private lateinit var playlistRepo: PlaylistRepository
     private lateinit var session: MediaSession
     private lateinit var sessionCallback: PlaybackCallback
 
@@ -46,6 +48,7 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         const val ACTION_MEDIA_NEXT = "com.lk.pl-ACTION_MEDIA_NEXT"
         const val SHUFFLE_KEY = "shuffle"
         const val QUEUE_KEY = "queue"
+        const val METADATA_KEY = "metadata"
         var PLAYBACK_STATE = PlaybackState.STATE_STOPPED
     }
 
@@ -58,9 +61,11 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         registerPlaybackObserver()
     }
 
+    // - - - Setup - - -
     private fun initializeComponents() {
         musicDataRepo = LocalMusicFileRepository(this.applicationContext)
-        sessionCallback = PlaybackCallback(musicDataRepo)
+        playlistRepo = PlaylistRoomRepository(this.application)
+        sessionCallback = PlaybackCallback(musicDataRepo, playlistRepo, this.applicationContext)
         notificationManager = this.getSystemService<NotificationManager>() as NotificationManager
         notificationBuilder = MusicNotificationBuilder(this)
         nbReceiver = NotificationActionReceiver(sessionCallback)
@@ -91,28 +96,15 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         sessionCallback.getPlayingList().observeForever(this)
     }
 
-    private fun startServiceIfNecessary() {
-        if (!serviceStarted) {
-            this.startService(Intent(applicationContext,
-                com.lk.musicservicelibrary.main.MusicService::class.java))
-            Log.d(TAG, "started service")
-            serviceStarted = true
-        }
-        if (!session.isActive)
-            session.isActive = true
-    }
-
-
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?)
-            : BrowserRoot {
+    // - - - Media Browser capabilities - - -
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
         if (this.packageName == clientPackageName) {
             return BrowserRoot(MusicDataRepository.ROOT_ID, null)
         }
         return BrowserRoot("", null)
     }
 
-    override fun onLoadChildren(parentId: String,
-                         result: Result<MutableList<MediaBrowser.MediaItem>>) {
+    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowser.MediaItem>>) {
         when {
             parentId == MusicDataRepository.ROOT_ID -> {
                 result.sendResult(musicDataRepo.queryAlbums().getMediaItemList())
@@ -131,22 +123,18 @@ class MusicService : MediaBrowserService(), Observer<Any> {
         return playingList.getMediaItemList()
     }
 
+    // - - - Clean up - - -
     override fun onUnbind(intent: Intent?): Boolean {
         val bool = super.onUnbind(intent)
         Log.v(TAG, "onUnbind")
         val state = session.controller.playbackState?.state
         if (state == PlaybackState.STATE_PAUSED) {
             Log.d(TAG, "Playback paused ($state), so stop")
+            val metadata = MusicMetadata.createFromMediaMetadata(session.controller.metadata!!)
+            playlistRepo.savePlayingQueue(sessionCallback.getPlayingList().value!!, metadata)
             sessionCallback.onStop()
         }
         return bool
-    }
-
-    private fun stopService() {
-        Log.d(TAG, "stopService in service")
-        this.stopSelf()
-        serviceStarted = false
-        this.stopForeground(true)
     }
 
     override fun onDestroy() {
@@ -176,13 +164,22 @@ class MusicService : MediaBrowserService(), Observer<Any> {
 
     private fun updatePlayingList(playingList: MusicList) {
         val playingTitle = playingList.getItemAtCurrentPlaying()
-        val shortQueue = getRealQueue(playingList)
+        val shortQueue = getShortenedQueue(playingList)
         if(playingTitle != null ){
             playingTitle.nr_of_songs_left = shortQueue.count().toLong()
             session.setMetadata(playingTitle.getMediaMetadata())
             sendBroadcastForLightningLauncher(playingTitle)
         }
         session.setQueue(shortQueue.getQueueItemList())
+    }
+
+    private fun getShortenedQueue(playingList: MusicList) : MusicList {
+        val shortedQueue = MusicList()
+        val firstAfterPlaying = playingList.getCurrentPlaying() + 1
+        for (i in firstAfterPlaying until playingList.size()) {
+            shortedQueue.addItem(playingList.getItemAt(i))
+        }
+        return shortedQueue
     }
 
     private fun sendBroadcastForLightningLauncher(metadata: MusicMetadata) {
@@ -199,48 +196,54 @@ class MusicService : MediaBrowserService(), Observer<Any> {
     private fun updatePlaybackState(state: PlaybackState) {
         PLAYBACK_STATE = state.state
         session.setPlaybackState(state)
-        updateNotification(state)
-
-        if(PLAYBACK_STATE == PlaybackState.STATE_PAUSED){
-            this.stopForeground(false)
-        }
+        adaptServiceToPlaybackState()
     }
 
-    private fun getRealQueue(playingList: MusicList) : MusicList {
-        val shortedQueue = MusicList()
-        val firstAfterPlaying = playingList.getCurrentPlaying() + 1
-        for (i in firstAfterPlaying until playingList.size()) {
-            shortedQueue.addItem(playingList.getItemAt(i))
-        }
-        return shortedQueue
-    }
-
-    private fun updateNotification(state: PlaybackState) {
-        val shuffleOn = state.extras?.getBoolean(SHUFFLE_KEY) ?: false
-        val playing = PLAYBACK_STATE ==  PlaybackState.STATE_PLAYING
-        val metadata = if(session.controller.metadata != null) {
-            MusicMetadata.createFromMediaMetadata(session.controller.metadata!!)
-        } else {
-            MusicMetadata()
-        }
-        launchNotification(metadata, shuffleOn, playing)
-    }
-
-    private fun launchNotification(metadata: MusicMetadata, shuffleOn: Boolean, startInForeground: Boolean) {
+    private fun adaptServiceToPlaybackState() {
         when (PLAYBACK_STATE) {
-            PlaybackState.STATE_PLAYING, PlaybackState.STATE_PAUSED -> {
-                val noti = notificationBuilder.showNotification(PLAYBACK_STATE, metadata, shuffleOn)
-                if(startInForeground){
-                    startServiceIfNecessary()
-                    this.startForeground(NOTIFICATION_ID, noti)
-                } else {
-                    notificationManager.notify(NOTIFICATION_ID, noti)
-                }
+            PlaybackState.STATE_PLAYING -> adaptToPlayingPaused()
+            PlaybackState.STATE_PAUSED -> {
+                adaptToPlayingPaused()
+                this.stopForeground(false)
             }
             PlaybackState.STATE_STOPPED -> {
                 notificationManager.cancel(NOTIFICATION_ID)
                 stopService()
             }
         }
+    }
+
+    private fun adaptToPlayingPaused() {
+        val shuffleOn = SharedPrefsWrapper.readShuffle(applicationContext)
+        val metadata = if(session.controller.metadata != null) {
+            MusicMetadata.createFromMediaMetadata(session.controller.metadata!!)
+        } else {
+            MusicMetadata()
+        }
+        val noti = notificationBuilder.showNotification(PLAYBACK_STATE, metadata, shuffleOn)
+        if(PLAYBACK_STATE == PlaybackState.STATE_PLAYING){
+            startServiceIfNecessary()
+            this.startForeground(NOTIFICATION_ID, noti)
+        } else {
+            notificationManager.notify(NOTIFICATION_ID, noti)
+        }
+    }
+
+    private fun startServiceIfNecessary() {
+        if (!serviceStarted) {
+            this.startService(Intent(applicationContext,
+                com.lk.musicservicelibrary.main.MusicService::class.java))
+            Log.d(TAG, "started service")
+            serviceStarted = true
+        }
+        if (!session.isActive)
+            session.isActive = true
+    }
+
+    private fun stopService() {
+        Log.d(TAG, "stopService in service")
+        this.stopSelf()
+        serviceStarted = false
+        this.stopForeground(true)
     }
 }

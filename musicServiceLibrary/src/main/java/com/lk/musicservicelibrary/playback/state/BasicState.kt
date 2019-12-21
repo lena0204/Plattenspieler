@@ -1,13 +1,10 @@
 package com.lk.musicservicelibrary.playback.state
 
-import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.playback.*
-import com.lk.musicservicelibrary.utils.PlaybackStateFactory
-import com.lk.musicservicelibrary.utils.QueueCreator
+import com.lk.musicservicelibrary.utils.*
 
 /**
  * Erstellt von Lena am 05/04/2019.
@@ -24,11 +21,21 @@ abstract class BasicState(private var playback: PlaybackCallback) {
     abstract fun skipToNext()
     abstract fun skipToPrevious()
 
-    open fun playFromId(mediaId: String?, extras: Bundle?) {
-        extras?.classLoader = this.javaClass.classLoader
-        val shuffle = extras?.getBoolean(MusicService.SHUFFLE_KEY) ?: false
+    open fun prepareFromMediaList() {
+        val shuffle = SharedPrefsWrapper.readShuffle(playback.context)
+        val playingList = playback.getQueriedMediaList()
+        prepareCurrentPlayingItem(playingList, false)
+        playback.setPlayingList(playingList)
+        playback.setPlaybackState(
+            PlaybackStateFactory.createState(States.PAUSED, 0L, shuffle)
+        )
+        playback.setPlayerState(PausedState(playback))
+    }
+
+    open fun playFromId(mediaId: String?) {
+        val shuffle = SharedPrefsWrapper.readShuffle(playback.context)
         val playingList = createPlayingList(mediaId, shuffle)
-        playCurrentPlayingItem(playingList)
+        prepareCurrentPlayingItem(playingList, true)
         playback.setPlayingList(playingList)
         playback.setPlaybackState(
             PlaybackStateFactory.createState(States.PLAYING, 0L, shuffle)
@@ -50,13 +57,22 @@ abstract class BasicState(private var playback: PlaybackCallback) {
         return playingList
     }
 
-    private fun playCurrentPlayingItem(playingList: MusicList) {
+    private fun prepareCurrentPlayingItem(playingList: MusicList, startPlaying: Boolean) {
         val currentMetadata = playingList.getItemAtCurrentPlaying()
         if(currentMetadata != null && currentMetadata.path != ""){
-            playback.getPlayer().preparePlayer(currentMetadata.path)
+            val player = playback.getPlayer()
+            player.preparePlayer()
+            val fd = this.playback.context.contentResolver
+                .openAssetFileDescriptor(currentMetadata.content_uri, "r")
+            Log.d(TAG, "$fd")
+            if(fd != null) {
+                player.playMedia(fd, startPlaying)
+            } else {
+                player.playMedia(currentMetadata.path, startPlaying)
+            }
         } else {
             // TODO handle Error? -> should provoke a user feedback
-            Log.e(TAG, "FirstMetadata is null!! List has ${playingList.count()} items.")
+            Log.e(TAG, "FirstMetadata ($currentMetadata) is null or has an empty path!! List has ${playingList.count()} items.")
         }
     }
 
@@ -65,14 +81,15 @@ abstract class BasicState(private var playback: PlaybackCallback) {
     }
 
     private fun updateRoutine(): Runnable {
+        // TODO stop runnable early enough
         return Runnable {
-            Log.v(TAG,"run...")
             val position = playback.getPlayer().getCurrentPosition()
             val type = playback.getPlayerState().type   // muss über Playback abgefragt werden, da sonst immer Stopped aufgerufen wird
             updateState(type, position.toLong())
         }
     }
 
+    // TODO Update Database regularly to always have to up-to-date data in there
     protected fun skipToNextOrStop(): Boolean {
         val playlist = playback.getPlayingList().value!!
         Log.v(TAG, "$playlist")
@@ -82,11 +99,12 @@ abstract class BasicState(private var playback: PlaybackCallback) {
 
             playback.getPlayer().resetPosition()
             if(playback.getPlayerState().type == States.PLAYING) {
-                playCurrentPlayingItem(playlist)
+                prepareCurrentPlayingItem(playlist, true)
             }
             updateState(playback.getPlayerState().type)
             true
         } else {
+            SharedPrefsWrapper.writeShuffle(playback.context, false)
             stop()
             false
         }
@@ -104,7 +122,7 @@ abstract class BasicState(private var playback: PlaybackCallback) {
             playlist.setCurrentPlaying(playlist.getCurrentPlaying() - 1)
             playback.setPlayingList(playlist)
             if(playback.getPlayerState().type == States.PLAYING) {
-                playCurrentPlayingItem(playlist)
+                prepareCurrentPlayingItem(playlist, true)
             }
         }
         updateState(playback.getPlayerState().type)

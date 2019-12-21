@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.CoverLoader
 import com.lk.plattenspieler.main.ThemeChanger
 import com.lk.plattenspieler.musicbrowser.ControllerAction
 import com.lk.plattenspieler.musicbrowser.EnumActions
@@ -45,7 +46,9 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
         mediaViewModel.albumList.observe(this, this)
         playbackViewModel = ViewModelProviders.of(requireActivity()).get(PlaybackViewModel::class.java)
         setTitleInActionbar()
-        setupRecyclerView(mediaViewModel.albumList.value!!)
+        if(mediaViewModel.albumList.value != null) {
+            setupRecyclerView(mediaViewModel.albumList.value!!)
+        }
     }
 
     override fun onChanged(albumList: MusicList?) {
@@ -68,8 +71,7 @@ class AlbumFragment: Fragment(), AlbumAdapter.Click, Observer<MusicList> {
         val data = MusicList()
         for (item in list) {
             if (!item.isEmpty()) {
-                item.id = item.id.replace("ALBUM-", "")
-                item.cover = MusicMetadata.decodeAlbumCover(item.cover_uri, resources)
+                item.cover = CoverLoader.decodeAlbumCover(requireContext(), item.content_uri, item.cover_uri)
                 item.allTracksFormatted = item.num_tracks_album.toString() + " " + resources.getString(R.string.songs)
                 data.addItem(item)
             }

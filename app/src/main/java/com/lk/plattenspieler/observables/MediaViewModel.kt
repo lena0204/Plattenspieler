@@ -12,6 +12,11 @@ class MediaViewModel(application: Application): AndroidViewModel(application) {
     var albumList = MutableLiveData<MusicList>()
     var titleList = MutableLiveData<MusicList>()
 
+    init {
+        albumList.value = MusicList()
+        titleList.value = MusicList()
+    }
+
     fun setObserversToAll(owner: LifecycleOwner, observer: Observer<Any>){
         albumList.observe(owner, observer)
         titleList.observe(owner, observer)

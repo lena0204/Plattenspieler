@@ -24,10 +24,6 @@
                 <action android:name="com.lk.plattenspieler.ACTION_LAUNCH_PL"/>
             </intent-filter>
         </activity>
-        <provider
-            android:authorities="com.lk.plattenspieler.contentprovider"
-            android:name="com.lk.musicservicelibrary.database.SongContentProvider"
-            android:exported="false"/>
         <service android:name="com.lk.musicservicelibrary.main.MusicService"
             android:exported="false">
             <intent-filter>

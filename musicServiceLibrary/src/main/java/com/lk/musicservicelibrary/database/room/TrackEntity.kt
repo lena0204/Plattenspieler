@@ -1,4 +1,4 @@
-package com.lk.musicservicelibrary.database
+package com.lk.musicservicelibrary.database.room
 
 import androidx.annotation.NonNull
 import androidx.room.*
@@ -8,11 +8,14 @@ import com.lk.musicservicelibrary.models.MusicMetadata
  * Erstellt von Lena am 02/04/2019.
  */
 @Entity(tableName = "playlist")
-class PlayingItemEntity {
+class TrackEntity {
 
-    @PrimaryKey(autoGenerate = false)
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "music_id")
-    var id: String = ""
+    var id: Int = 0
+
+    @ColumnInfo(name = "music_media_id")
+    var mediaId: String  = ""
 
     @ColumnInfo(name = "music_title")
     @NonNull
@@ -27,30 +30,26 @@ class PlayingItemEntity {
     var artist: String = ""
 
     @ColumnInfo(name = "music_num_tracks_left")
-    @NonNull
-    var numTracksLeft: Long = 0
+    var numTracksLeft: Long = 0L
 
     @ColumnInfo(name = "music_duration")
-    @NonNull
     var duration: Long = 0L
 
     @ColumnInfo(name = "music_cover_uri")
-    @NonNull
     var coverUri: String = ""
 
     @ColumnInfo(name = "music_file_uri")
-    @NonNull
     var fileUri: String = ""
 
     override fun toString(): String {
-        return "{id: $id, title: $title, album: $album, artist: $artist, "
+        return "{id: $id, title: $title, album: $album, artist: $artist}"
     }
 
     companion object {
 
-        fun createPlayingItemEntity(metadata: MusicMetadata): PlayingItemEntity {
-            val item = PlayingItemEntity()
-            item.id = metadata.id
+        fun createTrackEntity(metadata: MusicMetadata): TrackEntity {
+            val item = TrackEntity()
+            item.mediaId = metadata.id
             item.title = metadata.title
             item.album = metadata.album
             item.artist = metadata.artist
@@ -61,9 +60,9 @@ class PlayingItemEntity {
             return item
         }
 
-        fun createMusicMetadata(item: PlayingItemEntity): MusicMetadata {
+        fun createMusicMetadata(item: TrackEntity): MusicMetadata {
             val metadata = MusicMetadata()
-            metadata.id = item.id
+            metadata.id = item.mediaId
             metadata.title = item.title
             metadata.album = item.album
             metadata.artist = item.artist

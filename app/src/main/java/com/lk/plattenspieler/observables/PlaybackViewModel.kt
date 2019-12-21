@@ -3,23 +3,20 @@ package com.lk.plattenspieler.observables
 import android.app.Application
 import android.media.session.PlaybackState
 import android.util.Log
-import androidx.core.content.edit
-import androidx.core.os.bundleOf
 import androidx.lifecycle.*
-import androidx.preference.PreferenceManager
-import com.lk.musicservicelibrary.database.PlaylistRepository
-import com.lk.musicservicelibrary.database.SongDBAccess
-import com.lk.musicservicelibrary.main.MusicService
+import com.lk.musicservicelibrary.database.*
+import com.lk.musicservicelibrary.database.room.PlaylistRoomRepository
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
-import com.lk.plattenspieler.main.MainActivityNew
+import com.lk.musicservicelibrary.utils.SharedPrefsWrapper
 import com.lk.plattenspieler.musicbrowser.ControllerAction
-import com.lk.plattenspieler.musicbrowser.EnumActions
 
 /**
  * Erstellt von Lena am 09.09.18.
  */
 class PlaybackViewModel(application: Application): AndroidViewModel(application) {
+
+    private val TAG = "PlaybackViewModel"
 
     private var metadata = MutableLiveData<MusicMetadata>()
     private var playbackState = MutableLiveData<PlaybackState>()
@@ -27,14 +24,12 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     private var controllerAction = MutableLiveData<ControllerAction>()
 
     private var playlistRepo: PlaylistRepository
-    private val sharedPreferences =
-            PreferenceManager.getDefaultSharedPreferences(application)
 
     init {
         metadata.value = MusicMetadata()
         playbackState.value = PlaybackState.Builder().build()
         queue.value = MusicList()
-        playlistRepo = SongDBAccess(getApplication<Application>().contentResolver)
+        playlistRepo = PlaylistRoomRepository(application)
     }
 
     fun setObserverToAll(owner: LifecycleOwner, observer: Observer<Any>){
@@ -55,55 +50,19 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         controllerAction.value = action
     }
 
-    fun restoreSavedState(controllerState: Int?){
-        val wasQueueSaved = sharedPreferences.getBoolean(MainActivityNew.PREF_PLAYING, false)
-        Log.d("PlaybackViewModel", "restoreSavedState: $wasQueueSaved")
-        if(controllerState != PlaybackState.STATE_PLAYING && controllerState != PlaybackState.STATE_PAUSED){
-            if(wasQueueSaved)
-                restoreQueue()
-        } else {
-            val action = ControllerAction(EnumActions.IS_PLAYING)
-            controllerAction.postValue(action)
-        }
-    }
-
-    private fun restoreQueue(){
-        val music = playlistRepo.restoreFirstItem()
-        if(music == null){
-            sharedPreferences.edit { putBoolean(MainActivityNew.PREF_PLAYING, false) }
-        } else {
-            sendFirstItemToController(music.id)
-            sendQueueIfAvailable()
-        }
-    }
-
-    private fun sendFirstItemToController(titleId: String){
-        val args = bundleOf(MusicService.SHUFFLE_KEY to getShufflePreference())
-        controllerAction.postValue(ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = args))
-        controllerAction.postValue(ControllerAction(EnumActions.PLAY_PAUSE, titleId, args = args))
-    }
-
-    private fun sendQueueIfAvailable(){
-        val queueRestored = playlistRepo.restorePlayingQueue()
-        if(queueRestored != null){
-            Log.v("ViewModel", "sendQueue")
-            val args = bundleOf(MusicService.SHUFFLE_KEY to queueRestored)
-            controllerAction.postValue(ControllerAction(EnumActions.QUEUE_RESTORED, args = args))
-        }
-    }
-
+    // TODO über Commands lösen anstatt von direktem Zugriff
     fun saveQueue(){
         if(!queue.value!!.isEmpty()) {
-            Log.d("ViewModel", "saveQueue")
+            Log.d(TAG, "saveQueue")
             playlistRepo.savePlayingQueue(queue.value!!, metadata.value!!)
+        } else {
+            Log.d(TAG, "just delete playlist")
+            playlistRepo.deletePlaylist()
         }
     }
 
     private fun getShufflePreference(): Boolean
-            = sharedPreferences.getBoolean(MainActivityNew.PREF_SHUFFLE,false)
-
-    fun getShuffleFromPlaybackState(): Boolean =
-            playbackState.value?.extras?.getBoolean(MusicService.SHUFFLE_KEY) ?: false
+            = SharedPrefsWrapper.readShuffle(this.getApplication())
 
     fun getMetadata(): MusicMetadata {
         return metadata.value ?: MusicMetadata()

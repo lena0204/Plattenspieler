@@ -3,6 +3,7 @@
     <string name="action_playing">Wiedergabe</string>
     <string name="action_lyrics">Liedtext</string>
     <string name="songs">Lieder</string>
+    <string name="songs_left">Lieder noch</string>
 
     <!-- Menü -->
     <string name="menu_dark_light">Hell / Dunkel</string>

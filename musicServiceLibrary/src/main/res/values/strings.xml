@@ -1,7 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Music Service Library</string>
 
-    <string name="queue_title">Wiedergabeliste</string>
+    <string name="app_name">Music service library</string>
+    <string name="queue_title">Playing queue</string>
+    <string name="notification_songs_left">songs left</string>
 
-    <string name="notification_songs_left">Lieder noch</string>
+
 </resources>

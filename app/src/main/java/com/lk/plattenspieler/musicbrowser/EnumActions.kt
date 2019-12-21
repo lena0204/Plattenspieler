@@ -5,17 +5,14 @@ package com.lk.plattenspieler.musicbrowser
  */
 enum class EnumActions {
 
-    IS_PLAYING,
-    PREPARE_FROM_ID,
     PLAY_FROM_ID,
     PLAY_PAUSE,
     NEXT,
     PREVIOUS,
     STOP,
-    QUEUE,
-    QUEUE_RESTORED,
     SHUFFLE,
     SHUFFLE_ALL,
-    SHOW_ALBUM
+    SHOW_ALBUM,
+    DONE
 
 }

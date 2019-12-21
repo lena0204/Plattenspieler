@@ -9,7 +9,8 @@ import com.lk.musicservicelibrary.models.MusicMetadata
 interface PlaylistRepository {
 
     fun savePlayingQueue(playingQueue: MusicList, playingMetadata: MusicMetadata)
-    fun restoreFirstItem(): MusicMetadata?
-    fun restorePlayingQueue(): MusicList?
+    fun restorePlayingQueue(): MusicList
+    fun hasPlaylist(): Boolean
+    fun deletePlaylist()
 
 }

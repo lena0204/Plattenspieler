@@ -2,8 +2,7 @@ package com.lk.musicservicelibrary.tests
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.lk.musicservicelibrary.helpers.AssertPlayback
-import com.lk.musicservicelibrary.mocks.MockMusicPlayer
-import com.lk.musicservicelibrary.mocks.MockMusicRepository
+import com.lk.musicservicelibrary.mocks.*
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.musicservicelibrary.playback.PlaybackCallback
@@ -23,6 +22,7 @@ class PausedStateTest {
     private val mockPlayer = MockMusicPlayer()
     private val mockRepo = MockMusicRepository()
     private val playlist = createPlaylist()
+    private val mockPlaylistRepo = MockPlaylistRepository()
 
     private lateinit var playback: PlaybackCallback
     private lateinit var assertPlayback: AssertPlayback
@@ -44,7 +44,7 @@ class PausedStateTest {
     }
 
     private fun prepareBeforeEachTest(mediaId: String) {
-        playback = PlaybackCallback(mockRepo)
+        playback = PlaybackCallback(mockRepo, mockPlaylistRepo)
         assertPlayback = AssertPlayback(playback)
         playback.setPlayer(mockPlayer)
         playback.setQueriedMediaList(playlist)

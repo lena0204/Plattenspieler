@@ -21,4 +21,5 @@ enum class EnumAudioFocus {
 object Commands {
     const val ADD_QUEUE: String = "addQueue"
     const val ADD_ALL = "addAll"
+    const val RESTORE_QUEUE = "restoreQueue"
 }

@@ -3,7 +3,8 @@
 
     <string name="app_name">Gramophone</string>
     <string name="action_playing">Playback</string>
-    <string name="songs">Songs</string>
+    <string name="songs">songs</string>
+    <string name="songs_left">songs left</string>
     <string name="toast_no_permission">No permission to read the storage,
         therefore no songs can be shown.</string>
 

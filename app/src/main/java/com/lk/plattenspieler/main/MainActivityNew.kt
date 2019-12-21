@@ -8,18 +8,18 @@ import android.media.AudioManager
 import android.media.browse.MediaBrowser
 import android.media.session.PlaybackState
 import android.os.*
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.os.bundleOf
-import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.transaction
+import androidx.fragment.app.*
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.preference.PreferenceManager
 import com.lk.musicservicelibrary.models.MusicList
+import com.lk.musicservicelibrary.utils.SharedPrefsWrapper
 
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.fragments.*
@@ -39,12 +39,10 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
     // TODO auf ConstraintLayout umstellen
 
     companion object {
-        const val PREF_PLAYING = "playing"
         const val PREF_DESIGN = "design"
-        const val PREF_SHUFFLE = "shuffle"
         // not used currently -- const val PREF_LYRICS = "lyrics"
         fun isVersionGreaterThan(versionCode: Int): Boolean
-            = Build.VERSION.SDK_INT > versionCode
+            = Build.VERSION.SDK_INT >= versionCode
     }
 
     private val TAG = "com.lk.pl-MainActNew"
@@ -103,13 +101,13 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     private fun setupMusicBar(){
         hideBar()
-        supportFragmentManager.transaction {
+        supportFragmentManager.commit {
             replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
         }
         val pf = PlayingFragment()
         fl_main_bar.setOnClickListener {
             if(!pf.isVisible){
-                supportFragmentManager.transaction {
+                supportFragmentManager.commit {
                     addToBackStack(null)
                     replace(R.id.fl_main_content, pf, "TAG_PLAYING")
                 }
@@ -135,20 +133,18 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
                 MediaBrowser.MediaItem.FLAG_BROWSABLE -> showAlbums()
                 MediaBrowser.MediaItem.FLAG_PLAYABLE -> showTitles()
             }
-        } else if (update is PlaybackState) {
-            if(update.state == PlaybackState.STATE_STOPPED) {
-                hideBar()
-                // TODO Should also close PlayingFragment if open
-            }
+        } else if (update is PlaybackState && update.state == PlaybackState.STATE_STOPPED) {
+            hideBar()
+            // TODO Should also close PlayingFragment if open
         }
     }
 
     private fun showAlbums(){
-        supportFragmentManager.transaction { replace(R.id.fl_main_content, AlbumFragment()) }
+        supportFragmentManager.commit { replace(R.id.fl_main_content, AlbumFragment()) }
     }
 
     private fun showTitles(){
-        supportFragmentManager.transaction {
+        supportFragmentManager.commit {
             addToBackStack(null)
             replace(R.id.fl_main_content, AlbumDetailsFragment())
         }
@@ -231,6 +227,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
             R.id.menu_settings -> launchPreferences()
             R.id.menu_shuffle_all -> {
                 val action = ControllerAction(EnumActions.SHUFFLE_ALL)
+                SharedPrefsWrapper.writeShuffle(this.applicationContext, true)
                 playbackViewModel.callAction(action)
             }
             R.id.menu_remove_playing -> {
@@ -245,7 +242,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
     private fun launchPreferences(){
         val pf = PrefFragment()
         pf.arguments = prepareBundleForPrefFragment()
-        supportFragmentManager.transaction {
+        supportFragmentManager.commit {
             addToBackStack(null)
             replace(R.id.fl_main_content, pf, "PrefFragment")
         }

@@ -2,10 +2,13 @@ package com.lk.plattenspieler.fragments
 
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.media.session.PlaybackState
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +19,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.CoverLoader
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.observables.PlaybackViewModel
 import com.lk.plattenspieler.utils.LyricsAccess
@@ -94,12 +98,9 @@ class PlayingFragment : Fragment(), Observer<Any>{
             tv_playing_duration.text = " / "
             tv_playing_duration.append(MusicMetadata.formatMilliseconds(data.duration))
             pb_song_progress.max = data.duration.toInt()
-            // TODO cover wird noch nicht gut eingesetzt weil je nachdem Bitmap oder Drawable erforderlich ist -> Factory
-            var cover = Drawable.createFromPath(data.cover_uri)
-            if (cover == null){
-                cover = resources.getDrawable(R.mipmap.ic_no_cover, activity?.theme)
-            }
-            ll_playing_fragment.background = cover
+            val bitmapCover = CoverLoader.decodeAlbumCover(requireContext(),
+                    data.content_uri, data.cover_uri, 500)
+            ll_playing_fragment.background = BitmapDrawable(resources, bitmapCover)
             if(shallShowLyrics()) {
                 lyricsAbfragen(data.path)
             }
@@ -118,7 +119,8 @@ class PlayingFragment : Fragment(), Observer<Any>{
     private fun lyricsAbfragen(filepath: String){
         iv_playing_lyrics.alpha = 0.3f
         this.lyrics = null
-        val texte = LyricsAccess.readLyrics(filepath)
+        // PROBLEM_ Lyrics kein direkter Zugriff mehr auf die Datei möglich
+        val texte = "" // LyricsAccess.readLyrics(filepath)
         if(texte != ""){
             this.lyrics = texte
             iv_playing_lyrics.alpha = 1.0f

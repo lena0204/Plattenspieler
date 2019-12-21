@@ -12,16 +12,22 @@ import com.lk.plattenspieler.observables.PlaybackViewModel
  */
 class MetadataCallback(private val viewModel: PlaybackViewModel): MediaController.Callback() {
 
-    override fun onMetadataChanged(metadata: MediaMetadata) {
-        viewModel.setMetadata(MusicMetadata.createFromMediaMetadata(metadata))
+    override fun onMetadataChanged(metadata: MediaMetadata?) {
+        if(metadata != null) {
+            viewModel.setMetadata(MusicMetadata.createFromMediaMetadata(metadata))
+        }
     }
 
-    override fun onPlaybackStateChanged(state: PlaybackState) {
-        viewModel.setPlaybackState(state)
+    override fun onPlaybackStateChanged(state: PlaybackState?) {
+        if(state != null) {
+            viewModel.setPlaybackState(state)
+        }
     }
 
-    override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>) {
-        viewModel.setQueue(MusicList.createListFromQueue(queue))
+    override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>?) {
+        if(queue != null) {
+            viewModel.setQueue(MusicList.createListFromQueue(queue))
+        }
     }
 
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.utils.EnumTheme
@@ -46,8 +47,8 @@ class PrefFragment: PreferenceFragmentCompat() {
             losSupport && isLosThemeEnabled(sp) -> setStandardThemeEnabled(false)
             losSupport && !isLosThemeEnabled(sp) -> setStandardThemeEnabled(true)
             !losSupport -> {
-                findPreference(PREF_LOS).isEnabled = false
-                findPreference(PREF_LOS).setSummary(R.string.pref_themelos_unsupported)
+                findPreference<SwitchPreference>(PREF_LOS)?.isEnabled = false
+                findPreference<SwitchPreference>(PREF_LOS)?.setSummary(R.string.pref_themelos_unsupported)
             }
         }
     }
@@ -55,8 +56,8 @@ class PrefFragment: PreferenceFragmentCompat() {
     private fun isLosThemeEnabled(sp: SharedPreferences): Boolean = sp.getBoolean(PREF_LOS, false)
 
     private fun setStandardThemeEnabled(enabled: Boolean){
-        findPreference(PREF_COLOR).isEnabled = enabled
-        findPreference(PREF_DARK).isEnabled = enabled
+        findPreference<SwitchPreference>(PREF_COLOR)?.isEnabled = enabled
+        findPreference<SwitchPreference>(PREF_DARK)?.isEnabled = enabled
     }
 
     private fun getPrefListener(): SharedPreferences.OnSharedPreferenceChangeListener =

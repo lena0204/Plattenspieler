@@ -10,6 +10,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.CoverLoader
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.ThemeChanger
 import com.lk.plattenspieler.musicbrowser.ControllerAction
@@ -73,7 +74,7 @@ class MusicBarFragment : Fragment(), Observer<Any> {
 
     private fun writeMetadata(data: MusicMetadata){
         if(!data.isEmpty()) {
-            val cover = MusicMetadata.decodeAlbumCover(data.cover_uri, resources)
+            val cover = CoverLoader.decodeAlbumCover(requireContext(), data.content_uri, data.cover_uri)
             iv_main_cover.setImageBitmap(cover)
             tv_music_title.text = data.title
             // TODO nicht ganz zuverlässig -> SaveState Handling

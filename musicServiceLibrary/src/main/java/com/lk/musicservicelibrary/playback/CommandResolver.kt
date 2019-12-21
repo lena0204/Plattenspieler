@@ -21,6 +21,21 @@ class CommandResolver(private val playbackCallback: PlaybackCallback) {
         when(command){
             Commands.ADD_ALL -> addAllSongsToPlayingQueue()
             Commands.ADD_QUEUE -> addQueue(args)
+            Commands.RESTORE_QUEUE -> restore()
+        }
+    }
+
+    private fun restore() {
+        val list = playbackCallback.getPlaylistRepository().restorePlayingQueue()
+        if(!list.isEmpty()) {
+            Log.d(TAG, "Has items true: $list")
+            if(!list.isEmpty()) {
+                Log.d(TAG, "Restored playlist from DB with ${list.size()} items: $list")
+                playbackCallback.setQueriedMediaList(list)
+                playbackCallback.preparePlayback()
+            }
+        } else {
+            Log.d(TAG, "Keine Items in der DB.")
         }
     }
 
@@ -51,8 +66,7 @@ class CommandResolver(private val playbackCallback: PlaybackCallback) {
         val musicList = MusicList()
         musicList.addItem(firstTitle)
         playbackCallback.setPlayingList(musicList)
-        val extras = bundleOf(MusicService.SHUFFLE_KEY to true)
-        playbackCallback.onPlayFromMediaId(firstTitle.id, extras)
+        playbackCallback.onPlayFromMediaId(firstTitle.id, null)
     }
 
 }

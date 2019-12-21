@@ -1,8 +1,6 @@
 package com.lk.musicservicelibrary.playback.state
 
-import android.util.Log
 import com.lk.musicservicelibrary.playback.PlaybackCallback
-import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
 /**
  * Erstellt von Lena am 05/04/2019.

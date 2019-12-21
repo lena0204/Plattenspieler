@@ -1,8 +1,11 @@
 package com.lk.musicservicelibrary.playback
 
+import android.content.res.AssetFileDescriptor
 import android.media.MediaPlayer
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.lk.musicservicelibrary.system.AudioFocusRequester
+import java.io.FileDescriptor
 
 /**
  * Erstellt von Lena am 06/04/2019.
@@ -21,18 +24,21 @@ class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): Mus
         musicPlayer.seekTo(0)
     }
 
-    override fun preparePlayer(mediaFile: String) {
+    override fun preparePlayer() {
         stop()
         createMusicPlayer()
-        playMediaFile(mediaFile)
+    }
+
+    override fun playMedia(mediaFile: String, startPlaying: Boolean) {
+        playMediaFile(mediaFile, startPlaying)
+    }
+
+    override fun playMedia(mediaFileDescriptor: AssetFileDescriptor, startPlaying: Boolean) {
+        playMediaFile(mediaFileDescriptor, startPlaying)
     }
 
     private fun createMusicPlayer(){
         musicPlayer = MediaPlayer()
-        musicPlayer.setOnPreparedListener {
-            musicPlayer.seekTo(startPosition)
-            musicPlayer.start()
-        }
         musicPlayer.setOnErrorListener { _, what, extra ->
             Log.e(TAG, "MusicPlayerError: $what; $extra")
             false
@@ -41,13 +47,35 @@ class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): Mus
             listener.playbackFinished()
         }
         musicPlayer.setAudioAttributes(AudioFocusRequester.audioAttr)
+        musicPlayer.setVolume(0.7f, 0.7f)
         Log.v(TAG, "Musicplayer created")
         created = true
     }
 
-    private fun playMediaFile(mediaFile: String){
+    private fun playMediaFile(mediaFile: String, startPlaying: Boolean){
         Log.v(TAG, "playFile from $mediaFile")
         musicPlayer.setDataSource(mediaFile)
+
+        musicPlayer.setOnPreparedListener {
+            musicPlayer.seekTo(startPosition)
+            if(startPlaying) {
+                musicPlayer.start()
+            }
+        }
+        musicPlayer.prepareAsync()
+    }
+
+
+    private fun playMediaFile(mediaFileDescriptor: AssetFileDescriptor, startPlaying: Boolean){
+        Log.v(TAG, "playFile from $mediaFileDescriptor")
+        musicPlayer.setDataSource(mediaFileDescriptor)
+
+        musicPlayer.setOnPreparedListener {
+            musicPlayer.seekTo(startPosition)
+            if(startPlaying) {
+                musicPlayer.start()
+            }
+        }
         musicPlayer.prepareAsync()
     }
 

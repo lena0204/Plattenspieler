@@ -1,27 +1,32 @@
 package com.lk.musicservicelibrary.playback
 
+import android.content.Context
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.os.Bundle
 import android.os.ResultReceiver
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.lk.musicservicelibrary.database.PlaylistRepository
 import com.lk.musicservicelibrary.main.*
 import com.lk.musicservicelibrary.models.*
 import com.lk.musicservicelibrary.playback.state.*
 import com.lk.musicservicelibrary.system.MusicDataRepository
 import com.lk.musicservicelibrary.utils.PlaybackStateFactory
 
-
 /**
  * Erstellt von Lena am 05/04/2019.
  */
-class PlaybackCallback(private val dataRepository: MusicDataRepository):
+class PlaybackCallback(private val dataRepository: MusicDataRepository,
+                       private val playlistRepository: PlaylistRepository,
+                       val context: Context):
     MediaSession.Callback(),
     MusicPlayer.PlaybackFinished {
 
-    private var playerState: BasicState =
-        StoppedState(this)
+    private val TAG = "PlaybackCallback"
+
+    private var playerState: BasicState = StoppedState(this)
     private var commandResolver = CommandResolver(this)
 
     private var playingList = MutableLiveData<MusicList>()
@@ -44,6 +49,7 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     fun getQueriedMediaList(): MusicList = queriedMediaList
     fun setQueriedMediaList(updatedList: MusicList) {
         queriedMediaList = updatedList
+        Log.v(TAG, "Neue QueriedMediaList: $queriedMediaList")
     }
 
     fun getPlaybackState(): LiveData<PlaybackState> = playbackState
@@ -61,9 +67,14 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     }
 
     fun getDataRepository(): MusicDataRepository = dataRepository
+    fun getPlaylistRepository(): PlaylistRepository = playlistRepository
 
     fun getPlayer(): MusicPlayer = player
     fun setPlayer(player: MusicPlayer) { this.player = player }
+
+    fun preparePlayback() {
+        playerState.prepareFromMediaList()
+    }
 
     override fun playbackFinished() {
         playerState.skipToNext()
@@ -74,7 +85,7 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     }
 
     override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-        playerState.playFromId(mediaId, extras)
+        playerState.playFromId(mediaId)
     }
 
     override fun onPause() {
@@ -90,7 +101,9 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository):
     }
 
     override fun onStop() {
-        playerState.stop()
+        if(playerState.type != States.STOPPED) {
+            playerState.stop()
+        }
     }
 
     override fun onCommand(command: String, args: Bundle?, cb: ResultReceiver?) {

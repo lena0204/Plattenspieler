@@ -20,7 +20,7 @@ class LyricsAddingDialog: DialogFragment(){
 		fun onSaveLyrics(lyrics: String)
 	}
 
-	override fun onAttach(context: Context?) {
+	override fun onAttach(context: Context) {
 		super.onAttach(context)
 		listener = context as MainActivityNew
 	}

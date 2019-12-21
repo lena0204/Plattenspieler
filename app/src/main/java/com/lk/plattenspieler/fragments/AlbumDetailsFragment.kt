@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.lk.musicservicelibrary.main.MusicService
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
+import com.lk.musicservicelibrary.utils.CoverLoader
+import com.lk.musicservicelibrary.utils.SharedPrefsWrapper
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.ThemeChanger
 import com.lk.plattenspieler.musicbrowser.ControllerAction
@@ -34,12 +36,9 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
     private lateinit var playbackViewModel: PlaybackViewModel
 
     override fun onClick(titleId: String) {
-        val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId, args = shuffleBundle(false))
+        val action = ControllerAction(EnumActions.PLAY_FROM_ID, titleId)
+        SharedPrefsWrapper.writeShuffle(this.requireContext(), false)
         playbackViewModel.callAction(action)
-    }
-
-    private fun shuffleBundle(shuffle: Boolean): Bundle {
-        return bundleOf(MusicService.SHUFFLE_KEY to shuffle)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
@@ -48,9 +47,8 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         fab_shuffle.setOnClickListener {
-            val action = ControllerAction(EnumActions.SHUFFLE,
-                    data.getItemAt(0).id,
-                    args = shuffleBundle(true))
+            val action = ControllerAction(EnumActions.SHUFFLE, data.getItemAt(0).id)
+            SharedPrefsWrapper.writeShuffle(this.requireContext(), true)
             playbackViewModel.callAction(action)
         }
         mediaListViewModel = ViewModelProviders.of(requireActivity()).get(MediaViewModel::class.java)
@@ -70,7 +68,7 @@ class AlbumDetailsFragment: Fragment(), TitleAdapter.OnClickTitle, Observer<Musi
         for(item in list){
             if(!item.isEmpty()){
                 album = item.album
-                item.cover = MusicMetadata.decodeAlbumCover(item.cover_uri, resources)
+                item.cover = CoverLoader.decodeAlbumCover(requireContext(), item.content_uri, item.cover_uri)
                 data.addItem(item)
             }
         }
