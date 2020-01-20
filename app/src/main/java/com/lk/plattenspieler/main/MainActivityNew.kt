@@ -35,8 +35,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.OnSaveLyrics {
 
-    // IDEA_ ProgressBar für den Abspielfortschritt
-    // TODO auf ConstraintLayout umstellen
+    // TODO fix backup and restore of playing list
 
     companion object {
         const val PREF_DESIGN = "design"
@@ -94,13 +93,14 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
         mediaViewModel.setObserversToAll(this, this)
         playbackViewModel = ViewModelProviders.of(this).get(PlaybackViewModel::class.java)
         playbackViewModel.setObserverToPlaybackState(this, this)
+        playbackViewModel.setObserverToShowBar(this, this)
         controllerAccess = ControllerAccess(this)
         this.volumeControlStream = AudioManager.STREAM_MUSIC
         setupMusicBar()
     }
 
     private fun setupMusicBar(){
-        hideBar()
+        // TODO hide bar necessary
         supportFragmentManager.commit {
             replace(R.id.fl_main_bar, MusicBarFragment(), "MusicBarFragment")
         }
@@ -136,6 +136,12 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
         } else if (update is PlaybackState && update.state == PlaybackState.STATE_STOPPED) {
             hideBar()
             // TODO Should also close PlayingFragment if open
+        } else if(update is Boolean) {
+            if(update) {
+                showBar()
+            } else {
+                hideBar()
+            }
         }
     }
 
@@ -157,7 +163,6 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     fun setDesignFromPref(design: EnumTheme){
         controllerAccess?.applyTheme(design)
-        Toast.makeText(this, R.string.toast_restart, Toast.LENGTH_LONG).show()
     }
 
     override fun onResume() {
@@ -212,7 +217,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
     // ------------- Menü -------------
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         this.menu = menu
-        // TODO Lyrics hinzufügen nur anzeigen wenn PlayingFragment sichtbar ist
+        // IDEA_ Lyrics hinzufügen nur anzeigen wenn PlayingFragment sichtbar ist
         menu?.findItem(R.id.menu_add_lyrics)?.isVisible = false
         return true
     }

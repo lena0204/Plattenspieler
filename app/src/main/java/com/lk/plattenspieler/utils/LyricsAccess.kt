@@ -32,7 +32,6 @@ object LyricsAccess {
 
     private fun readMP3Lyrics(filepath: String) {
         val mp3File = AudioFileIO.read(File(filepath)) as MP3File
-        // PROBLEM_ noch relevant?? Fehler bei read() auf Bliss ROM 6.0 und RR 7.1
         if(mp3File.hasID3v2Tag()) {
             val lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
             if (!lyrics.isNullOrEmpty()) {

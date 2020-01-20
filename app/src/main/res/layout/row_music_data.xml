@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="72dp"
     android:layout_margin="4dp">
+    <!-- TODO change to constraint layout -->
 
     <ImageView
         android:contentDescription="@string/iv_cd_cover"

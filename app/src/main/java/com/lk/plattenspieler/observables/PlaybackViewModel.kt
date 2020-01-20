@@ -22,6 +22,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
     private var playbackState = MutableLiveData<PlaybackState>()
     private var queue = MutableLiveData<MusicList>()
     private var controllerAction = MutableLiveData<ControllerAction>()
+    private var showBar = MutableLiveData<Boolean>()
 
     private var playlistRepo: PlaylistRepository
 
@@ -29,6 +30,7 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         metadata.value = MusicMetadata()
         playbackState.value = PlaybackState.Builder().build()
         queue.value = MusicList()
+        showBar.value = false
         playlistRepo = PlaylistRoomRepository(application)
     }
 
@@ -36,6 +38,10 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         metadata.observe(owner, observer)
         playbackState.observe(owner, observer)
         queue.observe(owner, observer)
+    }
+
+    fun setObserverToShowBar(owner: LifecycleOwner, observer: Observer<Any>) {
+        showBar.observe(owner, observer)
     }
 
     fun setObserverToPlaybackState(owner: LifecycleOwner, observer: Observer<Any>){
@@ -93,4 +99,10 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
         }
         return limitedQueue
     }
+
+    fun setShowBar(show: Boolean) {
+        showBar.value= show
+    }
+
+    fun getShowBar(): Boolean = showBar.value ?: false
 }

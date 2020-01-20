@@ -92,6 +92,7 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     private fun setupQueue() {
         if(isPlayingOrPaused(musicController.playbackState?.state)) {
             updateAlreadyPlaying()
+            playbackViewModel.setShowBar(true)
         } else {
             GlobalScope.launch(Dispatchers.Default){
                 musicController.sendCommand(Commands.RESTORE_QUEUE, null, null)
