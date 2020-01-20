@@ -13,7 +13,7 @@ import com.lk.plattenspieler.observables.PlaybackViewModel
 class MetadataCallback(private val viewModel: PlaybackViewModel): MediaController.Callback() {
 
     override fun onMetadataChanged(metadata: MediaMetadata?) {
-        if(metadata != null) {
+        if(metadata != null){
             viewModel.setMetadata(MusicMetadata.createFromMediaMetadata(metadata))
         }
     }
