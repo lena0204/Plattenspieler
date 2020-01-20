@@ -2,10 +2,8 @@ package com.lk.plattenspieler.fragments
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreference
+import androidx.preference.*
 import com.lk.plattenspieler.R
 import com.lk.plattenspieler.main.MainActivityNew
 import com.lk.plattenspieler.utils.EnumTheme

@@ -36,6 +36,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.OnSaveLyrics {
 
     // TODO fix backup and restore of playing list
+    // TODO tidy up logs
 
     companion object {
         const val PREF_DESIGN = "design"
@@ -158,7 +159,8 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     override fun onSaveLyrics(lyrics: String) {
         Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-        LyricsAccess.writeLyrics(lyrics, playbackViewModel.getMetadata().path)
+        // TODO seit Android 10 kein Schreiben möglich
+        // LyricsAccess.writeLyrics(lyrics, playbackViewModel.getMetadata().path)
     }
 
     fun setDesignFromPref(design: EnumTheme){

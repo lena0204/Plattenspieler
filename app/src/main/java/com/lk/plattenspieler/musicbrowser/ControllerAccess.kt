@@ -5,7 +5,7 @@ import android.media.browse.MediaBrowser
 import android.media.session.MediaController
 import android.media.session.PlaybackState
 import android.os.Build
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.util.Log
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders

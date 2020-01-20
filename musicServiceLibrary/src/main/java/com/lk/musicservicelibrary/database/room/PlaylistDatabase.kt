@@ -6,7 +6,7 @@ import androidx.room.*
 /**
  * Erstellt von Lena am 02/04/2019.
  */
-@Database(entities = [TrackEntity::class], version = 3, exportSchema = true)
+@Database(entities = [TrackEntity::class], version = 4, exportSchema = true)
 abstract class PlaylistDatabase: RoomDatabase() {
 
     abstract fun playlistDao(): PlaylistDAO

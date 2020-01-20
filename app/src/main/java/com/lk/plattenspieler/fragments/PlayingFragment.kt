@@ -3,12 +3,10 @@ package com.lk.plattenspieler.fragments
 import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.media.session.PlaybackState
-import android.os.Build
+import android.net.Uri
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.util.Size
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +15,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.*
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.preference.PreferenceManager
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.musicservicelibrary.utils.CoverLoader
@@ -73,7 +72,7 @@ class PlayingFragment : Fragment(), Observer<Any>{
             val args = createBundleForLyricsFragment()
             val lyricsf = LyricsFragment()
             lyricsf.arguments = args
-            fragmentManager?.transaction {
+            fragmentManager?.commit {
                 addToBackStack(null)
                 replace(R.id.fl_main_content, lyricsf, "TAG_LYRICS")
             }
@@ -102,7 +101,7 @@ class PlayingFragment : Fragment(), Observer<Any>{
                     data.content_uri, data.cover_uri, 500)
             ll_playing_fragment.background = BitmapDrawable(resources, bitmapCover)
             if(shallShowLyrics()) {
-                lyricsAbfragen(data.path)
+                lyricsAbfragen(data.content_uri, data.display_name)
             }
         }
     }
@@ -116,11 +115,29 @@ class PlayingFragment : Fragment(), Observer<Any>{
     private fun shallShowLyrics(): Boolean
             = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("PREF_LYRICSSHOW",true)
 
+    @Deprecated("No file path can be read from system starting with Android 10.")
     private fun lyricsAbfragen(filepath: String){
         iv_playing_lyrics.alpha = 0.3f
         this.lyrics = null
         // PROBLEM_ Lyrics kein direkter Zugriff mehr auf die Datei möglich
         val texte = "" // LyricsAccess.readLyrics(filepath)
+        if(texte != ""){
+            this.lyrics = texte
+            iv_playing_lyrics.alpha = 1.0f
+        }
+    }
+
+    private fun lyricsAbfragen(uri: Uri, displayName: String){
+        iv_playing_lyrics.alpha = 0.3f
+        this.lyrics = null
+        val fileType = displayName.split(".").last()
+        val inputStream = requireContext().contentResolver.openInputStream(uri)
+        val texte = if(inputStream != null) {
+            // IDEA_ Lyrics kein direkter Zugriff mehr auf die Datei möglich
+            LyricsAccess.readLyrics(inputStream, fileType).also { inputStream.close() }
+        } else {
+            ""
+        }
         if(texte != ""){
             this.lyrics = texte
             iv_playing_lyrics.alpha = 1.0f

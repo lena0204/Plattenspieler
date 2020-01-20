@@ -11,6 +11,7 @@ import com.lk.musicservicelibrary.utils.AudioColumns
 
 /**
  * Erstellt von Lena am 01/04/2019.
+ * Columns zu den Projections hinzufügen!!!
  */
 class LocalMusicFileRepository(private val context: Context): MusicDataRepository {
 
@@ -118,7 +119,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
 
     private fun parseMetadata(titleCursor: Cursor, mediaId: String): MusicMetadata {
         val albumId = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM_ID)
-        val coverUri = getCoverPathForAlbum(albumId)     // notwendig für backward compatibility
+        val coverUri = getCoverPathForAlbum(albumId)     // notwendig für backward compatibility?
         val uri = ContentUris.withAppendedId(mediaStoreURI, mediaId.toLong())
         return MusicMetadata(
             id = mediaId,
@@ -128,7 +129,8 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
             cover_uri = coverUri,
             path = titleCursor.fetchString(MediaStore.Audio.Media.DATA),
             duration = titleCursor.fetchLong(MediaStore.Audio.Media.DURATION),
-            content_uri = uri)
+            content_uri = uri,
+            display_name = titleCursor.fetchString(MediaStore.Audio.Media.DISPLAY_NAME))
     }
 
     private fun getCoverPathForAlbum(albumId: String): String{

@@ -8,7 +8,7 @@ import org.jaudiotagger.tag.id3.ID3v24FieldKey
 import org.jaudiotagger.tag.id3.ID3v24Tag
 import org.jaudiotagger.tag.mp4.Mp4FieldKey
 import org.jaudiotagger.tag.mp4.Mp4Tag
-import java.io.File
+import java.io.*
 
 /**
  * Erstellt von Lena am 13.05.18.
@@ -19,7 +19,7 @@ object LyricsAccess {
     private val TAG = this.javaClass.simpleName
     private var currentLyrics = ""
 
-    fun readLyrics(filepath: String): String{
+    fun readLyrics(filepath: String): String {
         Log.d(TAG, filepath)
         currentLyrics = ""
         if(filepath.contains("mp3")){
@@ -30,8 +30,33 @@ object LyricsAccess {
         return currentLyrics
     }
 
+    // TESTING_ refactoring and test m4a files
+    fun readLyrics(inputStream: InputStream, fileType: String): String {
+        try {
+            val file = File.createTempFile("musicFile", ".$fileType")
+            val fileOutputStream = FileOutputStream(file)
+            fileOutputStream.write(inputStream.readBytes())
+            fileOutputStream.close()
+            inputStream.close()
+            currentLyrics = ""
+            if (fileType == "mp3") {
+                readMP3Lyrics(file)
+            } else if (fileType == "m4a") {
+                readM4ALyrics(file)
+            }
+        } catch(e: Exception) {
+            Log.e(TAG, "Error in reading lyrics")
+            e.printStackTrace()
+        }
+        return currentLyrics
+    }
+
     private fun readMP3Lyrics(filepath: String) {
-        val mp3File = AudioFileIO.read(File(filepath)) as MP3File
+        readMP3Lyrics(File(filepath))
+    }
+
+    private fun readMP3Lyrics(file: File) {
+        val mp3File = AudioFileIO.read(file) as MP3File
         if(mp3File.hasID3v2Tag()) {
             val lyrics = mp3File.iD3v2TagAsv24.getFirst(ID3v24FieldKey.LYRICS)
             if (!lyrics.isNullOrEmpty()) {
@@ -41,7 +66,11 @@ object LyricsAccess {
     }
 
     private fun readM4ALyrics(filepath: String) {
-        val m4aTag = AudioFileIO.read(File(filepath)).tag as Mp4Tag
+        readM4ALyrics(File(filepath))
+    }
+
+    private fun readM4ALyrics(file: File) {
+        val m4aTag = AudioFileIO.read(file).tag as Mp4Tag
         val lyrics = m4aTag.getFirst(Mp4FieldKey.LYRICS)
         if(!lyrics.isNullOrEmpty()){
             currentLyrics = lyrics
@@ -50,7 +79,7 @@ object LyricsAccess {
 
     // PROBLEM_ schreiben auf die SD-Karte ist nicht unbedingt ohne weiteres möglich ...
     // TODO Nutzer informieren, wenn schreiben der Lyrics fehlgeschlagen ist, geeignete Rückgabe !!
-    fun writeLyrics(lyrics: String, datapath: String){
+    /*fun writeLyrics(lyrics: String, datapath: String){
         if(datapath != ""){
             Log.i(TAG, datapath)
             if(datapath.contains("mp3")){
@@ -73,7 +102,7 @@ object LyricsAccess {
             }
             AudioFileIO.write(mp3File)
         } catch(ex: Exception){
-            Log.e(TAG, ex.message)
+            Log.e(TAG, ex.message ?: "No error message")
         }
     }
 
@@ -82,6 +111,6 @@ object LyricsAccess {
         // TESTING_ muss getestet werden -> auch Problem mit SD-Karte
         val m4aTag = AudioFileIO.read(File(path)).tag as Mp4Tag
         m4aTag.setField(Mp4FieldKey.LYRICS, lyrics)
-    }
+    }*/
 
 }

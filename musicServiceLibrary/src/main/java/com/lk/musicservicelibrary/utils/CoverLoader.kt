@@ -35,10 +35,11 @@ object CoverLoader {
             try {
                 context.contentResolver.loadThumbnail(contentUri, Size(size, size), null)
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to load cover from content resolver.")
+                // Log.w(TAG, "Failed to load cover from content resolver")
                 decodeFallbackCover(context.resources)
             }
         } else {
+            Log.d(TAG, "Decode old way")
             decodeAlbumCover(context.resources, coverUri)
         }
     }

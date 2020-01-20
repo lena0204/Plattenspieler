@@ -1,5 +1,6 @@
 package com.lk.musicservicelibrary.playback
 
+import android.annotation.TargetApi
 import android.content.res.AssetFileDescriptor
 import android.media.MediaPlayer
 import android.os.ParcelFileDescriptor
@@ -66,6 +67,7 @@ class SimpleMusicPlayer(private val listener: MusicPlayer.PlaybackFinished): Mus
     }
 
 
+    @TargetApi(24)
     private fun playMediaFile(mediaFileDescriptor: AssetFileDescriptor, startPlaying: Boolean){
         Log.v(TAG, "playFile from $mediaFileDescriptor")
         musicPlayer.setDataSource(mediaFileDescriptor)

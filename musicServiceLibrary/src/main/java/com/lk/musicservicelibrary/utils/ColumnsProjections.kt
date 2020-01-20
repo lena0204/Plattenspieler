@@ -24,6 +24,8 @@ object AudioColumns {
             MSAudio.Media.ALBUM,
             MSAudio.Media.ARTIST,
             MSAudio.Media.DURATION,
+            MSAudio.Media.DISPLAY_NAME,
+            MSAudio.Media.MIME_TYPE,
             MSAudio.Media.ALBUM_ID,
             MSAudio.Media.DATA)
 }

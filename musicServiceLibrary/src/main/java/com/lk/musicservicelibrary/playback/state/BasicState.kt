@@ -11,7 +11,7 @@ import com.lk.musicservicelibrary.utils.*
  */
 abstract class BasicState(private var playback: PlaybackCallback) {
 
-    private val TAG = "PlayerState"
+    private val TAG = "BasicState"
     private val progressHandler = Handler()
     private val updateRunnable = updateRoutine()
 
@@ -53,7 +53,7 @@ abstract class BasicState(private var playback: PlaybackCallback) {
             val position = playingList.indexOfFirst { data -> data.id == mediaId }
             playingList.setCurrentPlaying(position)
         }
-        Log.v(TAG, "created Playlist with ${playingList.count()} items and currentplaying: ${playingList.getItemAtCurrentPlaying()}")
+        Log.v(TAG, "created Playlist with ${playingList.count()} items and currentplaying title: ${playingList.getItemAtCurrentPlaying()?.title}")
         return playingList
     }
 
@@ -62,6 +62,7 @@ abstract class BasicState(private var playback: PlaybackCallback) {
         if(currentMetadata != null && currentMetadata.path != ""){
             val player = playback.getPlayer()
             player.preparePlayer()
+            Log.d(TAG, "Content-URI: ${currentMetadata.content_uri}")
             val fd = this.playback.context.contentResolver
                 .openAssetFileDescriptor(currentMetadata.content_uri, "r")
             Log.d(TAG, "$fd")

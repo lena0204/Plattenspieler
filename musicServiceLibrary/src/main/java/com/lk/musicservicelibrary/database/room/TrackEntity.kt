@@ -1,5 +1,6 @@
 package com.lk.musicservicelibrary.database.room
 
+import android.net.Uri
 import androidx.annotation.NonNull
 import androidx.room.*
 import com.lk.musicservicelibrary.models.MusicMetadata
@@ -41,6 +42,12 @@ class TrackEntity {
     @ColumnInfo(name = "music_file_uri")
     var fileUri: String = ""
 
+    @ColumnInfo(name = "music_display_name")
+    var displayName: String = ""
+
+    @ColumnInfo(name = "music_content_uri")
+    var contentUri: String = ""
+
     override fun toString(): String {
         return "{id: $id, title: $title, album: $album, artist: $artist}"
     }
@@ -57,6 +64,8 @@ class TrackEntity {
             item.duration = metadata.duration
             item.coverUri = metadata.cover_uri
             item.fileUri = metadata.path
+            item.contentUri = metadata.content_uri.toString()
+            item.displayName = metadata.display_name
             return item
         }
 
@@ -70,6 +79,8 @@ class TrackEntity {
             metadata.duration = item.duration
             metadata.cover_uri = item.coverUri
             metadata.path = item.fileUri
+            metadata.content_uri = Uri.parse(item.contentUri)
+            metadata.display_name = item.displayName
             return metadata
         }
     }
