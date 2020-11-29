@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Plattenspieler.iml" filepath="$PROJECT_DIR$/Plattenspieler.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/musicServiceLibrary/musicServiceLibrary.iml" filepath="$PROJECT_DIR$/musicServiceLibrary/musicServiceLibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Plattenspieler.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Plattenspieler.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/musicServiceLibrary/Plattenspieler.musicServiceLibrary.iml" filepath="$PROJECT_DIR$/.idea/modules/musicServiceLibrary/Plattenspieler.musicServiceLibrary.iml" />
     </modules>
   </component>
 </project>

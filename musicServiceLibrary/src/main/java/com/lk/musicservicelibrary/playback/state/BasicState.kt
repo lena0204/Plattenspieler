@@ -1,5 +1,6 @@
 package com.lk.musicservicelibrary.playback.state
 
+import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import com.lk.musicservicelibrary.models.MusicList
@@ -53,19 +54,17 @@ abstract class BasicState(private var playback: PlaybackCallback) {
             val position = playingList.indexOfFirst { data -> data.id == mediaId }
             playingList.setCurrentPlaying(position)
         }
-        Log.v(TAG, "created Playlist with ${playingList.count()} items and currentplaying title: ${playingList.getItemAtCurrentPlaying()?.title}")
+        Log.v(TAG, "created Playlist with ${playingList.count()} items and currentplaying title: ${playingList.getItemAtCurrentPlaying()}")
         return playingList
     }
 
     private fun prepareCurrentPlayingItem(playingList: MusicList, startPlaying: Boolean) {
         val currentMetadata = playingList.getItemAtCurrentPlaying()
-        if(currentMetadata != null && currentMetadata.path != ""){
+        if(currentMetadata != null && currentMetadata.content_uri != Uri.EMPTY){
             val player = playback.getPlayer()
             player.preparePlayer()
-            Log.d(TAG, "Content-URI: ${currentMetadata.content_uri}")
             val fd = this.playback.context.contentResolver
                 .openAssetFileDescriptor(currentMetadata.content_uri, "r")
-            Log.d(TAG, "$fd")
             if(fd != null) {
                 player.playMedia(fd, startPlaying)
             } else {
@@ -73,7 +72,7 @@ abstract class BasicState(private var playback: PlaybackCallback) {
             }
         } else {
             // TODO handle Error? -> should provoke a user feedback
-            Log.e(TAG, "FirstMetadata ($currentMetadata) is null or has an empty path!! List has ${playingList.count()} items.")
+            Log.e(TAG, "FirstMetadata ($currentMetadata) is null or has an empty content URI!! List has ${playingList.count()} items.")
         }
     }
 
@@ -90,7 +89,6 @@ abstract class BasicState(private var playback: PlaybackCallback) {
         }
     }
 
-    // TODO Update Database regularly to always have to up-to-date data in there
     protected fun skipToNextOrStop(): Boolean {
         val playlist = playback.getPlayingList().value!!
         Log.v(TAG, "$playlist")

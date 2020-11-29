@@ -101,7 +101,7 @@ class PlayingFragment : Fragment(), Observer<Any>{
                     data.content_uri, data.cover_uri, 500)
             ll_playing_fragment.background = BitmapDrawable(resources, bitmapCover)
             if(shallShowLyrics()) {
-                lyricsAbfragen(data.content_uri, data.display_name)
+                setLyricsForFileURI(data.content_uri, data.display_name)
             }
         }
     }
@@ -116,30 +116,27 @@ class PlayingFragment : Fragment(), Observer<Any>{
             = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("PREF_LYRICSSHOW",true)
 
     @Deprecated("No file path can be read from system starting with Android 10.")
-    private fun lyricsAbfragen(filepath: String){
+    private fun setLyricsForFileURI(filepath: String){
         iv_playing_lyrics.alpha = 0.3f
         this.lyrics = null
-        // PROBLEM_ Lyrics kein direkter Zugriff mehr auf die Datei möglich
-        val texte = "" // LyricsAccess.readLyrics(filepath)
-        if(texte != ""){
-            this.lyrics = texte
-            iv_playing_lyrics.alpha = 1.0f
-        }
+        val readLyrics = "" // LyricsAccess.readLyrics(filepath)
+        this.lyrics = readLyrics
+        iv_playing_lyrics.alpha = 1.0f
     }
 
-    private fun lyricsAbfragen(uri: Uri, displayName: String){
+    private fun setLyricsForFileURI(uri: Uri, displayName: String){
         iv_playing_lyrics.alpha = 0.3f
         this.lyrics = null
+        Log.d(TAG, "setLyricsForFileURI: URI to music file $uri")
         val fileType = displayName.split(".").last()
         val inputStream = requireContext().contentResolver.openInputStream(uri)
-        val texte = if(inputStream != null) {
-            // IDEA_ Lyrics kein direkter Zugriff mehr auf die Datei möglich
+        val readLyrics = if(inputStream != null) {
             LyricsAccess.readLyrics(inputStream, fileType).also { inputStream.close() }
         } else {
             ""
         }
-        if(texte != ""){
-            this.lyrics = texte
+        if(readLyrics != ""){
+            this.lyrics = readLyrics
             iv_playing_lyrics.alpha = 1.0f
         }
     }

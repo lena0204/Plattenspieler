@@ -25,7 +25,6 @@ data class MusicMetadata(
         var duration: Long = 0,
         var nr_of_songs_left: Long = 0,
         var num_tracks_album: Int = 0,
-        var cover: Bitmap? = null,
         var content_uri: Uri = Uri.EMPTY,
         var display_name: String = ""
 ) : Parcelable {
@@ -34,6 +33,8 @@ data class MusicMetadata(
     lateinit var allTracksFormatted: String
     @IgnoredOnParcel
     private val TAG = "MusicMetadata"
+    @IgnoredOnParcel
+    var cover: Bitmap? = null  // for adapter communication
 
     constructor() : this("","","")
 
@@ -51,11 +52,6 @@ data class MusicMetadata(
                 .putLong(MM.METADATA_KEY_NUM_TRACKS, nr_of_songs_left)
                 .putString(MM.METADATA_KEY_MEDIA_URI, content_uri.toString())
                 .putString(MM.METADATA_KEY_DISPLAY_TITLE, display_name)
-        if(cover != null){
-            builder.putBitmap(MM.METADATA_KEY_ALBUM_ART, cover)
-        } else {
-            Log.v("MusicMetadata", "Cover for $title is not available at URI: $cover_uri.")
-        }
         return builder.build()
     }
 
@@ -83,7 +79,6 @@ data class MusicMetadata(
                     path = meta.getString(MM.METADATA_KEY_WRITER),
                     duration = meta.getLong(MM.METADATA_KEY_DURATION),
                     nr_of_songs_left = meta.getLong(MM.METADATA_KEY_NUM_TRACKS),
-                    cover = meta.getBitmap(MM.METADATA_KEY_ALBUM_ART),
                     content_uri = Uri.parse(meta.getString(MM.METADATA_KEY_MEDIA_URI)),
                     display_name = meta.getString(MM.METADATA_KEY_DISPLAY_TITLE))
         }

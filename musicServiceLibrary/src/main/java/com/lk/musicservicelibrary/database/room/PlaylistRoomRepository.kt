@@ -18,6 +18,7 @@ class PlaylistRoomRepository(val application: Application): PlaylistRepository {
         val playlist: MutableList<TrackEntity> = mutableListOf()
         playlist.add(TrackEntity.createTrackEntity(playingMetadata))
         playingQueue.forEach {
+            Log.v(TAG, "Saving title: ${it.title}")
             playlist.add(TrackEntity.createTrackEntity(it))
         }
         Log.d(TAG, "Converted Playlist (Size ${playlist.size})")

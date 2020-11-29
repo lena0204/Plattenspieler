@@ -37,6 +37,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     // TODO fix backup and restore of playing list
     // TODO tidy up logs
+    // TODO Duration is missing (partly?) when loading form backup
 
     companion object {
         const val PREF_DESIGN = "design"
@@ -159,7 +160,7 @@ class MainActivityNew : FragmentActivity(), Observer<Any>, LyricsAddingDialog.On
 
     override fun onSaveLyrics(lyrics: String) {
         Log.v(TAG, "Lyrics schreiben, noch nicht korrekt implementiert")
-        // TODO seit Android 10 kein Schreiben möglich
+        // PROBLEM_ seit Android 10 kein Schreiben möglich
         // LyricsAccess.writeLyrics(lyrics, playbackViewModel.getMetadata().path)
     }
 

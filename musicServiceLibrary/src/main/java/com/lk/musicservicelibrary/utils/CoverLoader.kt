@@ -27,6 +27,7 @@ object CoverLoader {
     }
 
     fun decodeAlbumCover(context: Context, contentUri: Uri, coverUri: String): Bitmap {
+        Log.v(TAG, "Content-URI: $contentUri, cover-URI: $coverUri")
         return decodeAlbumCover(context, contentUri, coverUri, 120)
     }
 

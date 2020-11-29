@@ -58,7 +58,6 @@ object ThemeChanger {
             BLACK_STYLE -> activity.setTheme(R.style.AppThemeBlackL)
             else -> R.style.AppThemeL
         }
-        // IDEA_ Daynight Theme mit implementieren (evtl eigene Zeiten dafür)
         Log.d(TAG, "Changed to lineage theme (daynight to light theme)")
     }
 

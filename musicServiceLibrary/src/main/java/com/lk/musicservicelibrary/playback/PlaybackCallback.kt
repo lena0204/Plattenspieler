@@ -34,7 +34,7 @@ class PlaybackCallback(private val dataRepository: MusicDataRepository,
     private var player: MusicPlayer = SimpleMusicPlayer(this)
     private var queriedMediaList = MusicList()
 
-    // TODO check audiofocus
+    // TODO check audiofocus, update code etc. !!!
 
     init {
         playingList.value = MusicList()

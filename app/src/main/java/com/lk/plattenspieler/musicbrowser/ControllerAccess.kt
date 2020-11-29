@@ -52,7 +52,6 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
 
     override fun onChanged(update: Any?) {
         if(update is ControllerAction) {
-            Log.d(TAG, "ControllerAction: ${update.action}")
             when (update.action) {
                 EnumActions.PLAY_FROM_ID -> playFromMediaId(update)
                 EnumActions.PLAY_PAUSE -> playPause()
@@ -90,9 +89,9 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     private fun setupQueue() {
+        playbackViewModel.setShowBar(true)
         if(isPlayingOrPaused(musicController.playbackState?.state)) {
             updateAlreadyPlaying()
-            playbackViewModel.setShowBar(true)
         } else {
             GlobalScope.launch(Dispatchers.Default){
                 musicController.sendCommand(Commands.RESTORE_QUEUE, null, null)
@@ -104,7 +103,6 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
         (controllerState == PlaybackState.STATE_PLAYING || controllerState == PlaybackState.STATE_PAUSED)
 
     private fun updateAlreadyPlaying(){
-        activityNew.showBar()
         playbackViewModel.setQueue(MusicList.createListFromQueue(musicController.queue!!))
         playbackViewModel.setMetadata(MusicMetadata.createFromMediaMetadata(musicController.metadata!!))
         playbackViewModel.setPlaybackState(musicController.playbackState!!)
@@ -125,8 +123,11 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
     }
 
     private fun saveState(){
+        Log.d(TAG, "Save state: ${musicController.playbackState?.state} und ${PlaybackState.STATE_PLAYING}")
         if(musicController.playbackState?.state != PlaybackState.STATE_PLAYING){
             playbackViewModel.saveQueue()
+        } else {
+            Log.d(TAG, "Still playing")
         }
     }
 
@@ -161,7 +162,6 @@ class ControllerAccess(private val activityNew: MainActivityNew): Observer<Any> 
             musicController.registerCallback(controllerCallback)
             mbrowser.subscribe(mbrowser.root, subscriptionCallback)
             setupQueue()
-            activityNew.showBar()   // TODO show Bar based on LiveData
         }
 
         override fun onConnectionFailed() {

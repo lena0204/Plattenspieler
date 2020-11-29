@@ -58,9 +58,9 @@ class PlaybackViewModel(application: Application): AndroidViewModel(application)
 
     // TODO über Commands lösen anstatt von direktem Zugriff
     fun saveQueue(){
-        if(!queue.value!!.isEmpty()) {
-            Log.d(TAG, "saveQueue")
-            playlistRepo.savePlayingQueue(queue.value!!, metadata.value!!)
+        if(!queue.value!!.isEmpty()) {  // is queue resetted when stopping?
+            Log.d(TAG, "saveQueue: currently not used cause being buggy ...")
+            // playlistRepo.savePlayingQueue(queue.value!!, metadata.value!!)
         } else {
             Log.d(TAG, "just delete playlist")
             playlistRepo.deletePlaylist()

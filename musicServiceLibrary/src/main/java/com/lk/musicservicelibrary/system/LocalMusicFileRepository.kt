@@ -8,6 +8,7 @@ import android.util.Log
 import com.lk.musicservicelibrary.models.MusicList
 import com.lk.musicservicelibrary.models.MusicMetadata
 import com.lk.musicservicelibrary.utils.AudioColumns
+import java.lang.Exception
 
 /**
  * Erstellt von Lena am 01/04/2019.
@@ -38,14 +39,22 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
         val indexAlbum = albumCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM)
         val indexNumberOfSongs = albumCursor.getColumnIndex(MediaStore.Audio.Albums.NUMBER_OF_SONGS)
         val indexArtist = albumCursor.getColumnIndex(MediaStore.Audio.Albums.ARTIST)
-        val indexAlbumArt = albumCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)
+        var indexAlbumArt = -1
+        try {
+            indexAlbumArt = albumCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART)
+        } catch (e: Exception) {
+            Log.e(TAG, "addAlbumsToList: Couldn't get index for album art, seems to miss", e)
+        }
 
         do {
             var albumId = albumCursor.fetchString(indexID)
             val albumTitle = albumCursor.fetchString(indexAlbum)
             val albumTracks = albumCursor.fetchString(indexNumberOfSongs)
             val albumArtist = albumCursor.fetchString(indexArtist)
-            val albumArt = albumCursor.fetchString(indexAlbumArt)
+            var albumArt = ""
+            if(indexAlbumArt >= 0) {
+                albumArt = albumCursor.fetchString(indexAlbumArt)
+            }
             val uri = ContentUris.withAppendedId(albumStoreURI, albumId.toLong())
             val album = MusicMetadata(
                 albumId, albumTitle, albumArtist,
@@ -121,6 +130,7 @@ class LocalMusicFileRepository(private val context: Context): MusicDataRepositor
         val albumId = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM_ID)
         val coverUri = getCoverPathForAlbum(albumId)     // notwendig für backward compatibility?
         val uri = ContentUris.withAppendedId(mediaStoreURI, mediaId.toLong())
+        // TODO get duration by other means ex. by MediaMetadataRetriever, when API < 29
         return MusicMetadata(
             id = mediaId,
             album = titleCursor.fetchString(MediaStore.Audio.Media.ALBUM),

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.session.PlaybackState
+import android.net.Uri
 import android.os.Build
 import com.lk.musicservicelibrary.R
 import com.lk.musicservicelibrary.main.MusicService
@@ -58,7 +59,7 @@ class MusicNotificationBuilder(private val service: MusicService) {
         songsLeft += " " + service.resources.getString(R.string.notification_songs_left)
         notificationBuilder.setSubText(songsLeft)
         notificationBuilder.setSmallIcon(R.drawable.ic_stat_musicnotification)
-        if(currentMusicMetadata.cover_uri != ""){
+        if(currentMusicMetadata.cover_uri != "" || currentMusicMetadata.content_uri != Uri.EMPTY){
             val cover = CoverLoader.decodeAlbumCover(service.applicationContext,
             currentMusicMetadata.content_uri, currentMusicMetadata.cover_uri)
             notificationBuilder.setLargeIcon(cover)

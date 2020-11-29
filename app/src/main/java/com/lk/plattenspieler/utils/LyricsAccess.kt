@@ -44,6 +44,8 @@ object LyricsAccess {
             } else if (fileType == "m4a") {
                 readM4ALyrics(file)
             }
+            // Lyrics editor might add carriage return (\r) instead of new line
+            currentLyrics = currentLyrics.replace("\r", "\n")
         } catch(e: Exception) {
             Log.e(TAG, "Error in reading lyrics")
             e.printStackTrace()
@@ -78,7 +80,7 @@ object LyricsAccess {
     }
 
     // PROBLEM_ schreiben auf die SD-Karte ist nicht unbedingt ohne weiteres möglich ...
-    // TODO Nutzer informieren, wenn schreiben der Lyrics fehlgeschlagen ist, geeignete Rückgabe !!
+    // Nutzer informieren, wenn schreiben der Lyrics fehlgeschlagen ist, geeignete Rückgabe !!
     /*fun writeLyrics(lyrics: String, datapath: String){
         if(datapath != ""){
             Log.i(TAG, datapath)
@@ -108,7 +110,7 @@ object LyricsAccess {
 
     private fun writeLyricsForM4AFile(path: String, lyrics: String){
         // m4a Datei
-        // TESTING_ muss getestet werden -> auch Problem mit SD-Karte
+        // muss getestet werden -> auch Problem mit SD-Karte
         val m4aTag = AudioFileIO.read(File(path)).tag as Mp4Tag
         m4aTag.setField(Mp4FieldKey.LYRICS, lyrics)
     }*/
