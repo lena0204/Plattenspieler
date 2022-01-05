@@ -4,9 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/ll_lyrics_frame"
-    android:padding="8dp"
-    android:backgroundTint="@color/moredark"
-    android:backgroundTintMode="src_atop">
+    android:padding="8dp">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -17,8 +15,7 @@
             android:id="@+id/tv_lyrics_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="@color/light_grey"/>
+            android:textSize="16sp"/>
 
     </ScrollView>
 

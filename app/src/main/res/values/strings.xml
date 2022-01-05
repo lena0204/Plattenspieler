@@ -47,7 +47,7 @@
 
 
     <string name="menu_settings">Preferences</string>
-    <string name="pref_themecolor_title">Theme colour</string>
+    <string name="pref_themecolor_title">Pink / Green colours</string>
     <string name="pref_themecolor_on">Green theme is used</string>
     <string name="pref_themecolor_off">Pink design is used</string>
     <string name="pref_themelight_title">Light / dark design</string>
@@ -62,5 +62,9 @@
     <string name="pref_lyricsshow_on">Lyrics are shown if available</string>
     <string name="pref_lyricsshow_off">Lyrics are hidden</string>
     <string name="about_app">About this app: \nVersion 0.9  \nDeveloped by: Lena K</string>
+
+    <string name="test_title" translatable="false">Over the rainbow</string>
+    <string name="test_interpret" translatable="false">Johnny Hallyday</string>
+    <string name="test_album_info" translatable="false">Johnny Hallyday | 10 songs</string>
 
 </resources>

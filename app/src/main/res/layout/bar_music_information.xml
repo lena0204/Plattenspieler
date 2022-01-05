@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="80dp"
     android:padding="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -23,9 +22,9 @@
             android:lines="1"
             android:paddingStart="6dp"
             android:paddingEnd="16dp"
-            android:paddingBottom="2dp"
+            android:paddingBottom="6dp"
             android:text="@string/no_title"
-            android:textSize="17sp"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -89,13 +88,15 @@
     <ImageButton
         android:id="@+id/iv_main_cover"
         style="@style/ImageButtonStyle1"
-        android:layout_width="66dp"
-        android:layout_height="66dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:clickable="false"
         android:contentDescription="@string/iv_cd_cover"
         android:src="@mipmap/ic_no_cover"
         android:tint="@color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintVertical_weight="1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

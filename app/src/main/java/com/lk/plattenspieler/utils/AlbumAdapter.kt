@@ -31,6 +31,7 @@ class AlbumAdapter(private var dataset: MusicList, val cl: Click)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data, parent, false)
+        //val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data_simple, parent, false)
         return ViewHolder(v)
     }
 

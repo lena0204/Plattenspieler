@@ -70,10 +70,14 @@ object ThemeChanger {
     }
 
     private fun obtainColorAccentAttribute(activity: FragmentActivity?): Int{
-        val colorAttribute = intArrayOf(android.R.attr.colorAccent)
-        val typedArray = activity?.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, colorAttribute)
-        if(typedArray != null){
-            return typedArray.getColor(0, Color.BLACK).also { typedArray.recycle() }
+        try {
+            val colorAttribute = intArrayOf(android.R.attr.colorAccent)
+            val typedArray = activity?.obtainStyledAttributes(android.R.style.Theme_DeviceDefault, colorAttribute)
+            if(typedArray != null){
+                return typedArray.getColor(0, Color.BLACK).also { typedArray.recycle() }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "obtainColorAccentAttribute: obtaining accent color didn't work", e)
         }
         return 0
     }

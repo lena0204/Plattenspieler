@@ -32,7 +32,7 @@ class LyricsFragment: Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 		setTitleInActionbar()
 		val args = this.arguments
-		ll_lyrics_frame.background = Drawable.createFromPath(args?.getString("C"))
+		// ll_lyrics_frame.background = Drawable.createFromPath(args?.getString("C"))
 		val text = args?.getString("L")
 		setLyricsText(text)
 	}

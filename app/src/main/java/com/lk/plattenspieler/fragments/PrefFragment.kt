@@ -41,14 +41,14 @@ class PrefFragment: PreferenceFragmentCompat() {
     }
 
     private fun enableValidPreferences(sp: SharedPreferences){
-        when {
+       /* when {
             losSupport && isLosThemeEnabled(sp) -> setStandardThemeEnabled(false)
             losSupport && !isLosThemeEnabled(sp) -> setStandardThemeEnabled(true)
             !losSupport -> {
                 findPreference<SwitchPreference>(PREF_LOS)?.isEnabled = false
                 findPreference<SwitchPreference>(PREF_LOS)?.setSummary(R.string.pref_themelos_unsupported)
             }
-        }
+        }*/
     }
 
     private fun isLosThemeEnabled(sp: SharedPreferences): Boolean = sp.getBoolean(PREF_LOS, false)
@@ -69,17 +69,13 @@ class PrefFragment: PreferenceFragmentCompat() {
             }
 
     private fun changeTheme(sharedPreferences: SharedPreferences){
-        val theme = if(isLosThemeEnabled(sharedPreferences)){
-             EnumTheme.THEME_LINEAGE
-        } else {
-            val teal = sharedPreferences.getBoolean(PREF_COLOR, false)
-            val dark = sharedPreferences.getBoolean(PREF_DARK, false)
-            when {
-                !teal && dark -> EnumTheme.THEME_DARK
-                teal && !dark -> EnumTheme.THEME_LIGHT_T
-                teal && dark -> EnumTheme.THEME_DARK_T
-                else -> EnumTheme.THEME_LIGHT
-            }
+        val teal = sharedPreferences.getBoolean(PREF_COLOR, false)
+        val dark = sharedPreferences.getBoolean(PREF_DARK, false)
+        val theme = when {
+            !teal && dark -> EnumTheme.THEME_DARK
+            teal && !dark -> EnumTheme.THEME_LIGHT_T
+            teal && dark -> EnumTheme.THEME_DARK_T
+            else -> EnumTheme.THEME_LIGHT
         }
         mActivity.setDesignFromPref(theme)
     }

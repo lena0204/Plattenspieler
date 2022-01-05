@@ -29,6 +29,7 @@ class TitleAdapter(private var dataset: MusicList, var cl: TitleAdapter.OnClickT
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolderTitle {
+        // val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data_simple, parent, false)
         val v = LayoutInflater.from(parent.context).inflate(R.layout.row_music_data, parent, false)
         return ViewHolderTitle(v)
     }

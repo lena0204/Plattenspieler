@@ -30,6 +30,7 @@ class MusicBarFragment : Fragment(), Observer<Any> {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         return inflater.inflate(R.layout.bar_music_information, container, false)
+        // return inflater.inflate(R.layout.bar_music_information_simple, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {

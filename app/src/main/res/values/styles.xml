@@ -2,35 +2,36 @@
 
     <!-- Pink light -->
     <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
-        <item name="android:colorPrimary">@color/colorPrimary</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:colorPrimary">@color/colorPrimaryLight</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryLight</item>
         <item name="android:colorAccent">@color/colorAccent</item>
         <item name="android:textColor">@color/darkgrey</item>
     </style>
 
     <!-- Pink dark -->
     <style name="AppThemeDark" parent="android:Theme.Material">
-        <item name="android:colorPrimary">@color/colorPrimary</item>
+        <item name="android:colorPrimary">@color/colorPrimaryDark</item>
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:colorAccent">@color/colorAccent</item>
         <item name="android:textColor">@color/light_grey</item>
-        <item name="android:colorBackground">@color/black</item>
+        <item name="android:colorBackground">@color/darkgrey</item>
     </style>
 
     <!-- Teal light -->
     <style name="AppThemeT" parent="android:Theme.Material.Light.DarkActionBar">
-        <item name="android:colorPrimary">@color/colorPrimary_t</item>
-        <item name="android:colorPrimaryDark">@color/colorPrimaryDark_t</item>
+        <item name="android:colorPrimary">@color/colorPrimaryLight_t</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryLight_t</item>
         <item name="android:colorAccent">@color/colorAccent_t</item>
         <item name="android:textColor">@color/darkgrey</item>
     </style>
 
     <!-- Teal dark -->
     <style name="AppThemeDarkT" parent="android:Theme.Material">
-        <item name="android:colorPrimary">@color/colorPrimary_t</item>
+        <item name="android:colorPrimary">@color/colorPrimaryDark_t</item>
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark_t</item>
         <item name="android:colorAccent">@color/colorAccent_t</item>
         <item name="android:textColor">@color/light_grey</item>
+        <item name="android:colorBackground">@color/darkgrey</item>
     </style>
 
     <!-- Lineage light -->

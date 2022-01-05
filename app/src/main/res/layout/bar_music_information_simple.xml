@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="88dp"
+    android:padding="8dp">
+
+
+    <TextView
+        android:id="@+id/tv_music_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:lines="1"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="8dp"
+        android:paddingTop="4dp"
+        android:text="@string/no_title"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/ib_main_shuffle"
+        style="@style/ImageButtonStyle1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:alpha="0.3"
+        android:clickable="false"
+        android:contentDescription="@string/iv_cd_shuffle"
+        android:src="@mipmap/ic_shuffle"
+        android:tint="?android:attr/colorAccent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/ib_main_previous"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_music_title" />
+
+    <ImageButton
+        android:id="@+id/ib_main_previous"
+        style="@style/ImageButtonStyle1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:contentDescription="@string/iv_cd_previous"
+        android:src="@mipmap/ic_previous"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/ib_main_play"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/ib_main_shuffle"
+        app:layout_constraintTop_toBottomOf="@+id/tv_music_title" />
+
+    <ImageButton
+        android:id="@+id/ib_main_play"
+        style="@style/ImageButtonStyle1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:contentDescription="@string/iv_cd_play"
+        android:src="@mipmap/ic_play"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/ib_main_next"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/ib_main_previous"
+        app:layout_constraintTop_toBottomOf="@+id/tv_music_title" />
+
+    <ImageButton
+        android:id="@+id/ib_main_next"
+        style="@style/ImageButtonStyle1"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:contentDescription="@string/iv_cd_next"
+        android:src="@mipmap/ic_next"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/ib_main_play"
+        app:layout_constraintTop_toBottomOf="@+id/tv_music_title" />
+
+    <ImageButton
+        android:id="@+id/iv_main_cover"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/iv_cd_cover"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/tv_music_title"
+        tools:visibility="invisible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
